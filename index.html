@@ -96,49 +96,16 @@
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .toast.show { opacity: 1; }
     
-    /* 📅 HIJRI CALENDAR & KURBAN BAYRAM */
-    .hijri-banner { 
-      background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%); 
-      border: 1px solid var(--accent); 
-      border-radius: 1rem; 
-      padding: 1rem; 
-      margin-bottom: 1rem; 
-      text-align: center;
-    }
+    .hijri-banner { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%); border: 1px solid var(--accent); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; text-align: center; }
     .hijri-date { font-size: 1.1rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
     .hijri-month { font-size: 0.85rem; color: var(--muted); }
-    .kurban-banner {
-      background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%);
-      border: 1px solid var(--dhuha);
-      border-radius: 1rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .kurban-banner::before {
-      content: '🕌';
-      position: absolute;
-      right: -1rem;
-      bottom: -1rem;
-      font-size: 4rem;
-      opacity: 0.1;
-    }
+    .kurban-banner { background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%); border: 1px solid var(--dhuha); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; position: relative; overflow: hidden; }
+    .kurban-banner::before { content: '🕌'; position: absolute; right: -1rem; bottom: -1rem; font-size: 4rem; opacity: 0.1; }
     .kurban-title { font-size: 0.9rem; font-weight: 700; color: var(--dhuha); margin-bottom: 0.25rem; }
     .kurban-date { font-size: 0.85rem; color: var(--text); font-weight: 600; }
     .kurban-greeting { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; font-style: italic; }
     
-    .footer-warning { 
-      text-align: center; 
-      font-size: 0.75rem; 
-      color: var(--muted); 
-      padding: 1rem; 
-      margin-top: auto;
-      line-height: 1.5;
-    }
+    .footer-warning { text-align: center; font-size: 0.75rem; color: var(--muted); padding: 1rem; margin-top: auto; line-height: 1.5; }
     .footer-warning strong { color: var(--warning); }
     
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -156,13 +123,11 @@
 
   <div id="error-banner" class="error-banner">⚠️ Ошибка загрузки. Используются резервные данные.</div>
 
-  <!-- 📅 HIJRI CALENDAR -->
   <div class="hijri-banner">
     <div class="hijri-date" id="hijri-date">—</div>
-    <div class="hijri-month" id="hijri-month">—</div>
+    <div class="hijri-month" id="hijri-month">По хиджре</div>
   </div>
 
-  <!-- 🕌 KURBAN BAYRAM BANNER -->
   <div class="kurban-banner" id="kurban-banner">
     <div style="flex: 1;">
       <div class="kurban-title">🌙 Курбан Байрам</div>
@@ -221,7 +186,6 @@
     <div id="prayers-list" class="prayer-list"></div>
   </div>
 
-  <!-- ⚠️ FOOTER WARNING -->
   <div class="footer-warning">
     <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
@@ -271,6 +235,7 @@
   <div id="toast" class="toast">✓</div>
 
   <script>
+    // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
@@ -284,12 +249,14 @@
     let zikrPhase = 0, zikrCount = 0, zikrPrayerName = '';
     let dhuhaModalShown = false, tahajjudModalShown = false;
 
+    // === PHRASES ===
     const PHASE_FAJR_MAGHRIB = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ля-hуль-мульку ва ляhуль-хамду юхйи ва юмиту ва hува ‘аля кулли шайъин кадир';
     const PHASE_DHUHR_ASR_ISHA = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ляhуль-мульку ва ляhуль-хамду ва hува ‘аля кулли шайъин кадир';
     const SURAH_IKHLAS = "Куль хува-Ллаху ахад,\nЛлахус-самад.\nЛам ялид ва лам юляд,\nВа лам якун ляху куфуван ахад.";
     const SURAH_FALAQ = "Куль а'узу би-Раббиль-фаляк,\nМин шарри ма халак,\nВа мин шарри гасикын иза вакаб,\nВа мин шаррин-наффасати филь-'укад,\nВа мин шарри хасидин иза хасад.";
     const SURAH_NAS = "Куль а'узу би-Раббин-нас,\nМаликин-нас,\nИляхин-нас,\nМин шарриль-васвасиль-ханнас,\nАллязи ювасвису фи судури-н-нас,\nМиналь-джиннати ван-нас.";
 
+    // === UTILS ===
     const showToast = (msg) => {
       const t = document.getElementById('toast');
       t.textContent = msg; t.classList.add('show');
@@ -306,19 +273,9 @@
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
     const getTodayISO = () => new Date().toISOString().split('T')[0];
 
-    // 📅 HIJRI DATE CALCULATION
+    // === HIJRI & MOON ===
     const getHijriDate = (date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      
-      // Approximate conversion (Gregorian to Hijri)
-      const hijriYear = Math.floor((year - 622) * 33 / 32);
-      const hijriMonth = Math.floor((month - 1) * 12 / 12);
-      const hijriDay = day;
-      
-      // More accurate calculation
-      const jd = Math.floor((11 * year + 3) / 30) + 354 * year + 227551 + day + Math.floor((153 * month + 2) / 5) + 1729767;
+      const jd = Math.floor((11 * date.getFullYear() + 3) / 30) + 354 * date.getFullYear() + 227551 + date.getDate() + Math.floor((153 * (date.getMonth() + 1) + 2) / 5) + 1729767;
       const l = jd - 1948440 + 10632;
       const n = Math.floor((l - 1) / 10631);
       const l2 = l - 10631 * n + 354;
@@ -327,47 +284,34 @@
       const hijriM = Math.floor((24 * l3) / 709);
       const hijriD = l3 - Math.floor((709 * hijriM) / 24);
       const hijriY = 30 * n + j - 30;
-      
-      return {
-        day: hijriD,
-        month: hijriM - 1,
-        year: hijriY,
-        monthName: HIJRI_MONTHS[hijriM - 1]
-      };
+      return { day: hijriD, month: hijriM - 1, year: hijriY, monthName: HIJRI_MONTHS[hijriM - 1] || '—' };
     };
 
     const getMoonPhase = (date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
+      const year = date.getFullYear(), month = date.getMonth() + 1, day = date.getDate();
       let c, e, jd, b;
-      
       if (month < 3) { year--; month += 12; }
       ++month;
-      c = 365.25 * year;
-      e = 30.6 * month;
+      c = 365.25 * year; e = 30.6 * month;
       jd = c + e + day - 694039.09;
       jd /= 29.5305882;
-      b = parseInt(jd);
-      jd -= b;
+      b = parseInt(jd); jd -= b;
       b = Math.round(jd * 8);
       const phases = ['🌑','','🌓','','🌕','','🌗',''];
       return phases[b >= 8 ? 0 : b];
     };
 
-    // 🕌 KURBAN BAYRAM DATE (10 Dhul Hijjah)
+    // === KURBAN BAYRAM ===
     const getKurbanBayramDate = (year) => {
-      // Approximate dates for Kurban Bayram (Eid al-Adha)
-      // 10 Dhul Hijjah
-      const kurbanDates = {
+      const dates = {
         2026: { gregorian: '27 мая', dayOfWeek: 'Среда', hijri: '10 Зуль-Хиджа 1447' },
         2027: { gregorian: '16 мая', dayOfWeek: 'Воскресенье', hijri: '10 Зуль-Хиджа 1448' },
         2028: { gregorian: '5 мая', dayOfWeek: 'Пятница', hijri: '10 Зуль-Хиджа 1449' }
       };
-      
-      return kurbanDates[year] || kurbanDates[2026];
+      return dates[year] || dates[2026];
     };
 
+    // === DATA LOADER ===
     const loadData = async () => {
       try {
         const cached = localStorage.getItem(CACHE_KEY);
@@ -385,16 +329,11 @@
         
         const json = await res.json();
         const entry = json.schedule?.find(item => item.date === getTodayStr());
-        
         if (entry) {
           const timings = {};
           PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
           if (Object.keys(timings).length >= 4) {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ 
-              timings, 
-              schedule: json.schedule, 
-              timestamp: Date.now() 
-            }));
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ timings, schedule: json.schedule, timestamp: Date.now() }));
             return timings;
           }
         }
@@ -405,6 +344,7 @@
       }
     };
 
+    // === TIME LOGIC ===
     const parseTime = (timeStr) => {
       if (!timeStr || typeof timeStr !== 'string') return new Date();
       const [h, m] = timeStr.split(':').map(Number);
@@ -414,23 +354,18 @@
     const findCurrentNext = (timings) => {
       const now = new Date();
       let current = null, next = null;
-      
       for (const key of PRAYERS) {
         if (!timings[key]) continue;
         const time = parseTime(timings[key]);
         if (time <= now) current = { name: key, time };
         else if (!next) { next = { name: key, time }; break; }
       }
-      
       if (!next && current) {
         try {
           const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
           const tomorrowStr = `${tomorrow.getDate()} ${MONTHS[tomorrow.getMonth()]}`;
-          
           const tomorrowEntry = cached.schedule?.find(d => d.date === tomorrowStr);
-          
           if (tomorrowEntry?.fajr) {
             next = { name: 'fajr', time: parseTime(tomorrowEntry.fajr) };
             next.time.setDate(next.time.getDate() + 1);
@@ -443,7 +378,6 @@
           next.time.setDate(next.time.getDate() + 1);
         }
       }
-      
       if (!current) {
         current = { name: 'isha', time: parseTime(timings.isha) };
         current.time.setDate(current.time.getDate() - 1);
@@ -452,37 +386,30 @@
     };
 
     const isDhuhaTime = (timings) => {
-      const now = new Date();
-      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const now = new Date(), currentMins = now.getHours() * 60 + now.getMinutes();
       const getMins = (k) => { if (!timings[k]) return 0; const [h, m] = timings[k].split(':').map(Number); return h * 60 + m; };
-      const sunriseMins = getMins('sunrise');
-      const dhuhrMins = getMins('dhuhr');
-      return currentMins >= (sunriseMins + 30) && currentMins < dhuhrMins;
+      return currentMins >= (getMins('sunrise') + 30) && currentMins < getMins('dhuhr');
     };
 
     const isTahajjudTime = (timings) => {
       if (!timings.isha) return false;
-      const now = new Date();
-      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const now = new Date(), currentMins = now.getHours() * 60 + now.getMinutes();
       const [h, m] = timings.isha.split(':').map(Number);
       return currentMins >= (h * 60 + m);
     };
 
+    // === MODALS ===
     const showDhuhaModal = () => {
       if (dhuhaModalShown || appState.completed.dhuha) return;
       dhuhaModalShown = true;
       document.getElementById('dhuha-modal').classList.add('show');
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     };
-    window.closeDhuhaModal = function() { document.getElementById('dhuha-modal').classList.remove('show'); };
-    window.markDhuha = function(rakaats) {
-      appState.completed.dhuha = true;
-      appState.completed.dhuha_rakaats = rakaats;
-      appState.completed.dhuha_at = new Date().toISOString();
+    window.closeDhuhaModal = () => document.getElementById('dhuha-modal').classList.remove('show');
+    window.markDhuha = (rakaats) => {
+      appState.completed.dhuha = true; appState.completed.dhuha_rakaats = rakaats; appState.completed.dhuha_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast(`✓ Духа (${rakaats} р.)`);
-      closeDhuhaModal();
-      renderList(appData, appState.completed);
+      showToast(`✓ Духа (${rakaats} р.)`); closeDhuhaModal(); renderList(appData, appState.completed);
     };
 
     const showTahajjudModal = () => {
@@ -491,15 +418,11 @@
       document.getElementById('tahajjud-modal').classList.add('show');
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     };
-    window.closeTahajjudModal = function() { document.getElementById('tahajjud-modal').classList.remove('show'); };
-    window.markTahajjud = function(rakaats) {
-      appState.completed.tahajjud = true;
-      appState.completed.tahajjud_rakaats = rakaats;
-      appState.completed.tahajjud_at = new Date().toISOString();
+    window.closeTahajjudModal = () => document.getElementById('tahajjud-modal').classList.remove('show');
+    window.markTahajjud = (rakaats) => {
+      appState.completed.tahajjud = true; appState.completed.tahajjud_rakaats = rakaats; appState.completed.tahajjud_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast(`✓ Тахаджуд (${rakaats} р.)`);
-      closeTahajjudModal();
-      renderList(appData, appState.completed);
+      showToast(`✓ Тахаджуд (${rakaats} р.)`); closeTahajjudModal(); renderList(appData, appState.completed);
     };
 
     const formatDuration = (ms) => {
@@ -519,22 +442,20 @@
       return false;
     };
 
+    // === RENDER ===
     const renderList = (timings, completed) => {
+      if (!timings) return;
       const list = document.getElementById('prayers-list');
       list.innerHTML = '';
       const isFriday = new Date().getDay() === 5;
 
       if (completed.dhuha) {
-        const div = document.createElement('div');
-        div.className = 'prayer-item dhuha completed';
-        div.innerHTML = `<span class="prayer-name">🌤️ Духа (${completed.dhuha_rakaats || '?'} р.)</span><span>✓</span>`;
-        list.appendChild(div);
+        const div = document.createElement('div'); div.className = 'prayer-item dhuha completed';
+        div.innerHTML = `<span class="prayer-name">🌤️ Духа (${completed.dhuha_rakaats || '?'} р.)</span><span>✓</span>`; list.appendChild(div);
       }
       if (completed.tahajjud) {
-        const div = document.createElement('div');
-        div.className = 'prayer-item tahajjud completed';
-        div.innerHTML = `<span class="prayer-name">🌌 Тахаджуд (${completed.tahajjud_rakaats || '?'} р.)</span><span>✓</span>`;
-        list.appendChild(div);
+        const div = document.createElement('div'); div.className = 'prayer-item tahajjud completed';
+        div.innerHTML = `<span class="prayer-name">🌌 Тахаджуд (${completed.tahajjud_rakaats || '?'} р.)</span><span>✓</span>`; list.appendChild(div);
       }
 
       const ishaTime = timings.isha ? parseTime(timings.isha) : null;
@@ -544,14 +465,12 @@
         const isWitrDone = completed.witr;
         div.className = `prayer-item witr ${isWitrDone ? 'completed' : ''}`;
         div.innerHTML = `<span class="prayer-name">🌙 Витр (3 ракаата)</span><span style="font-family:monospace">${isWitrDone ? '✓' : timings.isha + ' — Фаджр'}</span>`;
-        div.onclick = () => toggleWitr();
-        list.appendChild(div);
+        div.onclick = () => toggleWitr(); list.appendChild(div);
       }
 
       PRAYERS.forEach(key => {
         if (key === 'sunrise' || !timings[key]) return;
-        const div = document.createElement('div');
-        div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
+        const div = document.createElement('div'); div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
         div.innerHTML = `<span class="prayer-name">${NAMES[key]}</span><span style="font-family:monospace">${timings[key]}</span>`;
         list.appendChild(div);
         
@@ -565,21 +484,17 @@
       });
     };
 
-    window.toggleWitr = function() {
+    window.toggleWitr = () => {
       if (appState.completed.witr) return showToast('Уже отмечено ✓');
-      appState.completed.witr = true;
-      appState.completed.witr_at = new Date().toISOString();
+      appState.completed.witr = true; appState.completed.witr_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast('✓ Витр');
-      renderList(appData, appState.completed);
+      showToast('✓ Витр'); renderList(appData, appState.completed);
     };
 
     const addSunnah = (container, key, label, completed) => {
-      const div = document.createElement('div');
-      div.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
+      const div = document.createElement('div'); div.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
       div.innerHTML = `<span class="prayer-name">${label}</span><span>${completed[key] ? '✓' : '—'}</span>`;
-      div.onclick = (e) => { e.stopPropagation(); toggleSunnah(key); };
-      container.appendChild(div);
+      div.onclick = (e) => { e.stopPropagation(); toggleSunnah(key); }; container.appendChild(div);
     };
 
     const toggleSunnah = (key) => {
@@ -591,7 +506,8 @@
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
-    window.handleZikr = function() {
+    // === ZIKR ===
+    window.handleZikr = () => {
       if (zikrPhase >= 7) return;
       const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
       zikrCount++;
@@ -600,54 +516,38 @@
       updateZikrUI();
     };
 
-    window.finishZikr = function() {
-      zikrPhase = 7; zikrCount = 0;
-      updateZikrUI();
-      showToast('✓ Зикры завершены');
+    window.finishZikr = () => {
+      zikrPhase = 7; zikrCount = 0; updateZikrUI(); showToast('✓ Зикры завершены');
     };
 
     const updateZikrUI = () => {
-      const phraseEl = document.getElementById('zikr-phrase');
-      const countEl = document.getElementById('zikr-count');
-      const btnEl = document.getElementById('zikr-btn');
-      const doneBtnEl = document.getElementById('zikr-done-btn');
-
-      if (zikrPhase === 0) { phraseEl.textContent = "СубханАллах"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `СубханАллах (${zikrCount})`; }
-      else if (zikrPhase === 1) { phraseEl.textContent = "Альхамдулиллях"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `Альхамдулиллях (${zikrCount})`; }
-      else if (zikrPhase === 2) { phraseEl.textContent = "Аллаху Акбар"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `Аллаху Акбар (${zikrCount})`; }
+      const p = document.getElementById('zikr-phrase'), c = document.getElementById('zikr-count'), b = document.getElementById('zikr-btn'), d = document.getElementById('zikr-done-btn');
+      if (zikrPhase === 0) { p.textContent = "СубханАллах"; c.textContent = `${zikrCount} / 33`; b.textContent = `СубханАллах (${zikrCount})`; }
+      else if (zikrPhase === 1) { p.textContent = "Альхамдулиллях"; c.textContent = `${zikrCount} / 33`; b.textContent = `Альхамдулиллях (${zikrCount})`; }
+      else if (zikrPhase === 2) { p.textContent = "Аллаху Акбар"; c.textContent = `${zikrCount} / 33`; b.textContent = `Аллаху Акбар (${zikrCount})`; }
       else if (zikrPhase === 3) {
-        const isFajrMaghrib = (zikrPrayerName === 'fajr' || zikrPrayerName === 'maghrib');
-        phraseEl.textContent = isFajrMaghrib ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA;
-        countEl.textContent = `${zikrCount} / 10`; btnEl.textContent = `Тахлиль (${zikrCount}/10)`;
+        const isFM = (zikrPrayerName === 'fajr' || zikrPrayerName === 'maghrib');
+        p.textContent = isFM ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA; c.textContent = `${zikrCount} / 10`; b.textContent = `Тахлиль (${zikrCount}/10)`;
       }
-      else if (zikrPhase === 4) { phraseEl.textContent = SURAH_IKHLAS; countEl.textContent = `${zikrCount} / 3`; btnEl.textContent = `Ихлас (${zikrCount}/3)`; }
-      else if (zikrPhase === 5) { phraseEl.textContent = SURAH_FALAQ; countEl.textContent = `${zikrCount} / 1`; btnEl.textContent = `Фаляк (${zikrCount}/1)`; }
-      else if (zikrPhase === 6) { phraseEl.textContent = SURAH_NAS; countEl.textContent = `${zikrCount} / 1`; btnEl.textContent = `Нас (${zikrCount}/1)`; }
-      else {
-        phraseEl.textContent = '✓ Завершено (Аллаху Акбар)';
-        countEl.textContent = '✓';
-        btnEl.textContent = 'Да примет Аллах';
-        btnEl.classList.add('done');
-        doneBtnEl.style.display = 'none';
-      }
+      else if (zikrPhase === 4) { p.textContent = SURAH_IKHLAS; c.textContent = `${zikrCount} / 3`; b.textContent = `Ихлас (${zikrCount}/3)`; }
+      else if (zikrPhase === 5) { p.textContent = SURAH_FALAQ; c.textContent = `${zikrCount} / 1`; b.textContent = `Фаляк (${zikrCount}/1)`; }
+      else if (zikrPhase === 6) { p.textContent = SURAH_NAS; c.textContent = `${zikrCount} / 1`; b.textContent = `Нас (${zikrCount}/1)`; }
+      else { p.textContent = '✓ Завершено (Аллаху Акбар)'; c.textContent = '✓'; b.textContent = 'Да примет Аллах'; b.classList.add('done'); d.style.display = 'none'; }
     };
 
+    // === ACTIONS ===
     document.getElementById('mark-done').onclick = () => {
       if (!appData) return;
       const { current } = findCurrentNext(appData);
       if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
-      appState.completed[current.name] = true;
-      appState.completed[current.name + '_at'] = new Date().toISOString();
+      appState.completed[current.name] = true; appState.completed[current.name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast(`✓ ${NAMES[current.name]}`);
-      renderList(appData, appState.completed);
-      zikrPrayerName = current.name;
-      zikrPhase = 0; zikrCount = 0;
+      showToast(`✓ ${NAMES[current.name]}`); renderList(appData, appState.completed);
+      zikrPrayerName = current.name; zikrPhase = 0; zikrCount = 0;
       document.getElementById('zikr-card').classList.add('show');
       document.getElementById('zikr-done-btn').style.display = 'block';
       document.getElementById('zikr-btn').classList.remove('done');
-      updateZikrUI();
-      startTimer();
+      updateZikrUI(); startTimer();
     };
 
     const startTimer = () => {
@@ -661,7 +561,6 @@
         const done = appState.completed[current.name];
         btn.disabled = done;
         btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
-        
         if (isDhuhaTime(appData)) showDhuhaModal();
         if (isTahajjudTime(appData)) showTahajjudModal();
       };
@@ -670,74 +569,36 @@
       timerInterval = setInterval(update, 1000);
     };
 
-    const enableCompass = function() {
-      const statusEl = document.getElementById('compass-status');
-      const btnEl = document.getElementById('enable-compass-btn');
-      const ringEl = document.getElementById('compass-ring');
-      const arrowEl = document.getElementById('compass-arrow');
-      
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission()
-          .then(permission => {
-            if (permission === 'granted') startCompass();
-            else statusEl.textContent = '⛔ Доступ к компасу запрещён';
-          })
-          .catch(console.error);
-      } else {
-        startCompass();
-      }
-      
-      function startCompass() {
-        btnEl.classList.add('hidden');
-        statusEl.textContent = '🔄 Калибровка...';
-        
-        const history = [];
-        const smooth = (value) => {
-          history.push(value);
-          if (history.length > 5) history.shift();
-          return history.reduce((a, b) => a + b, 0) / history.length;
+    // === COMPASS ===
+    window.enableCompass = () => {
+      const s = document.getElementById('compass-status'), b = document.getElementById('enable-compass-btn'), r = document.getElementById('compass-ring'), a = document.getElementById('compass-arrow');
+      const req = () => {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission().then(p => p === 'granted' ? start() : s.textContent = '⛔ Доступ запрещён').catch(console.error);
+        } else start();
+      };
+      const start = () => {
+        b.classList.add('hidden'); s.textContent = '🔄 Калибровка...';
+        const hist = [], smooth = v => { hist.push(v); if(hist.length>5) hist.shift(); return hist.reduce((a,b)=>a+b,0)/hist.length; };
+        const h = e => {
+          let heading = e.webkitCompassHeading !== undefined ? e.webkitCompassHeading : (e.alpha !== null ? (360 - e.alpha) % 360 : null);
+          if (heading !== null) { const sh = smooth(heading); r.style.transform = `rotate(${-sh}deg)`; a.style.transform = `rotate(${229 - sh}deg)`; if(s.textContent.includes('Калибровка')) s.textContent = '✅ Компас работает'; }
         };
-        
-        const handler = (event) => {
-          let heading = null;
-          if (event.webkitCompassHeading !== undefined) {
-            heading = event.webkitCompassHeading;
-          } else if (event.alpha !== null) {
-            heading = (360 - event.alpha) % 360;
-          }
-          
-          if (heading !== null) {
-            const smoothHeading = smooth(heading);
-            ringEl.style.transform = `rotate(${-smoothHeading}deg)`;
-            arrowEl.style.transform = `rotate(${229 - smoothHeading}deg)`;
-            
-            if (statusEl.textContent.includes('Калибровка')) {
-              statusEl.textContent = '✅ Компас работает';
-            }
-          }
-        };
-        
-        if ('ondeviceorientationabsolute' in window) {
-          window.addEventListener('deviceorientationabsolute', handler, { passive: true });
-        } else {
-          window.addEventListener('deviceorientation', handler, { passive: true });
-        }
-      }
+        if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', h, { passive: true });
+        else window.addEventListener('deviceorientation', h, { passive: true });
+      };
+      req();
     };
 
+    // === MIDNIGHT RELOAD ===
     const startMidnightCheck = () => {
       setInterval(() => {
-        const now = new Date();
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
-        
-        if (hours === 0 && minutes <= 1) {
-          console.log('🌙 Midnight reload triggered');
-          location.reload();
-        }
+        const n = new Date();
+        if (n.getHours() === 0 && n.getMinutes() <= 1) { console.log('🌙 Midnight reload'); location.reload(); }
       }, 60000);
     };
 
+    // === INIT ===
     const init = async () => {
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelector('.theme-btn').textContent = '🌞'; }
@@ -745,48 +606,40 @@
       const today = new Date();
       document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
       
-      // 📅 Display Hijri Date
-      const hijri = getHijriDate(today);
-      const moonPhase = getMoonPhase(today);
-      document.getElementById('hijri-date').textContent = `${hijri.day} ${hijri.monthName} ${hijri.year} ${moonPhase}`;
-      document.getElementById('hijri-month').textContent = 'По хиджре';
+      try {
+        const hijri = getHijriDate(today);
+        document.getElementById('hijri-date').textContent = `${hijri.day} ${hijri.monthName} ${hijri.year} ${getMoonPhase(today)}`;
+      } catch (e) { document.getElementById('hijri-date').textContent = '—'; }
       
-      // 🕌 Display Kurban Bayram
-      const currentYear = today.getFullYear();
-      const kurban = getKurbanBayramDate(currentYear);
-      document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
+      try {
+        const kurban = getKurbanBayramDate(today.getFullYear());
+        document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
+      } catch (e) { document.getElementById('kurban-date').textContent = '—'; }
       
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
       
       const todayISO = getTodayISO();
       ['dhuha', 'tahajjud'].forEach(key => {
         if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
-          delete appState.completed[key];
-          delete appState.completed[key + '_rakaats'];
-          delete appState.completed[key + '_at'];
+          delete appState.completed[key]; delete appState.completed[key + '_rakaats']; delete appState.completed[key + '_at'];
         }
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      dhuhaModalShown = false;
-      tahajjudModalShown = false;
+      dhuhaModalShown = false; tahajjudModalShown = false;
 
       appData = await loadData();
       renderList(appData, appState.completed);
       startTimer();
       startMidnightCheck();
       setInterval(() => renderList(appData, appState.completed), 30000);
+      
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));
+      }
     };
 
     document.addEventListener('DOMContentLoaded', init);
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('✅ SW registered:', reg.scope))
-          .catch(err => console.error('❌ SW failed:', err));
-      });
-    }
   </script>
 </body>
 </html>

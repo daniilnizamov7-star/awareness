@@ -29,7 +29,6 @@
     .btn { background: var(--accent); color: #0f172a; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1.1rem; }
     .btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.6; }
     
-    /* Zikr Styles */
     .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.1); border-radius: 0.75rem; border: 2px dashed var(--accent); text-align: center; }
     .zikr-card.show { display: block; }
     .zikr-counter { font-size: 3rem; font-weight: 800; margin: 0.5rem 0; }
@@ -52,7 +51,6 @@
     .prayer-item.sunnah { padding-left: 2.5rem; background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
     
-    /* Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
     .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
     .modal-card { background: var(--card); border-radius: 1.5rem; padding: 2rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 2px solid var(--dhuha); animation: slideUp 0.3s ease; }
@@ -69,14 +67,12 @@
     .btn-close { background: transparent; border: 2px solid var(--muted); color: var(--muted); padding: 0.75rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
     .btn-close:hover { border-color: var(--text); color: var(--text); }
 
-    /* Tahajjud Modal Theme */
     .tahajjud-theme .modal-card { border-color: var(--tahajjud); }
     .tahajjud-theme .modal-title { color: var(--tahajjud); }
     .tahajjud-theme .modal-hadith { border-left-color: var(--tahajjud); background: rgba(167,139,250,0.1); }
     .btn-rakaat-tahajjud { border-color: var(--tahajjud); background: rgba(167,139,250,0.2); }
     .btn-rakaat-tahajjud:hover { background: var(--tahajjud); color: #fff; }
 
-    /* 🧭 COMPASS STYLES */
     .compass-card { text-align: center; }
     .compass-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto 1rem; }
     .compass-ring { position: absolute; inset: 0; transition: transform 0.1s linear; }
@@ -99,6 +95,18 @@
     .error-banner.show { display: block; }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .toast.show { opacity: 1; }
+    
+    /* ⚠️ FOOTER WARNING */
+    .footer-warning { 
+      text-align: center; 
+      font-size: 0.75rem; 
+      color: var(--muted); 
+      padding: 1rem; 
+      margin-top: auto;
+      line-height: 1.5;
+    }
+    .footer-warning strong { color: var(--warning); }
+    
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
@@ -133,7 +141,6 @@
     </div>
   </div>
 
-  <!-- 🧭 COMPASS CARD -->
   <div class="card compass-card">
     <h3 style="margin-bottom: 0.5rem">🕋 Направление Киблы</h3>
     <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem">Для Челябинска (~229°)</p>
@@ -162,6 +169,13 @@
   <div class="card">
     <h3 style="margin-bottom: 0.75rem">📋 Сегодня</h3>
     <div id="prayers-list" class="prayer-list"></div>
+  </div>
+
+  <!-- ⚠️ FOOTER WARNING -->
+  <div class="footer-warning">
+    <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
+    <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
+    <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
 
   <!-- Dhuha Modal -->
@@ -245,22 +259,29 @@
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (data && Date.now() - timestamp < 24 * 60 * 60 * 1000) return data;
+          const { timings, timestamp } = JSON.parse(cached);
+          if (timings && Date.now() - timestamp < 24 * 60 * 60 * 1000) return timings;
         }
       } catch (e) { console.warn('Cache error:', e); }
+
       try {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 5000);
         const res = await fetch(API_URL + '?t=' + Date.now(), { signal: controller.signal, cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        
         const json = await res.json();
         const entry = json.schedule?.find(item => item.date === getTodayStr());
+        
         if (entry) {
           const timings = {};
           PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
           if (Object.keys(timings).length >= 4) {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ 
+              timings, 
+              schedule: json.schedule, 
+              timestamp: Date.now() 
+            }));
             return timings;
           }
         }
@@ -280,14 +301,40 @@
     const findCurrentNext = (timings) => {
       const now = new Date();
       let current = null, next = null;
+      
       for (const key of PRAYERS) {
         if (!timings[key]) continue;
         const time = parseTime(timings[key]);
         if (time <= now) current = { name: key, time };
         else if (!next) { next = { name: key, time }; break; }
       }
-      if (!next && current) { next = { name: 'fajr', time: parseTime(timings.fajr) }; next.time.setDate(next.time.getDate() + 1); }
-      if (!current) { current = { name: 'isha', time: parseTime(timings.isha) }; current.time.setDate(current.time.getDate() - 1); }
+      
+      if (!next && current) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = `${tomorrow.getDate()} ${MONTHS[tomorrow.getMonth()]}`;
+          
+          const tomorrowEntry = cached.schedule?.find(d => d.date === tomorrowStr);
+          
+          if (tomorrowEntry?.fajr) {
+            next = { name: 'fajr', time: parseTime(tomorrowEntry.fajr) };
+            next.time.setDate(next.time.getDate() + 1);
+          } else {
+            next = { name: 'fajr', time: parseTime(timings.fajr) };
+            next.time.setDate(next.time.getDate() + 1);
+          }
+        } catch {
+          next = { name: 'fajr', time: parseTime(timings.fajr) };
+          next.time.setDate(next.time.getDate() + 1);
+        }
+      }
+      
+      if (!current) {
+        current = { name: 'isha', time: parseTime(timings.isha) };
+        current.time.setDate(current.time.getDate() - 1);
+      }
       return { current, next };
     };
 
@@ -510,17 +557,12 @@
       timerInterval = setInterval(update, 1000);
     };
 
-    // 🧭 COMPASS LOGIC (из "Намаз Челябинск")
-    const QIBLA_ANGLE = 229; // Челябинск
-    let compassActive = false;
-
-    window.enableCompass = function() {
+    const enableCompass = function() {
       const statusEl = document.getElementById('compass-status');
       const btnEl = document.getElementById('enable-compass-btn');
       const ringEl = document.getElementById('compass-ring');
       const arrowEl = document.getElementById('compass-arrow');
       
-      // Запрос разрешения для iOS 13+
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
           .then(permission => {
@@ -535,9 +577,7 @@
       function startCompass() {
         btnEl.classList.add('hidden');
         statusEl.textContent = '🔄 Калибровка...';
-        compassActive = true;
         
-        // Сглаживание показаний
         const history = [];
         const smooth = (value) => {
           history.push(value);
@@ -547,22 +587,16 @@
         
         const handler = (event) => {
           let heading = null;
-          
-          // iOS
           if (event.webkitCompassHeading !== undefined) {
             heading = event.webkitCompassHeading;
-          }
-          // Android/стандарт
-          else if (event.alpha !== null) {
+          } else if (event.alpha !== null) {
             heading = (360 - event.alpha) % 360;
           }
           
           if (heading !== null) {
             const smoothHeading = smooth(heading);
-            // Вращаем компас против направления телефона
             ringEl.style.transform = `rotate(${-smoothHeading}deg)`;
-            // Стрелка Киблы = направление телефона + угол Киблы
-            arrowEl.style.transform = `rotate(${QIBLA_ANGLE - smoothHeading}deg)`;
+            arrowEl.style.transform = `rotate(${229 - smoothHeading}deg)`;
             
             if (statusEl.textContent.includes('Калибровка')) {
               statusEl.textContent = '✅ Компас работает';
@@ -570,13 +604,27 @@
           }
         };
         
-        // Пробуем absolute, если нет — обычный
         if ('ondeviceorientationabsolute' in window) {
           window.addEventListener('deviceorientationabsolute', handler, { passive: true });
         } else {
           window.addEventListener('deviceorientation', handler, { passive: true });
         }
       }
+    };
+
+    // 🔔 AUTO-RELOAD AT MIDNIGHT
+    const startMidnightCheck = () => {
+      setInterval(() => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        
+        // Если 00:00 или 00:01 → перезагружаем
+        if (hours === 0 && minutes <= 1) {
+          console.log('🌙 Midnight reload triggered');
+          location.reload();
+        }
+      }, 60000); // Проверяем каждую минуту
     };
 
     const init = async () => {
@@ -601,6 +649,7 @@
       appData = await loadData();
       renderList(appData, appState.completed);
       startTimer();
+      startMidnightCheck(); // 🔔 Запускаем проверку полуночи
       setInterval(() => renderList(appData, appState.completed), 30000);
     };
 

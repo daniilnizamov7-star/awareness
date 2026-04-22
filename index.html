@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
   <title>Осознанность • Трекер</title>
   <style>
-    :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --danger: #ef4444; --dhuha: #f59e0b; --witr: #8b5cf6; }
+    :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --danger: #ef4444; --dhuha: #f59e0b; --witr: #8b5cf6; --tahajjud: #a78bfa; }
     .light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
@@ -47,6 +47,8 @@
     .prayer-item.dhuha .prayer-name { color: var(--dhuha); }
     .prayer-item.witr { background: rgba(139,92,246,0.15); border: 1px solid var(--witr); }
     .prayer-item.witr .prayer-name { color: var(--witr); }
+    .prayer-item.tahajjud { background: rgba(167,139,250,0.15); border: 1px solid var(--tahajjud); }
+    .prayer-item.tahajjud .prayer-name { color: var(--tahajjud); }
     .prayer-item.sunnah { padding-left: 2.5rem; background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
     
@@ -66,6 +68,13 @@
     .btn-rakaat:active { transform: translateY(0); }
     .btn-close { background: transparent; border: 2px solid var(--muted); color: var(--muted); padding: 0.75rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
     .btn-close:hover { border-color: var(--text); color: var(--text); }
+
+    /* Tahajjud Modal Theme */
+    .tahajjud-theme .modal-card { border-color: var(--tahajjud); }
+    .tahajjud-theme .modal-title { color: var(--tahajjud); }
+    .tahajjud-theme .modal-hadith { border-left-color: var(--tahajjud); background: rgba(167,139,250,0.1); }
+    .btn-rakaat-tahajjud { border-color: var(--tahajjud); background: rgba(167,139,250,0.2); }
+    .btn-rakaat-tahajjud:hover { background: var(--tahajjud); color: #fff; }
 
     .error-banner { background: rgba(239,68,68,0.15); border: 1px solid var(--danger); color: var(--danger); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
     .error-banner.show { display: block; }
@@ -130,6 +139,26 @@
     </div>
   </div>
 
+  <!-- Tahajjud Modal -->
+  <div id="tahajjud-modal" class="modal-overlay tahajjud-theme">
+    <div class="modal-card">
+      <div class="modal-icon">🌌</div>
+      <div class="modal-title">Намаз Тахаджуд</div>
+      <div class="modal-text">Ночь — лучшее время для общения с Аллахом. Соверши добровольный намаз Тахаджуд.<br><br><strong>Сколько ракаатов совершить?</strong></div>
+      <div class="modal-hadith">
+        <p>«Господь наш нисходит на небо мира в последнюю треть ночи и говорит: "Кто взывает ко Мне, чтобы Я ответил ему? Кто просит у Меня, чтобы Я дал ему? Кто просит прощения у Меня, чтобы Я простил его?"»</p>
+        <cite>📚 Бухари, 1145; Муслим, 758</cite>
+      </div>
+      <div class="rakaat-buttons">
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(2)">2 ракаата</button>
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(4)">4 ракаата</button>
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(6)">6 ракаатов</button>
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(8)">8 ракаатов</button>
+      </div>
+      <button class="btn-close" onclick="closeTahajjudModal()">Понял, спасибо</button>
+    </div>
+  </div>
+
   <div id="toast" class="toast">✓</div>
 
   <script>
@@ -143,13 +172,10 @@
     
     let appData = null, appState = null, timerInterval = null;
     let zikrPhase = 0, zikrCount = 0, zikrPrayerName = '';
-    let dhuhaModalShown = false;
+    let dhuhaModalShown = false, tahajjudModalShown = false;
 
-    // 🔔 Фразы для зикров
     const PHASE_FAJR_MAGHRIB = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ля-hуль-мульку ва ляhуль-хамду юхйи ва юмиту ва hува ‘аля кулли шайъин кадир';
     const PHASE_DHUHR_ASR_ISHA = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ляhуль-мульку ва ляhуль-хамду ва hува ‘аля кулли шайъин кадир';
-    
-    // Тексты сур
     const SURAH_IKHLAS = "Куль хува-Ллаху ахад,\nЛлахус-самад.\nЛам ялид ва лам юляд,\nВа лам якун ляху куфуван ахад.";
     const SURAH_FALAQ = "Куль а'узу би-Раббиль-фаляк,\nМин шарри ма халак,\nВа мин шарри гасикын иза вакаб,\nВа мин шаррин-наффасати филь-'укад,\nВа мин шарри хасидин иза хасад.";
     const SURAH_NAS = "Куль а'узу би-Раббин-нас,\nМаликин-нас,\nИляхин-нас,\nМин шарриль-васвасиль-ханнас,\nАллязи ювасвису фи судури-н-нас,\nМиналь-джиннати ван-нас.";
@@ -168,6 +194,7 @@
     };
 
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
+    const getTodayISO = () => new Date().toISOString().split('T')[0];
 
     const loadData = async () => {
       try {
@@ -228,6 +255,14 @@
       return currentMins >= (sunriseMins + 30) && currentMins < dhuhrMins;
     };
 
+    const isTahajjudTime = (timings) => {
+      if (!timings.isha) return false;
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const [h, m] = timings.isha.split(':').map(Number);
+      return currentMins >= (h * 60 + m);
+    };
+
     const showDhuhaModal = () => {
       if (dhuhaModalShown || appState.completed.dhuha) return;
       dhuhaModalShown = true;
@@ -242,6 +277,23 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       showToast(`✓ Духа (${rakaats} р.)`);
       closeDhuhaModal();
+      renderList(appData, appState.completed);
+    };
+
+    const showTahajjudModal = () => {
+      if (tahajjudModalShown || appState.completed.tahajjud) return;
+      tahajjudModalShown = true;
+      document.getElementById('tahajjud-modal').classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    };
+    window.closeTahajjudModal = function() { document.getElementById('tahajjud-modal').classList.remove('show'); };
+    window.markTahajjud = function(rakaats) {
+      appState.completed.tahajjud = true;
+      appState.completed.tahajjud_rakaats = rakaats;
+      appState.completed.tahajjud_at = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      showToast(`✓ Тахаджуд (${rakaats} р.)`);
+      closeTahajjudModal();
       renderList(appData, appState.completed);
     };
 
@@ -271,6 +323,12 @@
         const div = document.createElement('div');
         div.className = 'prayer-item dhuha completed';
         div.innerHTML = `<span class="prayer-name">🌤️ Духа (${completed.dhuha_rakaats || '?'} р.)</span><span>✓</span>`;
+        list.appendChild(div);
+      }
+      if (completed.tahajjud) {
+        const div = document.createElement('div');
+        div.className = 'prayer-item tahajjud completed';
+        div.innerHTML = `<span class="prayer-name">🌌 Тахаджуд (${completed.tahajjud_rakaats || '?'} р.)</span><span>✓</span>`;
         list.appendChild(div);
       }
 
@@ -328,17 +386,11 @@
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
-    // 🔔 ЗИКРЫ: Полная Сунна (33/33/33 + 10 + Ихлаx3 + Фаляк + Нас)
     window.handleZikr = function() {
-      if (zikrPhase >= 7) return; // 7 фаз (0..6)
-      
+      if (zikrPhase >= 7) return;
       const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
       zikrCount++;
-      
-      if (zikrCount > limit) { 
-        zikrCount = 1; 
-        zikrPhase++; 
-      }
+      if (zikrCount > limit) { zikrCount = 1; zikrPhase++; }
       if (navigator.vibrate) navigator.vibrate(50);
       updateZikrUI();
     };
@@ -355,36 +407,17 @@
       const btnEl = document.getElementById('zikr-btn');
       const doneBtnEl = document.getElementById('zikr-done-btn');
 
-      // Фазы 0-2: 33 раза
-      if (zikrPhase === 0) {
-        phraseEl.textContent = "СубханАллах"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `СубханАллах (${zikrCount})`;
-      } else if (zikrPhase === 1) {
-        phraseEl.textContent = "Альхамдулиллях"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `Альхамдулиллях (${zikrCount})`;
-      } else if (zikrPhase === 2) {
-        phraseEl.textContent = "Аллаху Акбар"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `Аллаху Акбар (${zikrCount})`;
-      }
-      // Фаза 3: 10 раз (текст зависит от намаза)
+      if (zikrPhase === 0) { phraseEl.textContent = "СубханАллах"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `СубханАллах (${zikrCount})`; }
+      else if (zikrPhase === 1) { phraseEl.textContent = "Альхамдулиллях"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `Альхамдулиллях (${zikrCount})`; }
+      else if (zikrPhase === 2) { phraseEl.textContent = "Аллаху Акбар"; countEl.textContent = `${zikrCount} / 33`; btnEl.textContent = `Аллаху Акбар (${zikrCount})`; }
       else if (zikrPhase === 3) {
         const isFajrMaghrib = (zikrPrayerName === 'fajr' || zikrPrayerName === 'maghrib');
         phraseEl.textContent = isFajrMaghrib ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA;
         countEl.textContent = `${zikrCount} / 10`; btnEl.textContent = `Тахлиль (${zikrCount}/10)`;
       }
-      // Фаза 4: Ихлаx (3 раза)
-      else if (zikrPhase === 4) {
-        phraseEl.textContent = SURAH_IKHLAS;
-        countEl.textContent = `${zikrCount} / 3`; btnEl.textContent = `Ихлас (${zikrCount}/3)`;
-      }
-      // Фаза 5: Фаляк (1 раз)
-      else if (zikrPhase === 5) {
-        phraseEl.textContent = SURAH_FALAQ;
-        countEl.textContent = `${zikrCount} / 1`; btnEl.textContent = `Фаляк (${zikrCount}/1)`;
-      }
-      // Фаза 6: Нас (1 раз)
-      else if (zikrPhase === 6) {
-        phraseEl.textContent = SURAH_NAS;
-        countEl.textContent = `${zikrCount} / 1`; btnEl.textContent = `Нас (${zikrCount}/1)`;
-      }
-      // Завершено
+      else if (zikrPhase === 4) { phraseEl.textContent = SURAH_IKHLAS; countEl.textContent = `${zikrCount} / 3`; btnEl.textContent = `Ихлас (${zikrCount}/3)`; }
+      else if (zikrPhase === 5) { phraseEl.textContent = SURAH_FALAQ; countEl.textContent = `${zikrCount} / 1`; btnEl.textContent = `Фаляк (${zikrCount}/1)`; }
+      else if (zikrPhase === 6) { phraseEl.textContent = SURAH_NAS; countEl.textContent = `${zikrCount} / 1`; btnEl.textContent = `Нас (${zikrCount}/1)`; }
       else {
         phraseEl.textContent = '✓ Завершено (Аллаху Акбар)';
         countEl.textContent = '✓';
@@ -398,22 +431,17 @@
       if (!appData) return;
       const { current } = findCurrentNext(appData);
       if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
-      
       appState.completed[current.name] = true;
       appState.completed[current.name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      
       showToast(`✓ ${NAMES[current.name]}`);
       renderList(appData, appState.completed);
-      
-      // Инициализация зикров
       zikrPrayerName = current.name;
       zikrPhase = 0; zikrCount = 0;
       document.getElementById('zikr-card').classList.add('show');
       document.getElementById('zikr-done-btn').style.display = 'block';
       document.getElementById('zikr-btn').classList.remove('done');
       updateZikrUI();
-      
       startTimer();
     };
 
@@ -430,6 +458,7 @@
         btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
         
         if (isDhuhaTime(appData)) showDhuhaModal();
+        if (isTahajjudTime(appData)) showTahajjudModal();
       };
       update();
       if (timerInterval) clearInterval(timerInterval);
@@ -440,7 +469,27 @@
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelector('.theme-btn').textContent = '🌞'; }
       document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-      try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
+      
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        appState = saved ? JSON.parse(saved) : { completed: {} };
+      } catch { appState = { completed: {} }; }
+      
+      // 🔔 Ежедневный сброс добровольных намазов
+      const today = getTodayISO();
+      ['dhuha', 'tahajjud'].forEach(key => {
+        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== today) {
+          delete appState.completed[key];
+          delete appState.completed[key + '_rakaats'];
+          delete appState.completed[key + '_at'];
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      
+      // Сброс флагов модалок
+      dhuhaModalShown = false;
+      tahajjudModalShown = false;
+
       appData = await loadData();
       renderList(appData, appState.completed);
       startTimer();

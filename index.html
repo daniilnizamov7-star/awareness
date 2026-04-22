@@ -83,6 +83,7 @@
 
   <script>
     // === CONFIG ===
+    const FALLBACK_DATA = { fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" };
     const PRAYER_DATA_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
@@ -95,8 +96,8 @@
     const zikrPhrases = ['СубханАллах', 'Альхамдулиллях', 'Аллаху Акбар'];
 
     // === UTILS ===
-    const showToast = (msg) => {
-      const t = document.getElementById('toast');      t.textContent = msg; t.classList.add('show');
+    const showToast = (msg) => {      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2000);
     };
 
@@ -109,21 +110,26 @@
     };
 
     const getTodayDateStr = () => `${new Date().getDate()} ${MONTHS_RU[new Date().getMonth()]}`;
-    const getFallbackData = () => ({ fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" });
 
-    // === DATA LOADER ===
+    // === DATA LOADER (НАДЕЖНЫЙ) ===
     const loadPrayerData = async () => {
+      // 1. Кэш
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
           const { data } = JSON.parse(cached);
           if (data && Object.keys(data).length > 3) return data;
         }
-        const res = await fetch(PRAYER_DATA_URL, { cache: 'no-store' });
+      } catch (e) { console.warn('Cache error', e); }
+
+      // 2. Сеть (3 секунды макс)
+      try {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(PRAYER_DATA_URL, { signal: controller.signal, cache: 'no-store' });
         if (!res.ok) throw new Error('Network');
         const json = await res.json();
-        const todayStr = getTodayDateStr();
-        const entry = json.schedule?.find(item => item.date === todayStr);
+        const entry = json.schedule?.find(item => item.date === getTodayDateStr());
         if (entry) {
           const timings = {};
           PRAYER_KEYS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
@@ -134,18 +140,17 @@
         }
         throw new Error('Invalid');
       } catch (e) {
-        console.warn('⚠️ Network failed:', e.message);
         document.getElementById('error-banner').classList.add('show');
-        return getFallbackData();
+        return FALLBACK_DATA; // 🔧 МГНОВЕННЫЙ ОТКАЗ В ПОЛЬЗУ РАБОТЫ
       }
     };
 
-    // === TIME LOGIC ===
-    const parseTimeToday = (timeStr) => {
+    // === LOGIC ===    const parseTimeToday = (timeStr) => {
       if (!timeStr || typeof timeStr !== 'string') return new Date();
       const [h, m] = timeStr.split(':').map(Number);
       const d = new Date(); d.setHours(h, m, 0, 0); return d;
     };
+
     const findPrayerContext = (timings) => {
       const now = new Date();
       let current = null, next = null;
@@ -172,7 +177,6 @@
       
       if (key === 'fajr_sunnah') return mins >= getMins('fajr') && mins < getMins('sunrise');
       if (key === 'dhuhr_sunnah_before') return mins >= getMins('dhuhr') && mins < getMins('asr');
-      // 🔧 ИСПРАВЛЕНО: Сунна после Зухра появляется ПОСЛЕ отметки фарда
       if (key === 'dhuhr_sunnah_after') return completed.dhuhr && mins >= getMins('dhuhr');
       if (key === 'maghrib_sunnah') return completed.maghrib && mins >= getMins('maghrib');
       if (key === 'isha_sunnah') return completed.isha && mins >= getMins('isha');
@@ -187,19 +191,14 @@
 
       PRAYER_KEYS.forEach(key => {
         if (key === 'sunrise' || !timings[key]) return;
-        
         const div = document.createElement('div');
         div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
         div.innerHTML = `<span class="prayer-name">${NAMES_RU[key]}</span><span class="prayer-time">${timings[key]}</span>`;
         list.appendChild(div);
-
-        // Сунны
-        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) addSunnah(list, 'fajr_sunnah', 'Сунна до (2)', completed);        if (key === 'dhuhr') {
+        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) addSunnah(list, 'fajr_sunnah', 'Сунна до (2)', completed);
+        if (key === 'dhuhr') {
           if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) addSunnah(list, 'dhuhr_sunnah_before', 'Сунна до (4)', completed);
-          if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) {
-            const cnt = isFriday ? 4 : 2;
-            addSunnah(list, 'dhuhr_sunnah_after', `Сунна после (${cnt})`, completed);
-          }
+          if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) addSunnah(list, 'dhuhr_sunnah_after', `Сунна после (${isFriday ? 4 : 2})`, completed);
         }
         if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) addSunnah(list, 'maghrib_sunnah', 'Сунна после (2)', completed);
         if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);
@@ -223,13 +222,11 @@
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
-    // === ZIKR ===
     window.handleZikr = function() {
       if (zikrPhase >= 3) return;
       zikrCount++;
       if (zikrCount > 33) { zikrCount = 1; zikrPhase++; }
       if (navigator.vibrate) navigator.vibrate(40);
-      
       if (zikrPhase < 3) {
         document.getElementById('zikr-phrase').textContent = zikrPhrases[zikrPhase];
         document.getElementById('zikr-count').textContent = `${zikrCount} / 33`;
@@ -239,14 +236,14 @@
         document.getElementById('zikr-count').textContent = '✓';
         document.getElementById('zikr-btn').textContent = 'Да примет Аллах';
         document.getElementById('zikr-btn').classList.add('done');
-        showToast('✓ Зикры завершены');
+        showToast('✓ Зикры');
       }
     };
 
-    // === MAIN LOOP ===    const startTimer = () => {
+    // === TIMER ===
+    const startTimer = () => {
       if (!appData) return;
-      const update = () => {
-        const { current, next } = findPrayerContext(appData);
+      const update = () => {        const { current, next } = findPrayerContext(appData);
         document.getElementById('current-name').textContent = NAMES_RU[current.name];
         document.getElementById('current-time-info').textContent = `с ${appData[current.name]}`;
         document.getElementById('countdown').textContent = formatDuration(next.time - new Date());
@@ -271,28 +268,25 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       showToast(`✓ ${NAMES_RU[current.name]}`);
-      renderList(appData, appState.completed); // 🔧 Мгновенное обновление списка
+      renderList(appData, appState.completed);
       document.getElementById('zikr-card').classList.add('show');
-      startTimer(); 
+      startTimer();
     };
 
     // === INIT ===
     const init = async () => {
-      // Theme restore
       const savedTheme = localStorage.getItem('theme') || 'dark';
       if (savedTheme === 'light') toggleTheme();
       
       document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        appState = saved ? JSON.parse(saved) : { completed: {} };
-      } catch { appState = { completed: {} }; }
+      try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
       
       appData = await loadPrayerData();
       renderList(appData, appState.completed);
       startTimer();
       setInterval(() => renderList(appData, appState.completed), 30000);
     };
+
     document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>

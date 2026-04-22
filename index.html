@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="Трекер осознанности: намаз, зикры, Коран." />
   <title>Осознанность • Трекер</title>
   <link rel="manifest" href="manifest.json" />
   <style>
@@ -13,52 +12,31 @@
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
     .card { background: var(--card); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); }
     .header { text-align: center; padding: 0.5rem 0 1rem; }
-    .header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.025em; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
     .header p { color: var(--muted); font-size: 0.875rem; }
-    .timer-card { text-align: center; position: relative; overflow: hidden; }
-    .timer-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), #3b82f6); opacity: 0.5; }
+    .timer-card { text-align: center; }
     .status-label { font-size: 0.875rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
     .current-prayer { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(148,163,184,0.1); }
     .current-prayer .name { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
     .current-prayer .time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    .countdown { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
-    .next-prayer-label { font-size: 1rem; color: var(--text); font-weight: 500; }
-    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.5rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; user-select: none; -webkit-tap-highlight-color: transparent; }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
-    .hadith-card { background: rgba(16,185,129,0.08); border-left: 4px solid var(--accent); padding: 1rem; margin-top: 1rem; border-radius: 0 0.5rem 0.5rem 0; display: none; }
-    .hadith-card.show { display: block; }
-    .hadith-text { font-style: italic; margin-bottom: 0.5rem; line-height: 1.5; }
-    .hadith-source { font-size: 0.75rem; color: var(--warning); font-weight: 600; }
-    .disclaimer { font-size: 0.7rem; color: var(--muted); margin-top: 0.75rem; font-style: italic; line-height: 1.4; }
+    .countdown { font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1rem; }
+    .btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.7; }
+    .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.05); border-radius: 0.75rem; border: 1px dashed var(--accent); text-align: center; }
+    .zikr-card.show { display: block; }
+    .zikr-counter { font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0; }
+    .zikr-text { font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; }
+    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.5rem; border-radius: 1rem; font-size: 1.5rem; width: 100%; font-weight: 800; }
     .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; transition: background 0.2s; cursor: pointer; }
+    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; cursor: pointer; }
     .prayer-item.completed { opacity: 0.6; }
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
-    .prayer-name { font-weight: 500; }
-    .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
     .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; background: rgba(16,185,129,0.05); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
-    /* Zikr Card Styles */
-    .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.05); border-radius: 0.75rem; border: 1px dashed var(--accent); text-align: center; }
-    .zikr-card.show { display: block; animation: fadeIn 0.3s ease; }
-    .zikr-counter { font-size: 2.5rem; font-weight: 800; color: var(--text); margin: 0.5rem 0; }
-    .zikr-text { font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; min-height: 1.5em; }
-    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.5rem; border-radius: 1rem; font-size: 1.5rem; width: 100%; font-weight: 800; box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
-    .btn-zikr:active { background: #059669; transform: scale(0.97); }
-    .btn-zikr.done { background: var(--muted); color: #fff; box-shadow: none; pointer-events: none; }
-    .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }    .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
-    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .error-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; margin-bottom: 1rem; display: none; text-align: center; }
-    .error-banner.show { display: block; animation: shake 0.3s ease; }
-    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    @media (prefers-color-scheme: light) { 
-      :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; } 
-      .prayer-item { background: rgba(0,0,0,0.03); }
-      .prayer-item.sunnah { background: rgba(16,185,129,0.08); }
-    }
+    .error-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
+    .error-banner.show { display: block; }
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--card); padding: 0.75rem 1.5rem; border-radius: 2rem; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
@@ -67,139 +45,115 @@
     <p>Челябинск • <span id="date">—</span></p>
   </div>
 
-  <div id="error-banner" class="error-banner">
-    ⚠️ Не удалось загрузить расписание. Проверьте консоль.
-  </div>
+  <div id="error-banner" class="error-banner">⚠️ Ошибка загрузки. Используются резервные данные.</div>
 
-  <div class="card timer-card">
-    <div class="status-label">Текущий период</div>
+  <div class="card timer-card">    <div class="status-label">Текущий период</div>
     <div class="current-prayer">
       <div class="name" id="current-name">Загрузка…</div>
       <div class="time" id="current-time-info">—</div>
     </div>
-    <div class="status-label" style="margin-top: 0.5rem">До следующего намаза</div>
+    <div class="status-label">До следующего намаза</div>
     <div class="countdown" id="countdown">--:--:--</div>
-    <div class="next-prayer-label" id="next-name">—</div>
-    <button id="mark-done" class="btn">
-      <span>✅</span> <span id="btn-text">Я совершил этот намаз</span>
-    </button>
+    <button id="mark-done" class="btn">✅ Я совершил этот намаз</button>
     
-    <!-- ZIKR CARD (New) -->
     <div id="zikr-card" class="zikr-card">
       <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem">Зикры после намаза</div>
-      <div class="zikr-text" id="zikr-phrase">Нажми кнопку ниже</div>
+      <div class="zikr-text" id="zikr-phrase">Нажми кнопку</div>
       <div class="zikr-counter" id="zikr-count">0</div>
       <button id="zikr-btn" class="btn btn-zikr" onclick="handleZikr()">Тап</button>
-      <div style="margin-top:0.5rem; font-size:0.75rem; color:var(--muted)">СубханАллах (33) → Альхамдулиллях (33) → Аллаху Акбар (33)</div>
     </div>
-
-    <div id="hadith-card" class="hadith-card">
-      <div class="hadith-text" id="hadith-text">—</div>
-      <div class="hadith-source" id="hadith-source">—</div>
-      <div class="disclaimer">💡 Визуальные баллы — лишь мотивация. Истинная награда — у Аллаха. Проверяй намерение (ихлас).</div>    </div>
   </div>
 
   <div class="card">
-    <h3 style="margin-bottom: 0.75rem; font-size: 1.1rem">📋 Сегодня</h3>
+    <h3 style="margin-bottom: 0.75rem">📋 Сегодня</h3>
     <div id="prayers-list" class="prayer-list"></div>
   </div>
 
-  <div class="footer">
-    <p>🕌 Намерение: помочь не откладывать поклонение.</p>
-    <p style="margin-top:0.25rem">Источники: Данные: ЦДУМ России / РДУМ Челябинской обл.</p>
-    <p class="disclaimer" style="margin-top:0.5rem">⚠️ Время намазов указано справочно. Для обязательств сверяйтесь с расписанием местной мечети.</p>
-    <p class="disclaimer">Не является фетвой. По шариатским вопросам — к знающим.</p>
-  </div>
-
-  <div id="toast" class="toast">✓ Сохранено</div>
+  <div id="toast" class="toast">✓</div>
 
   <script>
-    // === CONFIG ===
     const PRAYER_DATA_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const PRAYER_KEYS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
     const NAMES_RU = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
     const MONTHS_RU = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-
-    // === STATE ===
-    let appData = null;
-    let appState = null;
-    let timerInterval = null;
     
-    // Zikr State
-    let zikrPhase = 0; // 0: Subhan, 1: Alhamdulillah, 2: Allahu Akbar, 3: Done
-    let zikrCount = 0;
+    let appData = null, appState = null, timerInterval = null;
+    let zikrPhase = 0, zikrCount = 0;
     const zikrPhrases = ['СубханАллах', 'Альхамдулиллях', 'Аллаху Акбар'];
 
-    // === UTILS ===
     const showToast = (msg) => {
       const t = document.getElementById('toast');
       t.textContent = msg; t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
-    };
-    const showError = (show) => {
-      document.getElementById('error-banner').classList.toggle('show', show);
+      setTimeout(() => t.classList.remove('show'), 2000);
     };
 
-    // === DATE HELPERS ===
     const getTodayDateStr = () => {
       const d = new Date();
-      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;    };
-
-    const getFallbackData = () => ({
-      fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50"
-    });
-
-    // === PARSE DATA ===
-    const parsePrayerData = (json) => {
-      if (!json?.schedule || !Array.isArray(json.schedule)) return null;
-      const todayStr = getTodayDateStr();
-      const todayEntry = json.schedule.find(item => item.date === todayStr);
-      if (!todayEntry) return extractTimings(json.schedule[0]);
-      return extractTimings(todayEntry);
+      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
     };
 
-    const extractTimings = (entry) => {
-      if (!entry) return null;
-      const result = {};
-      for (const key of PRAYER_KEYS) {
-        if (entry[key]) result[key] = entry[key];
-      }
-      return Object.keys(result).length >= 4 ? result : null;
+    // 🔧 НАДЕЖНЫЙ FALLBACK
+    const getFallbackData = () => {
+      console.log('🆘 Using fallback data');      return {
+        fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", 
+        asr: "17:03", maghrib: "20:12", isha: "21:50"
+      };
     };
 
-    // === LOAD DATA ===
     const loadPrayerData = async () => {
-      // localStorage.removeItem(CACHE_KEY); // Uncomment only if data is broken
+      // 1. Сначала пробуем кэш
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
-           const { data, timestamp } = JSON.parse(cached);
-           if (Date.now() - timestamp < 24 * 60 * 60 * 1000) return data;
+          const { data } = JSON.parse(cached);
+          if (data && Object.keys(data).length > 3) {
+            console.log('✅ Loaded from cache');
+            return data;
+          }
         }
+      } catch (e) { console.warn('Cache error:', e); }
 
-        const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+      // 2. Пробуем сеть
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const res = await fetch(PRAYER_DATA_URL, { 
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        
         const json = await res.json();
-        const timings = parsePrayerData(json);
-        if (!timings) throw new Error('Parse failed');
-        localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
-        return timings;
+        const todayStr = getTodayDateStr();
+        const entry = json.schedule?.find(item => item.date === todayStr);
+        
+        if (entry) {
+          const timings = {};
+          PRAYER_KEYS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
+          
+          if (Object.keys(timings).length >= 4) {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
+            console.log('✅ Loaded from network');
+            return timings;
+          }
+        }
+        throw new Error('Invalid data');
       } catch (e) {
-        console.error('❌ Network error:', e.message);
-        showError(true);
-        return getFallbackData();
-      }
+        console.warn('⚠️ Network failed:', e.message);
+        document.getElementById('error-banner').classList.add('show');      }
+
+      // 3. Возвращаем fallback
+      return getFallbackData();
     };
 
-    // === TIME LOGIC ===
-    const parseTimeToday = (timeStr) => {      if (!timeStr || typeof timeStr !== 'string') return new Date();
-      const parts = timeStr.split(':');
-      if (parts.length !== 2) return new Date();
-      const h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      if (isNaN(h) || isNaN(m)) return new Date();
+    const parseTimeToday = (timeStr) => {
+      if (!timeStr || typeof timeStr !== 'string') return new Date();
+      const [h, m] = timeStr.split(':').map(Number);
       const d = new Date();
       d.setHours(h, m, 0, 0);
       return d;
@@ -207,22 +161,24 @@
 
     const findPrayerContext = (timings) => {
       const now = new Date();
-      let current = null;
-      let next = null;
+      let current = null, next = null;
+      
       for (const key of PRAYER_KEYS) {
         if (!timings[key]) continue;
         const timeObj = parseTimeToday(timings[key]);
         if (timeObj <= now) current = { name: key, time: timeObj };
         else if (!next) { next = { name: key, time: timeObj }; break; }
       }
+      
       if (!next && current) {
-        next = { name: 'fajr', time: parseTimeToday(timings['fajr']) };
+        next = { name: 'fajr', time: parseTimeToday(timings.fajr) };
         next.time.setDate(next.time.getDate() + 1);
       }
       if (!current) {
-        current = { name: 'isha', time: parseTimeToday(timings['isha']) };
+        current = { name: 'isha', time: parseTimeToday(timings.isha) };
         current.time.setDate(current.time.getDate() - 1);
       }
+      
       return { current, next };
     };
 
@@ -234,41 +190,20 @@
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
-    // === SUNNAH VISIBILITY ===
-    const shouldShowSunnah = (sunnahKey, timings, completed) => {
+    const shouldShowSunnah = (key, timings, completed) => {
       const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const getTimeMinutes = (key) => {
-        if (!timings[key]) return null;
-        const [h, m] = timings[key].split(':').map(Number);
+      const mins = now.getHours() * 60 + now.getMinutes();
+      const getMins = (k) => {
+        if (!timings[k]) return 0;        const [h, m] = timings[k].split(':').map(Number);
         return h * 60 + m;
       };
-      const fajrTime = getTimeMinutes('fajr');      const sunriseTime = getTimeMinutes('sunrise');
-      const dhuhrTime = getTimeMinutes('dhuhr');
-      const asrTime = getTimeMinutes('asr');
-      const maghribTime = getTimeMinutes('maghrib');
-      const ishaTime = getTimeMinutes('isha');
       
-      if (sunnahKey === 'fajr_sunnah') return currentMinutes >= fajrTime && currentMinutes < sunriseTime;
-      if (sunnahKey === 'dhuhr_sunnah_before') return currentMinutes >= dhuhrTime && currentMinutes < asrTime;
-      if (sunnahKey === 'dhuhr_sunnah_after') return completed['dhuhr'] && currentMinutes >= dhuhrTime;
-      if (sunnahKey === 'maghrib_sunnah') return completed['maghrib'] && currentMinutes >= maghribTime;
-      if (sunnahKey === 'isha_sunnah') return completed['isha'] && currentMinutes >= ishaTime;
+      if (key === 'fajr_sunnah') return mins >= getMins('fajr') && mins < getMins('sunrise');
+      if (key === 'dhuhr_sunnah_before') return mins >= getMins('dhuhr') && mins < getMins('asr');
+      if (key === 'dhuhr_sunnah_after') return completed.dhuhr && mins >= getMins('dhuhr');
+      if (key === 'maghrib_sunnah') return completed.maghrib && mins >= getMins('maghrib');
+      if (key === 'isha_sunnah') return completed.isha && mins >= getMins('isha');
       return false;
-    };
-
-    // === RENDER ===
-    const renderDate = () => {
-      const d = new Date();
-      document.getElementById('date').textContent = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-    };
-
-    const renderSunnah = (container, completed, key, label) => {
-      const div = document.createElement('div');
-      div.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
-      div.innerHTML = `<span class="prayer-name">${label}</span><span class="prayer-time">${completed[key] ? '✓' : '—'}</span>`;
-      div.onclick = (e) => { e.stopPropagation(); toggleSunnah(key); };
-      container.appendChild(div);
     };
 
     const renderList = (timings, completed) => {
@@ -278,185 +213,123 @@
 
       PRAYER_KEYS.forEach(key => {
         if (key === 'sunrise' || !timings[key]) return;
-        const mainDiv = document.createElement('div');
-        mainDiv.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
-        mainDiv.innerHTML = `<span class="prayer-name">${NAMES_RU[key]}</span><span class="prayer-time">${timings[key]}</span>`;
-        list.appendChild(mainDiv);
+        
+        const div = document.createElement('div');
+        div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
+        div.innerHTML = `<span>${NAMES_RU[key]}</span><span style="font-family:monospace">${timings[key]}</span>`;
+        list.appendChild(div);
 
-        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) renderSunnah(list, completed, 'fajr_sunnah', 'Сунна до (2 ракаата)');
+        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) {
+          const s = document.createElement('div');
+          s.className = `prayer-item sunnah ${completed.fajr_sunnah ? 'completed' : ''}`;
+          s.innerHTML = `<span>🌿 Сунна до (2)</span><span>${completed.fajr_sunnah ? '✓' : ''}</span>`;
+          s.onclick = (e) => { e.stopPropagation(); toggleSunnah('fajr_sunnah'); };
+          list.appendChild(s);
+        }
         if (key === 'dhuhr') {
-          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) renderSunnah(list, completed, 'dhuhr_sunnah_before', 'Сунна до (4 ракаата)');
+          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) {
+            const s = document.createElement('div');
+            s.className = `prayer-item sunnah ${completed.dhuhr_sunnah_before ? 'completed' : ''}`;
+            s.innerHTML = `<span>🌿 Сунна до (4)</span><span>${completed.dhuhr_sunnah_before ? '✓' : ''}</span>`;
+            s.onclick = (e) => { e.stopPropagation(); toggleSunnah('dhuhr_sunnah_before'); };
+            list.appendChild(s);
+          }
           if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) {
-            const afterCount = isFriday ? 4 : 2;
-            renderSunnah(list, completed, 'dhuhr_sunnah_after', `Сунна после (${afterCount} ракаата)`);
+            const cnt = isFriday ? 4 : 2;
+            const s = document.createElement('div');
+            s.className = `prayer-item sunnah ${completed.dhuhr_sunnah_after ? 'completed' : ''}`;
+            s.innerHTML = `<span>🌿 Сунна после (${cnt})</span><span>${completed.dhuhr_sunnah_after ? '✓' : ''}</span>`;
+            s.onclick = (e) => { e.stopPropagation(); toggleSunnah('dhuhr_sunnah_after'); };
+            list.appendChild(s);
           }
         }
-        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) renderSunnah(list, completed, 'maghrib_sunnah', 'Сунна после (2 ракаата)');
-        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) renderSunnah(list, completed, 'isha_sunnah', 'Сунна после (2 ракаата)');      });
-    };
-
-    const getHadith = (name) => {
-      const isFriday = new Date().getDay() === 5;
-      const db = {
-        fajr: { t: '«Два ракаата Фаджра лучше мира и всего, что в нём»', s: 'Муслим, 725' },
-        fajr_sunnah: { t: '«Два ракаата до Фаджра лучше мира и всего, что в нём»', s: 'Муслим, 725' },
-        dhuhr: isFriday ? { t: '«Кто совершит омовение в пятницу...»', s: 'Бухари, 883' } : { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269' },
-        dhuhr_sunnah_before: { t: '«Да помилует Аллах того, кто совершит четыре ракаата до Зухра»', s: 'Абу Дауд, 1274' },
-        dhuhr_sunnah_after: isFriday ? { t: '«Кто сохранит четыре ракаата до Зухра и четыре после...»', s: 'Абу Дауд, 1269' } : { t: '«Пророк ﷺ совершал два ракаата после Зухра»', s: 'Бухари, 1180' },
-        maghrib: { t: '«Магриб — витр дня. Совершайте его вовремя»', s: 'Тирмизи' },
-        maghrib_sunnah: { t: '«Совершайте два ракаата после Магриба»', s: 'Бухари, Муслим' },
-        isha: { t: '«Если бы люди знали о пользе Иша и Фаджра...»', s: 'Бухари, 615' },
-        isha_sunnah: { t: '«Кто будет совершать 12 ракаатов сунны...»', s: 'Муслим, 728' }
-      };
-      return db[name] || { t: '«Намаз — столп религии»', s: 'Общий смысл' };
-    };
-
-    // === ZIKR LOGIC ===
-    const resetZikr = () => {
-      document.getElementById('zikr-card').classList.remove('show');
-      zikrPhase = 0;
-      zikrCount = 0;
-      document.getElementById('zikr-btn').classList.remove('done');
-      document.getElementById('zikr-btn').textContent = 'Тап';
-    };
-
-    const showZikr = () => {
-      const card = document.getElementById('zikr-card');
-      card.classList.add('show');
-      updateZikrUI();
-    };
-
-    const updateZikrUI = () => {
-      if (zikrPhase < 3) {
-        document.getElementById('zikr-phrase').textContent = zikrPhrases[zikrPhase];
-        document.getElementById('zikr-count').textContent = `${zikrCount} / 33`;
-        document.getElementById('zikr-btn').textContent = `${zikrPhrases[zikrPhase]} (${zikrCount + 1})`;
-      } else {
-        document.getElementById('zikr-phrase').textContent = "Аллаху Акбар (33) — Завершено ✓";
-        document.getElementById('zikr-count').textContent = "✓";
-        document.getElementById('zikr-btn').textContent = "Да примет Аллах";
-        document.getElementById('zikr-btn').classList.add('done');
-      }
-    };
-
-    window.handleZikr = function() {
-      if (zikrPhase >= 3) return; // Already done
-            zikrCount++;
-      
-      if (zikrCount > 33) {
-        zikrCount = 1;
-        zikrPhase++;
-      }
-      
-      // Vibration feedback (if supported)
-      if (navigator.vibrate) navigator.vibrate(50);
-      
-      updateZikrUI();
-      
-      if (zikrPhase >= 3) showToast('✓ Зикры завершены');
+        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) {          const s = document.createElement('div');
+          s.className = `prayer-item sunnah ${completed.maghrib_sunnah ? 'completed' : ''}`;
+          s.innerHTML = `<span>🌿 Сунна после (2)</span><span>${completed.maghrib_sunnah ? '✓' : ''}</span>`;
+          s.onclick = (e) => { e.stopPropagation(); toggleSunnah('maghrib_sunnah'); };
+          list.appendChild(s);
+        }
+        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) {
+          const s = document.createElement('div');
+          s.className = `prayer-item sunnah ${completed.isha_sunnah ? 'completed' : ''}`;
+          s.innerHTML = `<span>🌿 Сунна после (2)</span><span>${completed.isha_sunnah ? '✓' : ''}</span>`;
+          s.onclick = (e) => { e.stopPropagation(); toggleSunnah('isha_sunnah'); };
+          list.appendChild(s);
+        }
+      });
     };
 
     const toggleSunnah = (key) => {
       appState.completed[key] = !appState.completed[key];
-      if (appState.completed[key]) {
-        appState.completed[key + '_at'] = new Date().toISOString();
-        showToast('✓ Сунна отмечена');
-      } else {
-        delete appState.completed[key + '_at'];
-        showToast('↩ Отменено');
-      }
+      if (appState.completed[key]) appState.completed[key + '_at'] = new Date().toISOString();
+      else delete appState.completed[key + '_at'];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       renderList(appData, appState.completed);
+      showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
-    // === TIMER ===
+    window.handleZikr = function() {
+      if (zikrPhase >= 3) return;
+      zikrCount++;
+      if (zikrCount > 33) { zikrCount = 1; zikrPhase++; }
+      if (navigator.vibrate) navigator.vibrate(30);
+      
+      if (zikrPhase < 3) {
+        document.getElementById('zikr-phrase').textContent = zikrPhrases[zikrPhase];
+        document.getElementById('zikr-count').textContent = `${zikrCount} / 33`;
+        document.getElementById('zikr-btn').textContent = `${zikrPhrases[zikrPhase]} (${zikrCount})`;
+      } else {
+        document.getElementById('zikr-phrase').textContent = '✓ Завершено';
+        document.getElementById('zikr-count').textContent = '✓';
+        document.getElementById('zikr-btn').textContent = 'Да примет Аллах';
+        showToast('✓ Зикры завершены');
+      }
+    };
+
     const startTimer = () => {
       if (!appData) return;
       const update = () => {
         const { current, next } = findPrayerContext(appData);
-        document.getElementById('current-name').textContent = NAMES_RU[current.name] || current.name;
-        document.getElementById('current-time-info').textContent = `время с ${appData[current.name]}`;
-        document.getElementById('next-name').textContent = `Следующий: ${NAMES_RU[next.name]}`;
-        const diff = next.time - new Date();
-        document.getElementById('countdown').textContent = formatDuration(diff);
-        
+        document.getElementById('current-name').textContent = NAMES_RU[current.name];
+        document.getElementById('current-time-info').textContent = `с ${appData[current.name]}`;
+        document.getElementById('countdown').textContent = formatDuration(next.time - new Date());        
         const btn = document.getElementById('mark-done');
-        const isDone = appState.completed[current.name];
-        btn.disabled = isDone;
-        document.getElementById('btn-text').textContent = isDone 
-          ? `${NAMES_RU[current.name]} совершён ✓` 
-          : `✅ Я совершил ${NAMES_RU[current.name]}`;
-        
-        if (diff <= 60000 && diff > -60000) {
-           document.getElementById('countdown').textContent = "ВРЕМЯ ПРИШЛО";
-           document.getElementById('countdown').style.color = "var(--warning)";
-        } else {           document.getElementById('countdown').style.color = "var(--text)";
-        }
+        const done = appState.completed[current.name];
+        btn.disabled = done;
+        btn.textContent = done ? `${NAMES_RU[current.name]} ✓` : `✅ ${NAMES_RU[current.name]}`;
       };
       update();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(update, 1000);
     };
 
-    const handleMarkDone = () => {
+    document.getElementById('mark-done').onclick = () => {
       if (!appData) return;
       const { current } = findPrayerContext(appData);
-      const name = current.name;
-      if (appState.completed[name]) { showToast('Уже отмечено ✓'); return; }
+      if (appState.completed[current.name]) return;
       
-      appState.completed[name] = true;
-      appState.completed[name + '_at'] = new Date().toISOString();
+      appState.completed[current.name] = true;
+      appState.completed[current.name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      showToast(`✓ ${NAMES_RU[name]} сохранён`);
+      showToast(`✓ ${NAMES_RU[current.name]}`);
       renderList(appData, appState.completed);
-      
-      // Show Hadith
-      const { t, s } = getHadith(name);
-      document.getElementById('hadith-text').textContent = t;
-      document.getElementById('hadith-source').textContent = `📚 ${s}`;
-      document.getElementById('hadith-card').classList.add('show');
-      
-      // Show Zikr
-      resetZikr();
-      showZikr();
-      
-      startTimer(); 
+      document.getElementById('zikr-card').classList.add('show');
+      startTimer();
     };
 
-    // === INIT ===
     const init = async () => {
+      document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      
       try {
-        renderDate();
-        try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          appState = saved ? JSON.parse(saved) : { completed: {} };
-        } catch (e) { appState = { completed: {} }; }
-        
-        appData = await loadPrayerData();
-        if (!appData) throw new Error('appData is empty');
-        
-        const now = new Date();
-        PRAYER_KEYS.forEach(key => {
-          if (appData[key] && appState.completed[key]) {
-            const prayerTime = parseTimeToday(appData[key]);            if (prayerTime > now) {
-              delete appState.completed[key];
-              delete appState.completed[key + '_at'];
-            }
-          }
-        });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-        
-        renderList(appData, appState.completed);
-        startTimer();
-        setInterval(() => renderList(appData, appState.completed), 30000);
-        
-        document.getElementById('mark-done').addEventListener('click', handleMarkDone);
-      } catch (error) {
-        console.error('❌ Init failed:', error);
-        document.getElementById('current-name').textContent = 'Ошибка';
-        showError(true);
-      }
+        const saved = localStorage.getItem(STORAGE_KEY);
+        appState = saved ? JSON.parse(saved) : { completed: {} };
+      } catch { appState = { completed: {} }; }
+      
+      appData = await loadPrayerData();
+      renderList(appData, appState.completed);
+      startTimer();
+      setInterval(() => renderList(appData, appState.completed), 30000);
     };
 
     document.addEventListener('DOMContentLoaded', init);

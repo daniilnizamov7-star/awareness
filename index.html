@@ -210,7 +210,7 @@
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
-    // === SUNNAH VISIBILITY LOGIC ===
+    // === SUNNAH VISIBILITY LOGIC (ИСПРАВЛЕНА) ===
     const shouldShowSunnah = (sunnahKey, timings, completed) => {
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -224,13 +224,24 @@
       const fajrTime = getTimeMinutes('fajr');
       const sunriseTime = getTimeMinutes('sunrise');
       const dhuhrTime = getTimeMinutes('dhuhr');
+      const asrTime = getTimeMinutes('asr');
       const maghribTime = getTimeMinutes('maghrib');
       const ishaTime = getTimeMinutes('isha');
       
+      // Фаджр сунна: от Фаджра до Восхода
       if (sunnahKey === 'fajr_sunnah') return currentMinutes >= fajrTime && currentMinutes < sunriseTime;
-      if (sunnahKey === 'dhuhr_sunnah_before') return currentMinutes >= dhuhrTime && !completed['dhuhr'];
+      
+      // 🔧 ИСПРАВЛЕНИЕ: Зухр сунна до показывается до самого Асра
+      // Раньше она пропадала, если нажать фард. Теперь она висит до Асра.
+      if (sunnahKey === 'dhuhr_sunnah_before') return currentMinutes >= dhuhrTime && currentMinutes < asrTime;
+      
+      // Зухр сунна после: после совершения фарда Зухра
       if (sunnahKey === 'dhuhr_sunnah_after') return completed['dhuhr'] && currentMinutes >= dhuhrTime;
+      
+      // Магриб сунна: после совершения фарда Магриба
       if (sunnahKey === 'maghrib_sunnah') return completed['maghrib'] && currentMinutes >= maghribTime;
+      
+      // Иша сунна: после совершения фарда Иша
       if (sunnahKey === 'isha_sunnah') return completed['isha'] && currentMinutes >= ishaTime;
       
       return false;
@@ -252,8 +263,6 @@
 
     const renderList = (timings, completed) => {
       const list = document.getElementById('prayers-list');
-      // Очищаем только если контент изменился, чтобы не мигало?
-      // Нет, для простоты очищаем, но вызываем редко (раз в 30 сек)
       list.innerHTML = '';
       const isFriday = new Date().getDay() === 5;
 
@@ -342,7 +351,6 @@
         } else {
            document.getElementById('countdown').style.color = "var(--text)";
         }
-        // renderList убран отсюда, чтобы не мигало!
       };
       update();
       if (timerInterval) clearInterval(timerInterval);
@@ -399,7 +407,7 @@
         renderList(appData, appState.completed);
         startTimer();
         
-        // Обновляем список раз в 30 секунд, чтобы сунны появлялись по времени
+        // Обновляем список раз в 30 секунд
         setInterval(() => renderList(appData, appState.completed), 30000);
         
         document.getElementById('mark-done').addEventListener('click', handleMarkDone);

@@ -96,7 +96,41 @@
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .toast.show { opacity: 1; }
     
-    /* ⚠️ FOOTER WARNING */
+    /* 📅 HIJRI CALENDAR & KURBAN BAYRAM */
+    .hijri-banner { 
+      background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%); 
+      border: 1px solid var(--accent); 
+      border-radius: 1rem; 
+      padding: 1rem; 
+      margin-bottom: 1rem; 
+      text-align: center;
+    }
+    .hijri-date { font-size: 1.1rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
+    .hijri-month { font-size: 0.85rem; color: var(--muted); }
+    .kurban-banner {
+      background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%);
+      border: 1px solid var(--dhuha);
+      border-radius: 1rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .kurban-banner::before {
+      content: '🕌';
+      position: absolute;
+      right: -1rem;
+      bottom: -1rem;
+      font-size: 4rem;
+      opacity: 0.1;
+    }
+    .kurban-title { font-size: 0.9rem; font-weight: 700; color: var(--dhuha); margin-bottom: 0.25rem; }
+    .kurban-date { font-size: 0.85rem; color: var(--text); font-weight: 600; }
+    .kurban-greeting { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; font-style: italic; }
+    
     .footer-warning { 
       text-align: center; 
       font-size: 0.75rem; 
@@ -121,6 +155,22 @@
   </div>
 
   <div id="error-banner" class="error-banner">⚠️ Ошибка загрузки. Используются резервные данные.</div>
+
+  <!-- 📅 HIJRI CALENDAR -->
+  <div class="hijri-banner">
+    <div class="hijri-date" id="hijri-date">—</div>
+    <div class="hijri-month" id="hijri-month">—</div>
+  </div>
+
+  <!-- 🕌 KURBAN BAYRAM BANNER -->
+  <div class="kurban-banner" id="kurban-banner">
+    <div style="flex: 1;">
+      <div class="kurban-title">🌙 Курбан Байрам</div>
+      <div class="kurban-date" id="kurban-date">—</div>
+      <div class="kurban-greeting">Такъаббаль Аллаху минна ва минкум</div>
+    </div>
+    <div style="font-size: 2.5rem;">✨</div>
+  </div>
 
   <div class="card timer-card">
     <div class="status-label">Текущий период</div>
@@ -227,6 +277,7 @@
     const PRAYERS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
     const NAMES = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
     const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const HIJRI_MONTHS = ['Мухаррам','Сафар','Раби уль-авваль','Раби уль-ахир','Джумада уль-уля','Джумада уль-ахира','Раджаб','Шаабан','Рамадан','Шавваль','Зуль-Каада','Зуль-Хиджа'];
     const FALLBACK = { fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" };
     
     let appData = null, appState = null, timerInterval = null;
@@ -254,6 +305,68 @@
 
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
     const getTodayISO = () => new Date().toISOString().split('T')[0];
+
+    // 📅 HIJRI DATE CALCULATION
+    const getHijriDate = (date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      
+      // Approximate conversion (Gregorian to Hijri)
+      const hijriYear = Math.floor((year - 622) * 33 / 32);
+      const hijriMonth = Math.floor((month - 1) * 12 / 12);
+      const hijriDay = day;
+      
+      // More accurate calculation
+      const jd = Math.floor((11 * year + 3) / 30) + 354 * year + 227551 + day + Math.floor((153 * month + 2) / 5) + 1729767;
+      const l = jd - 1948440 + 10632;
+      const n = Math.floor((l - 1) / 10631);
+      const l2 = l - 10631 * n + 354;
+      const j = (Math.floor((10985 - l2) / 5316)) * (Math.floor((50 * l2) / 17719)) + (Math.floor(l2 / 5670)) * (Math.floor((43 * l2) / 15238));
+      const l3 = l2 - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
+      const hijriM = Math.floor((24 * l3) / 709);
+      const hijriD = l3 - Math.floor((709 * hijriM) / 24);
+      const hijriY = 30 * n + j - 30;
+      
+      return {
+        day: hijriD,
+        month: hijriM - 1,
+        year: hijriY,
+        monthName: HIJRI_MONTHS[hijriM - 1]
+      };
+    };
+
+    const getMoonPhase = (date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      let c, e, jd, b;
+      
+      if (month < 3) { year--; month += 12; }
+      ++month;
+      c = 365.25 * year;
+      e = 30.6 * month;
+      jd = c + e + day - 694039.09;
+      jd /= 29.5305882;
+      b = parseInt(jd);
+      jd -= b;
+      b = Math.round(jd * 8);
+      const phases = ['🌑','','🌓','','🌕','','🌗',''];
+      return phases[b >= 8 ? 0 : b];
+    };
+
+    // 🕌 KURBAN BAYRAM DATE (10 Dhul Hijjah)
+    const getKurbanBayramDate = (year) => {
+      // Approximate dates for Kurban Bayram (Eid al-Adha)
+      // 10 Dhul Hijjah
+      const kurbanDates = {
+        2026: { gregorian: '27 мая', dayOfWeek: 'Среда', hijri: '10 Зуль-Хиджа 1447' },
+        2027: { gregorian: '16 мая', dayOfWeek: 'Воскресенье', hijri: '10 Зуль-Хиджа 1448' },
+        2028: { gregorian: '5 мая', dayOfWeek: 'Пятница', hijri: '10 Зуль-Хиджа 1449' }
+      };
+      
+      return kurbanDates[year] || kurbanDates[2026];
+    };
 
     const loadData = async () => {
       try {
@@ -612,30 +725,42 @@
       }
     };
 
-    // 🔔 AUTO-RELOAD AT MIDNIGHT
     const startMidnightCheck = () => {
       setInterval(() => {
         const now = new Date();
         const hours = now.getHours();
         const minutes = now.getMinutes();
         
-        // Если 00:00 или 00:01 → перезагружаем
         if (hours === 0 && minutes <= 1) {
           console.log('🌙 Midnight reload triggered');
           location.reload();
         }
-      }, 60000); // Проверяем каждую минуту
+      }, 60000);
     };
 
     const init = async () => {
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelector('.theme-btn').textContent = '🌞'; }
-      document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      
+      const today = new Date();
+      document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      
+      // 📅 Display Hijri Date
+      const hijri = getHijriDate(today);
+      const moonPhase = getMoonPhase(today);
+      document.getElementById('hijri-date').textContent = `${hijri.day} ${hijri.monthName} ${hijri.year} ${moonPhase}`;
+      document.getElementById('hijri-month').textContent = 'По хиджре';
+      
+      // 🕌 Display Kurban Bayram
+      const currentYear = today.getFullYear();
+      const kurban = getKurbanBayramDate(currentYear);
+      document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
+      
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
       
-      const today = getTodayISO();
+      const todayISO = getTodayISO();
       ['dhuha', 'tahajjud'].forEach(key => {
-        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== today) {
+        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
           delete appState.completed[key];
           delete appState.completed[key + '_rakaats'];
           delete appState.completed[key + '_at'];
@@ -649,7 +774,7 @@
       appData = await loadData();
       renderList(appData, appState.completed);
       startTimer();
-      startMidnightCheck(); // 🔔 Запускаем проверку полуночи
+      startMidnightCheck();
       setInterval(() => renderList(appData, appState.completed), 30000);
     };
 

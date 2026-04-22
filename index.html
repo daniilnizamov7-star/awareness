@@ -76,6 +76,25 @@
     .btn-rakaat-tahajjud { border-color: var(--tahajjud); background: rgba(167,139,250,0.2); }
     .btn-rakaat-tahajjud:hover { background: var(--tahajjud); color: #fff; }
 
+    /* 🧭 COMPASS STYLES */
+    .compass-card { text-align: center; }
+    .compass-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto 1rem; }
+    .compass-ring { position: absolute; inset: 0; transition: transform 0.1s linear; }
+    .compass-arrow { position: absolute; inset: 0; transition: transform 0.1s linear; }
+    .compass-center { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; box-shadow: 0 0 0 3px var(--card); }
+    .compass-directions { position: absolute; inset: 8px; border: 2px solid var(--muted); border-radius: 50%; }
+    .compass-n { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 700; color: var(--danger); }
+    .compass-s { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: var(--muted); }
+    .compass-e { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); }
+    .compass-w { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); }
+    .qibla-arrow { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 3px; height: 32px; background: linear-gradient(to top, var(--accent), transparent); border-radius: 2px; }
+    .qibla-arrow::after { content: '🕋'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; }
+    .compass-status { font-size: 0.85rem; color: var(--muted); min-height: 1.5rem; margin-bottom: 0.5rem; }
+    .btn-compass { background: #3b82f6; color: #fff; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; width: 100%; margin: 0.5rem 0; border: none; font-size: 1rem; }
+    .btn-compass:disabled { background: var(--muted); cursor: not-allowed; }
+    .compass-note { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+    .compass-warning { font-size: 0.75rem; color: var(--warning); margin-top: 0.25rem; font-weight: 500; }
+
     .error-banner { background: rgba(239,68,68,0.15); border: 1px solid var(--danger); color: var(--danger); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
     .error-banner.show { display: block; }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -112,6 +131,32 @@
       <button id="zikr-btn" class="btn btn-zikr btn-zikr-tap" onclick="handleZikr()">Тап</button>
       <button id="zikr-done-btn" class="btn btn-zikr btn-zikr-done" onclick="finishZikr()">✅ Я выполнил зикры</button>
     </div>
+  </div>
+
+  <!-- 🧭 COMPASS CARD -->
+  <div class="card compass-card">
+    <h3 style="margin-bottom: 0.5rem">🕋 Направление Киблы</h3>
+    <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem">Для Челябинска (~229°)</p>
+    
+    <div class="compass-wrapper">
+      <div class="compass-ring" id="compass-ring">
+        <div class="compass-directions">
+          <span class="compass-n">С</span>
+          <span class="compass-s">Ю</span>
+          <span class="compass-e">В</span>
+          <span class="compass-w">З</span>
+        </div>
+      </div>
+      <div class="compass-arrow" id="compass-arrow">
+        <div class="qibla-arrow"></div>
+      </div>
+      <div class="compass-center"></div>
+    </div>
+    
+    <p class="compass-status" id="compass-status">Нажмите кнопку ниже</p>
+    <button id="enable-compass-btn" class="btn-compass" onclick="enableCompass()">📡 Включить компас</button>
+    <p class="compass-note">Держите телефон горизонтально</p>
+    <p class="compass-warning">⚠️ Компас может иметь погрешность</p>
   </div>
 
   <div class="card">
@@ -465,17 +510,81 @@
       timerInterval = setInterval(update, 1000);
     };
 
+    // 🧭 COMPASS LOGIC (из "Намаз Челябинск")
+    const QIBLA_ANGLE = 229; // Челябинск
+    let compassActive = false;
+
+    window.enableCompass = function() {
+      const statusEl = document.getElementById('compass-status');
+      const btnEl = document.getElementById('enable-compass-btn');
+      const ringEl = document.getElementById('compass-ring');
+      const arrowEl = document.getElementById('compass-arrow');
+      
+      // Запрос разрешения для iOS 13+
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(permission => {
+            if (permission === 'granted') startCompass();
+            else statusEl.textContent = '⛔ Доступ к компасу запрещён';
+          })
+          .catch(console.error);
+      } else {
+        startCompass();
+      }
+      
+      function startCompass() {
+        btnEl.classList.add('hidden');
+        statusEl.textContent = '🔄 Калибровка...';
+        compassActive = true;
+        
+        // Сглаживание показаний
+        const history = [];
+        const smooth = (value) => {
+          history.push(value);
+          if (history.length > 5) history.shift();
+          return history.reduce((a, b) => a + b, 0) / history.length;
+        };
+        
+        const handler = (event) => {
+          let heading = null;
+          
+          // iOS
+          if (event.webkitCompassHeading !== undefined) {
+            heading = event.webkitCompassHeading;
+          }
+          // Android/стандарт
+          else if (event.alpha !== null) {
+            heading = (360 - event.alpha) % 360;
+          }
+          
+          if (heading !== null) {
+            const smoothHeading = smooth(heading);
+            // Вращаем компас против направления телефона
+            ringEl.style.transform = `rotate(${-smoothHeading}deg)`;
+            // Стрелка Киблы = направление телефона + угол Киблы
+            arrowEl.style.transform = `rotate(${QIBLA_ANGLE - smoothHeading}deg)`;
+            
+            if (statusEl.textContent.includes('Калибровка')) {
+              statusEl.textContent = '✅ Компас работает';
+            }
+          }
+        };
+        
+        // Пробуем absolute, если нет — обычный
+        if ('ondeviceorientationabsolute' in window) {
+          window.addEventListener('deviceorientationabsolute', handler, { passive: true });
+        } else {
+          window.addEventListener('deviceorientation', handler, { passive: true });
+        }
+      }
+    };
+
     const init = async () => {
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelector('.theme-btn').textContent = '🌞'; }
       document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
       
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        appState = saved ? JSON.parse(saved) : { completed: {} };
-      } catch { appState = { completed: {} }; }
-      
-      // 🔔 Ежедневный сброс добровольных намазов
       const today = getTodayISO();
       ['dhuha', 'tahajjud'].forEach(key => {
         if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== today) {
@@ -486,7 +595,6 @@
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      // Сброс флагов модалок
       dhuhaModalShown = false;
       tahajjudModalShown = false;
 

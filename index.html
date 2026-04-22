@@ -6,68 +6,46 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="Трекер осознанности: намаз, зикры, Коран." />
   <title>Осознанность • Трекер</title>
-  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="manifest" href="manifest.json" />
   <style>
     :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --warning: #f59e0b; --danger: #ef4444; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-    
-    /* Cards & Layout */
     .card { background: var(--card); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); }
     .header { text-align: center; padding: 0.5rem 0 1rem; }
     .header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.025em; }
     .header p { color: var(--muted); font-size: 0.875rem; }
-    
-    /* Timer Section */
     .timer-card { text-align: center; position: relative; overflow: hidden; }
     .timer-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), #3b82f6); opacity: 0.5; }
-    
     .status-label { font-size: 0.875rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
-    
     .current-prayer { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(148,163,184,0.1); }
     .current-prayer .name { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
     .current-prayer .time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    
     .countdown { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
     .next-prayer-label { font-size: 1rem; color: var(--text); font-weight: 500; }
-    
-    /* Buttons */
     .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.5rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
     .btn:active { transform: translateY(0); }
     .btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
-    .btn-outline { background: transparent; border: 2px solid var(--muted); color: var(--muted); }
-    .btn-outline:hover { border-color: var(--text); color: var(--text); }
-    
-    /* Hadith Card */
     .hadith-card { background: rgba(16,185,129,0.08); border-left: 4px solid var(--accent); padding: 1rem; margin-top: 1rem; border-radius: 0 0.5rem 0.5rem 0; display: none; animation: slideIn 0.3s ease; }
     .hadith-card.show { display: block; }
     .hadith-text { font-style: italic; margin-bottom: 0.5rem; line-height: 1.5; }
     .hadith-source { font-size: 0.75rem; color: var(--warning); font-weight: 600; }
     .disclaimer { font-size: 0.7rem; color: var(--muted); margin-top: 0.75rem; font-style: italic; line-height: 1.4; }
-    
-    /* List */
     .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; transition: background 0.2s; }
     .prayer-item.completed { opacity: 0.6; }
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
     .prayer-name { font-weight: 500; }
     .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    
-    /* Footer */
     .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }
     .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
-    
-    /* Toast & Utils */
     .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    
     .error-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; margin-bottom: 1rem; display: none; text-align: center; }
     .error-banner.show { display: block; animation: shake 0.3s ease; }
-    
     @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-    
     @media (prefers-color-scheme: light) { 
       :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; } 
       .prayer-item { background: rgba(0,0,0,0.03); }
@@ -81,26 +59,21 @@
   </div>
 
   <div id="error-banner" class="error-banner">
-    ⚠️ Не удалось обновить расписание. Используются данные из кэша.
+    ⚠️ Не удалось загрузить расписание. Проверьте консоль.
   </div>
 
-  <!-- MAIN TIMER CARD -->
   <div class="card timer-card">
     <div class="status-label">Текущий период</div>
-    
     <div class="current-prayer">
       <div class="name" id="current-name">Загрузка…</div>
       <div class="time" id="current-time-info">—</div>
     </div>
-
     <div class="status-label" style="margin-top: 0.5rem">До следующего намаза</div>
     <div class="countdown" id="countdown">--:--:--</div>
     <div class="next-prayer-label" id="next-name">—</div>
-
     <button id="mark-done" class="btn">
       <span>✅</span> <span id="btn-text">Я совершил этот намаз</span>
     </button>
-
     <div id="hadith-card" class="hadith-card">
       <div class="hadith-text" id="hadith-text">—</div>
       <div class="hadith-source" id="hadith-source">—</div>
@@ -108,7 +81,6 @@
     </div>
   </div>
 
-  <!-- TODAY LIST -->
   <div class="card">
     <h3 style="margin-bottom: 0.75rem; font-size: 1.1rem">📋 Сегодня</h3>
     <div id="prayers-list" class="prayer-list"></div>
@@ -127,127 +99,167 @@
     const PRAYER_DATA_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
-    
-    // Порядок намазов для логики
-    const PRAYER_ORDER = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
-    
-    // Русские названия
-    const NAMES_RU = {
-      fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша'
-    };
+    const PRAYER_KEYS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+    const NAMES_RU = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
+    const MONTHS_RU = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+
+    // === STATE ===
+    let appData = null;
+    let appState = null;
+    let timerInterval = null;
 
     // === UTILS ===
-    const sanitize = (str) => String(str || '').replace(/[<>]/g, '').trim();
     const showToast = (msg) => {
       const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
+      t.textContent = msg; t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2500);
     };
     const showError = (show) => {
       document.getElementById('error-banner').classList.toggle('show', show);
     };
 
-    // === DATA: Умная загрузка с фоллбэком ===
-    const getFallbackData = () => {
-      // Резервные данные (Челябинск, примерные на сегодня)
-      const today = new Date().toISOString().split('T')[0];
-      return {
-        date: today,
-        city: "Chelyabinsk",
-        timings: { Fajr: "03:48", Sunrise: "05:26", Dhuhr: "12:49", Asr: "17:03", Maghrib: "20:12", Isha: "21:50" }
-      };
+    // === DATE HELPERS ===
+    const getTodayDateStr = () => {
+      const d = new Date();
+      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`; // "22 апр"
     };
 
+    const getFallbackData = () => ({
+      fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50"
+    });
+
+    // === PARSE DATA ===
+    const parsePrayerData = (json) => {
+      console.log('🔍 Parsing JSON:', json);
+      
+      if (!json?.schedule || !Array.isArray(json.schedule)) {
+        console.error('❌ Нет массива schedule');
+        return null;
+      }
+      
+      const todayStr = getTodayDateStr();
+      console.log('🔍 Ищу дату:', todayStr);
+      
+      const todayEntry = json.schedule.find(item => {
+        const match = item.date === todayStr;
+        console.log(`  Checking ${item.date}: ${match ? '✓' : '✗'}`);
+        return match;
+      });
+      
+      if (!todayEntry) {
+        console.warn(`⚠️ Не найдено "${todayStr}". Беру первую запись.`);
+        return extractTimings(json.schedule[0]);
+      }
+      
+      console.log('✅ Найдено:', todayEntry);
+      return extractTimings(todayEntry);
+    };
+
+    const extractTimings = (entry) => {
+      if (!entry) return null;
+      const result = {};
+      
+      for (const key of PRAYER_KEYS) {
+        if (entry[key]) {
+          result[key] = entry[key];
+        }
+      }
+      
+      console.log('⏰ Extracted timings:', result);
+      
+      if (Object.keys(result).length < 4) {
+        console.error('❌ Слишком мало таймингов:', Object.keys(result).length);
+        return null;
+      }
+      
+      return result;
+    };
+
+    // === LOAD DATA ===
     const loadPrayerData = async () => {
-      // 1. Пробуем взять из кэша (самый быстрый путь)
+      // 1. Clear old cache first
+      localStorage.removeItem(CACHE_KEY);
+      
+      // 2. Try network
       try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          // Если кэш свежий (менее 24 часов), отдаем его сразу
-          if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-            console.log('✅ Данные из кэша');
-            return normalizeData(data);
-          }
-        }
-      } catch (e) { console.warn('Cache read error', e); }
-
-      // 2. Пробуем загрузить с GitHub (в фоне)
-      try {
-        console.log('🔄 Загрузка новых данных...');
-        // Добавляем случайный параметр, чтобы избежать кэширования браузером самого запроса
+        console.log('🔄 Loading from network...');
         const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        console.log('📡 Response status:', res.status);
+        
         if (!res.ok) throw new Error('HTTP ' + res.status);
+        
         const json = await res.json();
+        const timings = parsePrayerData(json);
         
-        // Сохраняем в кэш
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json, timestamp: Date.now() }));
-        console.log('✅ Данные обновлены');
-        return normalizeData(json);
+        if (!timings) throw new Error('Parse failed');
+        
+        // Cache it
+        localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
+        console.log('✅ Data loaded and cached');
+        return timings;
+        
       } catch (e) {
-        console.warn('⚠️ Ошибка загрузки (CORS/Network):', e.message);
-        showError(true); // Показываем баннер
+        console.error('❌ Network error:', e.message);
+        showError(true);
         
-        // 3. Фоллбэк: если есть старый кэш (даже просроченный), берем его
-        const oldCached = localStorage.getItem(CACHE_KEY);
-        if (oldCached) {
-          console.log('♻️ Используем старый кэш');
-          return normalizeData(JSON.parse(oldCached).data);
-        }
-        
-        // 4. Полный фоллбэк: хардкод
-        console.log('🆘 Используем резервные данные');
-        return normalizeData(getFallbackData());
+        // 3. Fallback
+        console.log('🆘 Using fallback data');
+        return getFallbackData();
       }
     };
 
-    // Приводим данные к единому виду (нижний регистр ключей)
-    const normalizeData = (raw) => {
-      const timings = raw.timings || raw; // поддержка разных структур
-      const normalized = {};
-      for (const [key, val] of Object.entries(timings)) {
-        normalized[key.toLowerCase()] = val;
-      }
-      return normalized;
-    };
-
-    // === TIME LOGIC: Исправленная ===
-    
-    // Превращает "12:45" в дату СЕГОДНЯ
+    // === TIME LOGIC ===
     const parseTimeToday = (timeStr) => {
-      const [h, m] = timeStr.split(':').map(Number);
+      if (!timeStr || typeof timeStr !== 'string') {
+        console.error('⚠️ Invalid timeStr:', timeStr);
+        return new Date(); // Return now as fallback
+      }
+      
+      const parts = timeStr.split(':');
+      if (parts.length !== 2) {
+        console.error('⚠️ Invalid time format:', timeStr);
+        return new Date();
+      }
+      
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      
+      if (isNaN(h) || isNaN(m)) {
+        console.error('⚠️ NaN in time:', timeStr);
+        return new Date();
+      }
+      
       const d = new Date();
       d.setHours(h, m, 0, 0);
       return d;
     };
 
-    // Находит, какой намаз СЕЙЧАС актуален, и какой СЛЕДУЮЩИЙ
     const findPrayerContext = (timings) => {
       const now = new Date();
-      let current = null; // последний прошедший
-      let next = null;    // первый будущий
+      let current = null;
+      let next = null;
 
-      for (const key of PRAYER_ORDER) {
+      for (const key of PRAYER_KEYS) {
         if (!timings[key]) continue;
+        
         const timeObj = parseTimeToday(timings[key]);
         
         if (timeObj <= now) {
           current = { name: key, time: timeObj };
         } else if (!next) {
           next = { name: key, time: timeObj };
-          break; // нашли первый будущий
+          break;
         }
       }
 
-      // Если все намазы сегодня прошли (ночь) -> следующий Фаджр ЗАВТРА
+      // All prayers passed -> next Fajr tomorrow
       if (!next && current) {
         next = { name: 'fajr', time: parseTimeToday(timings['fajr']) };
         next.time.setDate(next.time.getDate() + 1);
       }
-      // Если ещё даже Фаджр не наступил (раннее утро)
+      
+      // Before Fajr -> current is Isha yesterday
       if (!current) {
-        // Текущим считаем Иша ВЧЕРА
         current = { name: 'isha', time: parseTimeToday(timings['isha']) };
         current.time.setDate(current.time.getDate() - 1);
       }
@@ -263,7 +275,7 @@
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
-    // === UI RENDER ===
+    // === RENDER ===
     const renderDate = () => {
       const d = new Date();
       document.getElementById('date').textContent = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -272,8 +284,9 @@
     const renderList = (timings, completed) => {
       const list = document.getElementById('prayers-list');
       list.innerHTML = '';
-      PRAYER_ORDER.forEach(key => {
-        if (key === 'sunrise') return; // Восход не молимся
+      
+      PRAYER_KEYS.forEach(key => {
+        if (key === 'sunrise') return;
         if (!timings[key]) return;
         
         const div = document.createElement('div');
@@ -297,33 +310,28 @@
       return db[name] || { t: '«Намаз — столп религии»', s: 'Общий смысл' };
     };
 
-    // === MAIN LOOP ===
-    let timerInterval = null;
-    let appData = null;
-    let appState = null;
-
+    // === TIMER ===
     const startTimer = () => {
-      if (!appData) return;
+      if (!appData) {
+        console.error('⚠️ startTimer called but appData is null');
+        return;
+      }
       
       const update = () => {
         const { current, next } = findPrayerContext(appData);
         
-        // Обновляем инфо о ТЕКУЩЕМ (прошедшем)
         document.getElementById('current-name').textContent = NAMES_RU[current.name] || current.name;
         document.getElementById('current-time-info').textContent = `был в ${appData[current.name]}`;
         
-        // Обновляем инфо о СЛЕДУЮЩЕМ и таймер
         document.getElementById('next-name').textContent = `До ${NAMES_RU[next.name] || next.name}:`;
         const diff = next.time - new Date();
         document.getElementById('countdown').textContent = formatDuration(diff);
         
-        // Кнопка
         const btn = document.getElementById('mark-done');
         const isDone = appState.completed[next.name];
         btn.disabled = isDone;
         document.getElementById('btn-text').textContent = isDone ? 'Намаз совершён ✓' : '✅ Я совершил этот намаз';
         
-        // Если время пришло (допуск 1 мин)
         if (diff <= 60000 && diff > -60000) {
            document.getElementById('countdown').textContent = "ВРЕМЯ ПРИШЛО";
            document.getElementById('countdown').style.color = "var(--warning)";
@@ -344,48 +352,68 @@
       
       if (appState.completed[name]) return;
       
-      // Save
       appState.completed[name] = true;
       appState.completed[name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      // UI Feedback
       showToast('✓ Сохранено. Да примет Аллах!');
       renderList(appData, appState.completed);
       
-      // Show Hadith
       const { t, s } = getHadith(name);
       document.getElementById('hadith-text').textContent = t;
       document.getElementById('hadith-source').textContent = `📚 ${s}`;
       document.getElementById('hadith-card').classList.add('show');
       
-      // Update button state immediately
       startTimer(); 
     };
 
     // === INIT ===
     const init = async () => {
-      renderDate();
+      console.log('🚀 Init started');
       
-      // Load State
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        appState = saved ? JSON.parse(saved) : { completed: {} };
-      } catch { appState = { completed: {} }; }
-      
-      // Load Data
-      appData = await loadPrayerData();
-      
-      // Render
-      renderList(appData, appState.completed);
-      startTimer();
-      
-      // Events
-      document.getElementById('mark-done').addEventListener('click', handleMarkDone);
-      
-      // SW
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+        renderDate();
+        
+        // Load State
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          appState = saved ? JSON.parse(saved) : { completed: {} };
+          console.log('✅ State:', appState);
+        } catch (e) { 
+          console.warn('State error:', e);
+          appState = { completed: {} }; 
+        }
+        
+        // Load Data
+        console.log(' Loading prayer data...');
+        appData = await loadPrayerData();
+        console.log('✅ Data loaded:', appData);
+        
+        if (!appData || Object.keys(appData).length === 0) {
+          throw new Error('appData is empty after load');
+        }
+        
+        // Render
+        renderList(appData, appState.completed);
+        console.log('✅ List rendered');
+        
+        startTimer();
+        console.log('✅ Timer started');
+        
+        document.getElementById('mark-done').addEventListener('click', handleMarkDone);
+        
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('SW error:', e));
+        }
+        
+        console.log('🎉 Init complete');
+        
+      } catch (error) {
+        console.error('❌ Init failed:', error);
+        document.getElementById('current-name').textContent = 'Ошибка';
+        document.getElementById('current-time-info').textContent = error.message;
+        document.getElementById('countdown').textContent = '--:--:--';
+        showError(true);
       }
     };
 

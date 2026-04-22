@@ -28,6 +28,8 @@
     .countdown { font-size: 3rem; font-weight: 800; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
     .btn { background: var(--accent); color: #0f172a; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1.1rem; }
     .btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.6; }
+    .btn-outline { background: transparent; border: 2px solid var(--muted); color: var(--muted); width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
+    .btn-outline:hover { border-color: var(--text); color: var(--text); }
     
     .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.1); border-radius: 0.75rem; border: 2px dashed var(--accent); text-align: center; }
     .zikr-card.show { display: block; }
@@ -72,6 +74,16 @@
     .tahajjud-theme .modal-hadith { border-left-color: var(--tahajjud); background: rgba(167,139,250,0.1); }
     .btn-rakaat-tahajjud { border-color: var(--tahajjud); background: rgba(167,139,250,0.2); }
     .btn-rakaat-tahajjud:hover { background: var(--tahajjud); color: #fff; }
+
+    /* 📖 DUA COLLECTION STYLES */
+    .dua-list-item { background: rgba(148,163,184,0.08); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; text-align: left; position: relative; }
+    .dua-list-item h4 { font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--accent); }
+    .dua-list-item p { font-size: 0.85rem; color: var(--text); white-space: pre-wrap; margin-bottom: 0.5rem; }
+    .dua-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; border: none; color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
+    .dua-form { margin-top: 1rem; text-align: left; }
+    .dua-form input, .dua-form textarea { width: 100%; background: rgba(148,163,184,0.1); border: 1px solid var(--muted); color: var(--text); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; font-family: inherit; }
+    .dua-form textarea { min-height: 80px; resize: vertical; }
+    .dua-form button { width: 100%; margin-top: 0.5rem; }
 
     .compass-card { text-align: center; }
     .compass-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto 1rem; }
@@ -186,6 +198,9 @@
     <div id="prayers-list" class="prayer-list"></div>
   </div>
 
+  <!-- 📖 DUA COLLECTION BUTTON -->
+  <button class="btn btn-outline" onclick="openDuaModal()" style="width: 100%; margin-bottom: 1rem;">📖 Мои дуа и азкары</button>
+
   <div class="footer-warning">
     <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
@@ -232,6 +247,24 @@
     </div>
   </div>
 
+  <!-- 📖 DUA COLLECTION MODAL -->
+  <div id="dua-modal" class="modal-overlay">
+    <div class="modal-card" style="border-color: var(--accent); text-align: left; max-height: 80vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">📖 Мои дуа и азкары</h3>
+        <button onclick="closeDuaModal()" style="background: transparent; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      
+      <div id="dua-list" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.5rem;"></div>
+      
+      <div class="dua-form">
+        <input type="text" id="dua-title" placeholder="Название (например: После намаза)" />
+        <textarea id="dua-text" placeholder="Текст дуа или зикра..."></textarea>
+        <button class="btn" onclick="addDua()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast">✓</div>
 
   <script>
@@ -239,13 +272,13 @@
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
+    const DUA_KEY = 'dua_collection_v1';
     const PRAYERS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
     const NAMES = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
     const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-    const HIJRI_MONTHS = ['Мухаррам','Сафар','Раби уль-авваль','Раби уль-ахир','Джумада уль-уля','Джумада уль-ахира','Раджаб','Шаабан','Рамадан','Шавваль','Зуль-Каада','Зуль-Хиджа'];
     const FALLBACK = { fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" };
     
-    let appData = null, appState = null, timerInterval = null;
+    let appTimings = null, appState = null, timerInterval = null;
     let zikrPhase = 0, zikrCount = 0, zikrPrayerName = '';
     let dhuhaModalShown = false;
 
@@ -273,34 +306,6 @@
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
     const getTodayISO = () => new Date().toISOString().split('T')[0];
 
-    // === HIJRI & MOON ===
-    const getHijriDate = (date) => {
-      const jd = Math.floor((11 * date.getFullYear() + 3) / 30) + 354 * date.getFullYear() + 227551 + date.getDate() + Math.floor((153 * (date.getMonth() + 1) + 2) / 5) + 1729767;
-      const l = jd - 1948440 + 10632;
-      const n = Math.floor((l - 1) / 10631);
-      const l2 = l - 10631 * n + 354;
-      const j = (Math.floor((10985 - l2) / 5316)) * (Math.floor((50 * l2) / 17719)) + (Math.floor(l2 / 5670)) * (Math.floor((43 * l2) / 15238));
-      const l3 = l2 - (Math.floor((30 - j) / 15)) * (Math.floor((17719 * j) / 50)) - (Math.floor(j / 16)) * (Math.floor((15238 * j) / 43)) + 29;
-      const hijriM = Math.floor((24 * l3) / 709);
-      const hijriD = l3 - Math.floor((709 * hijriM) / 24);
-      const hijriY = 30 * n + j - 30;
-      return { day: hijriD, month: hijriM - 1, year: hijriY, monthName: HIJRI_MONTHS[hijriM - 1] || '—' };
-    };
-
-    const getMoonPhase = (date) => {
-      const year = date.getFullYear(), month = date.getMonth() + 1, day = date.getDate();
-      let c, e, jd, b;
-      if (month < 3) { year--; month += 12; }
-      ++month;
-      c = 365.25 * year; e = 30.6 * month;
-      jd = c + e + day - 694039.09;
-      jd /= 29.5305882;
-      b = parseInt(jd); jd -= b;
-      b = Math.round(jd * 8);
-      const phases = ['🌑','','🌓','','🌕','','🌗',''];
-      return phases[b >= 8 ? 0 : b];
-    };
-
     // === KURBAN BAYRAM ===
     const getKurbanBayramDate = (year) => {
       const dates = {
@@ -316,8 +321,10 @@
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
-          const { timings, timestamp } = JSON.parse(cached);
-          if (timings && Date.now() - timestamp < 24 * 60 * 60 * 1000) return timings;
+          const { timings, timestamp, hijriDay, hijriMonth } = JSON.parse(cached);
+          if (timings && Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+            return { timings, hijriDay, hijriMonth };
+          }
         }
       } catch (e) { console.warn('Cache error:', e); }
 
@@ -333,14 +340,20 @@
           const timings = {};
           PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
           if (Object.keys(timings).length >= 4) {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ timings, schedule: json.schedule, timestamp: Date.now() }));
-            return timings;
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+              timings,
+              schedule: json.schedule,
+              hijriDay: entry.d,
+              hijriMonth: json.monthName || '—',
+              timestamp: Date.now()
+            }));
+            return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
           }
         }
         throw new Error('Invalid');
       } catch (e) {
         document.getElementById('error-banner').classList.add('show');
-        return FALLBACK;
+        return { timings: FALLBACK, hijriDay: '—', hijriMonth: '—' };
       }
     };
 
@@ -402,10 +415,9 @@
     window.markDhuha = (rakaats) => {
       appState.completed.dhuha = true; appState.completed.dhuha_rakaats = rakaats; appState.completed.dhuha_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast(`✓ Духа (${rakaats} р.)`); closeDhuhaModal(); renderList(appData, appState.completed);
+      showToast(`✓ Духа (${rakaats} р.)`); closeDhuhaModal(); renderList(appTimings, appState.completed);
     };
 
-    // 🔧 ИЗМЕНЕНО: Тахаджуд теперь показывается только по запросу
     const showTahajjudModal = () => {
       if (appState.completed.tahajjud) return;
       document.getElementById('tahajjud-modal').classList.add('show');
@@ -415,7 +427,60 @@
     window.markTahajjud = (rakaats) => {
       appState.completed.tahajjud = true; appState.completed.tahajjud_rakaats = rakaats; appState.completed.tahajjud_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast(`✓ Тахаджуд (${rakaats} р.)`); closeTahajjudModal(); renderList(appData, appState.completed);
+      showToast(`✓ Тахаджуд (${rakaats} р.)`); closeTahajjudModal(); renderList(appTimings, appState.completed);
+    };
+
+    // === DUA COLLECTION ===
+    const getDuas = () => {
+      try { return JSON.parse(localStorage.getItem(DUA_KEY)) || []; }
+      catch { return []; }
+    };
+
+    window.openDuaModal = () => {
+      renderDuas();
+      document.getElementById('dua-modal').classList.add('show');
+    };
+    window.closeDuaModal = () => document.getElementById('dua-modal').classList.remove('show');
+
+    const renderDuas = () => {
+      const list = document.getElementById('dua-list');
+      const duas = getDuas();
+      list.innerHTML = duas.length === 0 ? '<p style="color: var(--muted); text-align: center; padding: 1rem;">Пока пусто. Добавь своё первое дуа 👇</p>' : '';
+      
+      duas.forEach((dua, index) => {
+        const div = document.createElement('div');
+        div.className = 'dua-list-item';
+        div.innerHTML = `
+          <button class="dua-delete-btn" onclick="deleteDua(${index})">🗑️</button>
+          <h4>${dua.title || 'Без названия'}</h4>
+          <p>${dua.text}</p>
+        `;
+        list.appendChild(div);
+      });
+    };
+
+    window.addDua = () => {
+      const title = document.getElementById('dua-title').value.trim();
+      const text = document.getElementById('dua-text').value.trim();
+      if (!text) return showToast('Введите текст дуа');
+      
+      const duas = getDuas();
+      duas.unshift({ title, text, date: new Date().toISOString() });
+      localStorage.setItem(DUA_KEY, JSON.stringify(duas));
+      
+      document.getElementById('dua-title').value = '';
+      document.getElementById('dua-text').value = '';
+      renderDuas();
+      showToast('✓ Сохранено');
+    };
+
+    window.deleteDua = (index) => {
+      if (!confirm('Удалить эту запись?')) return;
+      const duas = getDuas();
+      duas.splice(index, 1);
+      localStorage.setItem(DUA_KEY, JSON.stringify(duas));
+      renderDuas();
+      showToast('🗑️ Удалено');
     };
 
     const formatDuration = (ms) => {
@@ -481,7 +546,7 @@
       if (appState.completed.witr) return showToast('Уже отмечено ✓');
       appState.completed.witr = true; appState.completed.witr_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast('✓ Витр'); renderList(appData, appState.completed);
+      showToast('✓ Витр'); renderList(appTimings, appState.completed);
     };
 
     const addSunnah = (container, key, label, completed) => {
@@ -495,7 +560,7 @@
       if (appState.completed[key]) appState.completed[key + '_at'] = new Date().toISOString();
       else delete appState.completed[key + '_at'];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      renderList(appData, appState.completed);
+      renderList(appTimings, appState.completed);
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
@@ -530,8 +595,8 @@
 
     // === ACTIONS ===
     document.getElementById('mark-done').onclick = () => {
-      if (!appData) return;
-      const { current } = findCurrentNext(appData);
+      if (!appTimings) return;
+      const { current } = findCurrentNext(appTimings);
       if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
       
       appState.completed[current.name] = true; 
@@ -539,7 +604,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       showToast(`✓ ${NAMES[current.name]}`); 
-      renderList(appData, appState.completed);
+      renderList(appTimings, appState.completed);
       
       zikrPrayerName = current.name; 
       zikrPhase = 0; 
@@ -549,7 +614,6 @@
       document.getElementById('zikr-btn').classList.remove('done');
       updateZikrUI(); 
       
-      // 🔧 ИЗМЕНЕНО: Если это Иша, показываем окно Тахаджуда
       if (current.name === 'isha') {
         setTimeout(() => showTahajjudModal(), 500);
       }
@@ -558,17 +622,17 @@
     };
 
     const startTimer = () => {
-      if (!appData) return;
+      if (!appTimings) return;
       const update = () => {
-        const { current, next } = findCurrentNext(appData);
+        const { current, next } = findCurrentNext(appTimings);
         document.getElementById('current-name').textContent = NAMES[current.name];
-        document.getElementById('current-time-info').textContent = `с ${appData[current.name]}`;
+        document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;
         document.getElementById('countdown').textContent = formatDuration(next.time - new Date());
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
         btn.disabled = done;
         btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
-        if (isDhuhaTime(appData)) showDhuhaModal();
+        if (isDhuhaTime(appTimings)) showDhuhaModal();
       };
       update();
       if (timerInterval) clearInterval(timerInterval);
@@ -613,11 +677,6 @@
       document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
       
       try {
-        const hijri = getHijriDate(today);
-        document.getElementById('hijri-date').textContent = `${hijri.day} ${hijri.monthName} ${hijri.year} ${getMoonPhase(today)}`;
-      } catch (e) { document.getElementById('hijri-date').textContent = '—'; }
-      
-      try {
         const kurban = getKurbanBayramDate(today.getFullYear());
         document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
       } catch (e) { document.getElementById('kurban-date').textContent = '—'; }
@@ -634,11 +693,21 @@
       
       dhuhaModalShown = false;
 
-      appData = await loadData();
-      renderList(appData, appState.completed);
+      const data = await loadData();
+      appTimings = data.timings;
+      
+      // 📅 Render Hijri from JSON
+      if (data.hijriDay && data.hijriMonth) {
+        document.getElementById('hijri-date').textContent = `${data.hijriDay} ${data.hijriMonth}`;
+        document.getElementById('hijri-month').textContent = 'По хиджре (из базы)';
+      } else {
+        document.getElementById('hijri-date').textContent = '—';
+      }
+
+      renderList(appTimings, appState.completed);
       startTimer();
       startMidnightCheck();
-      setInterval(() => renderList(appData, appState.completed), 30000);
+      setInterval(() => renderList(appTimings, appState.completed), 30000);
       
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));

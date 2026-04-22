@@ -33,11 +33,13 @@
     .hadith-source { font-size: 0.75rem; color: var(--warning); font-weight: 600; }
     .disclaimer { font-size: 0.7rem; color: var(--muted); margin-top: 0.75rem; font-style: italic; line-height: 1.4; }
     .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; transition: background 0.2s; }
+    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; transition: background 0.2s; cursor: pointer; }
     .prayer-item.completed { opacity: 0.6; }
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
     .prayer-name { font-weight: 500; }
     .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
+    .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; }
+    .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
     .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }
     .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
     .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
@@ -88,10 +90,9 @@
 
   <div class="footer">
     <p>🕌 Намерение: помочь не откладывать поклонение.</p>
-    <p style="margin-top:0.25rem">Источники: Данные: ЦДУМ России / РДУМ Челябинской обл.
-
-⚠️ Время намазов указано справочно. Для обязательств сверяйтесь с расписанием местной мечети.</p>
-    <p class="disclaimer" style="margin-top:0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
+    <p style="margin-top:0.25rem">Источники: Данные: ЦДУМ России / РДУМ Челябинской обл.</p>
+    <p class="disclaimer" style="margin-top:0.5rem">⚠️ Время намазов указано справочно. Для обязательств сверяйтесь с расписанием местной мечети.</p>
+    <p class="disclaimer">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
 
   <div id="toast" class="toast">✓ Сохранено</div>
@@ -123,7 +124,7 @@
     // === DATE HELPERS ===
     const getTodayDateStr = () => {
       const d = new Date();
-      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`; // "22 апр"
+      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
     };
 
     const getFallbackData = () => ({
@@ -132,28 +133,19 @@
 
     // === PARSE DATA ===
     const parsePrayerData = (json) => {
-      console.log('🔍 Parsing JSON:', json);
-      
       if (!json?.schedule || !Array.isArray(json.schedule)) {
         console.error('❌ Нет массива schedule');
         return null;
       }
       
       const todayStr = getTodayDateStr();
-      console.log('🔍 Ищу дату:', todayStr);
-      
-      const todayEntry = json.schedule.find(item => {
-        const match = item.date === todayStr;
-        console.log(`  Checking ${item.date}: ${match ? '✓' : '✗'}`);
-        return match;
-      });
+      const todayEntry = json.schedule.find(item => item.date === todayStr);
       
       if (!todayEntry) {
         console.warn(`⚠️ Не найдено "${todayStr}". Беру первую запись.`);
         return extractTimings(json.schedule[0]);
       }
       
-      console.log('✅ Найдено:', todayEntry);
       return extractTimings(todayEntry);
     };
 
@@ -167,10 +159,8 @@
         }
       }
       
-      console.log('⏰ Extracted timings:', result);
-      
       if (Object.keys(result).length < 4) {
-        console.error('❌ Слишком мало таймингов:', Object.keys(result).length);
+        console.error('❌ Слишком мало таймингов');
         return null;
       }
       
@@ -179,14 +169,10 @@
 
     // === LOAD DATA ===
     const loadPrayerData = async () => {
-      // 1. Clear old cache first
       localStorage.removeItem(CACHE_KEY);
       
-      // 2. Try network
       try {
-        console.log('🔄 Loading from network...');
         const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
-        console.log('📡 Response status:', res.status);
         
         if (!res.ok) throw new Error('HTTP ' + res.status);
         
@@ -195,16 +181,13 @@
         
         if (!timings) throw new Error('Parse failed');
         
-        // Cache it
         localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
-        console.log('✅ Data loaded and cached');
         return timings;
         
       } catch (e) {
         console.error('❌ Network error:', e.message);
         showError(true);
         
-        // 3. Fallback
         console.log('🆘 Using fallback data');
         return getFallbackData();
       }
@@ -213,13 +196,11 @@
     // === TIME LOGIC ===
     const parseTimeToday = (timeStr) => {
       if (!timeStr || typeof timeStr !== 'string') {
-        console.error('⚠️ Invalid timeStr:', timeStr);
-        return new Date(); // Return now as fallback
+        return new Date();
       }
       
       const parts = timeStr.split(':');
       if (parts.length !== 2) {
-        console.error('⚠️ Invalid time format:', timeStr);
         return new Date();
       }
       
@@ -227,7 +208,6 @@
       const m = parseInt(parts[1], 10);
       
       if (isNaN(h) || isNaN(m)) {
-        console.error('⚠️ NaN in time:', timeStr);
         return new Date();
       }
       
@@ -254,13 +234,11 @@
         }
       }
 
-      // All prayers passed -> next Fajr tomorrow
       if (!next && current) {
         next = { name: 'fajr', time: parseTimeToday(timings['fajr']) };
         next.time.setDate(next.time.getDate() + 1);
       }
       
-      // Before Fajr -> current is Isha yesterday
       if (!current) {
         current = { name: 'isha', time: parseTimeToday(timings['isha']) };
         current.time.setDate(current.time.getDate() - 1);
@@ -291,20 +269,52 @@
         if (key === 'sunrise') return;
         if (!timings[key]) return;
         
-        const div = document.createElement('div');
-        div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
-        div.innerHTML = `
+        // Основной намаз
+        const mainDiv = document.createElement('div');
+        mainDiv.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
+        mainDiv.innerHTML = `
           <span class="prayer-name">${NAMES_RU[key]}</span>
           <span class="prayer-time">${timings[key]}</span>
         `;
-        list.appendChild(div);
+        list.appendChild(mainDiv);
+        
+        // Сунны Зухра
+        if (key === 'dhuhr') {
+          // Сунна до
+          const sunnahBefore = document.createElement('div');
+          sunnahBefore.className = `prayer-item sunnah ${completed['dhuhr_sunnah_before'] ? 'completed' : ''}`;
+          sunnahBefore.innerHTML = `
+            <span class="prayer-name">Сунна до (4 ракаата)</span>
+            <span class="prayer-time">${completed['dhuhr_sunnah_before'] ? '✓' : '—'}</span>
+          `;
+          sunnahBefore.onclick = (e) => {
+            e.stopPropagation();
+            toggleSunnah('dhuhr_sunnah_before');
+          };
+          list.appendChild(sunnahBefore);
+          
+          // Сунна после
+          const sunnahAfter = document.createElement('div');
+          sunnahAfter.className = `prayer-item sunnah ${completed['dhuhr_sunnah_after'] ? 'completed' : ''}`;
+          sunnahAfter.innerHTML = `
+            <span class="prayer-name">Сунна после (2 ракаата)</span>
+            <span class="prayer-time">${completed['dhuhr_sunnah_after'] ? '✓' : '—'}</span>
+          `;
+          sunnahAfter.onclick = (e) => {
+            e.stopPropagation();
+            toggleSunnah('dhuhr_sunnah_after');
+          };
+          list.appendChild(sunnahAfter);
+        }
       });
     };
 
     const getHadith = (name) => {
       const db = {
         fajr: { t: '«Два ракаата рассветного намаза лучше, чем весь мир и всё, что в нём»', s: 'Муслим, 725' },
-        dhuhr: { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269' },
+        dhuhr: { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269; хасан' },
+        dhuhr_sunnah_before: { t: '«Да помилует Аллах того, кто совершит четыре ракаата до Зухра»', s: 'Абу Дауд, Тирмизи' },
+        dhuhr_sunnah_after: { t: '«Кто будет постоянно совершать 12 ракаатов сунны — Аллах построит ему дом в Раю»', s: 'Муслим, 728' },
         asr: { t: '«Кто пропустил послеполуденный намаз — словно потерял семью и имущество»', s: 'Бухари, 552' },
         maghrib: { t: '«Магриб — это витраж дня. Совершайте его вовремя»', s: 'Тирмизи' },
         isha: { t: '«Если бы люди знали о пользе Иша и Фаджра — пришли бы даже ползком»', s: 'Бухари, 615' }
@@ -312,10 +322,24 @@
       return db[name] || { t: '«Намаз — столп религии»', s: 'Общий смысл' };
     };
 
+    // === TOGGLE SUNNAH ===
+    const toggleSunnah = (key) => {
+      appState.completed[key] = !appState.completed[key];
+      if (appState.completed[key]) {
+        appState.completed[key + '_at'] = new Date().toISOString();
+        showToast('✓ Сунна отмечена');
+      } else {
+        delete appState.completed[key + '_at'];
+        showToast('↩ Отменено');
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      renderList(appData, appState.completed);
+    };
+
     // === TIMER ===
     const startTimer = () => {
       if (!appData) {
-        console.error('⚠️ startTimer called but appData is null');
+        console.error('⚠️ startTimer: appData is null');
         return;
       }
       
@@ -323,16 +347,18 @@
         const { current, next } = findPrayerContext(appData);
         
         document.getElementById('current-name').textContent = NAMES_RU[current.name] || current.name;
-        document.getElementById('current-time-info').textContent = `был в ${appData[current.name]}`;
+        document.getElementById('current-time-info').textContent = `время с ${appData[current.name]}`;
         
-        document.getElementById('next-name').textContent = `До ${NAMES_RU[next.name] || next.name}:`;
+        document.getElementById('next-name').textContent = `Следующий: ${NAMES_RU[next.name]}`;
         const diff = next.time - new Date();
         document.getElementById('countdown').textContent = formatDuration(diff);
         
         const btn = document.getElementById('mark-done');
-        const isDone = appState.completed[next.name];
+        const isDone = appState.completed[current.name];
         btn.disabled = isDone;
-        document.getElementById('btn-text').textContent = isDone ? 'Намаз совершён ✓' : '✅ Я совершил этот намаз';
+        document.getElementById('btn-text').textContent = isDone 
+          ? `${NAMES_RU[current.name]} совершён ✓` 
+          : `✅ Я совершил ${NAMES_RU[current.name]}`;
         
         if (diff <= 60000 && diff > -60000) {
            document.getElementById('countdown').textContent = "ВРЕМЯ ПРИШЛО";
@@ -349,16 +375,19 @@
 
     const handleMarkDone = () => {
       if (!appData) return;
-      const { next } = findPrayerContext(appData);
-      const name = next.name;
+      const { current } = findPrayerContext(appData);
+      const name = current.name;
       
-      if (appState.completed[name]) return;
+      if (appState.completed[name]) {
+        showToast('Уже отмечено ✓');
+        return;
+      }
       
       appState.completed[name] = true;
       appState.completed[name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      showToast('✓ Сохранено. Да примет Аллах!');
+      showToast(`✓ ${NAMES_RU[name]} сохранён. Да примет Аллах!`);
       renderList(appData, appState.completed);
       
       const { t, s } = getHadith(name);
@@ -376,17 +405,14 @@
       try {
         renderDate();
         
-        // Load State
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
           appState = saved ? JSON.parse(saved) : { completed: {} };
-          console.log('✅ State:', appState);
         } catch (e) { 
           console.warn('State error:', e);
           appState = { completed: {} }; 
         }
         
-        // Load Data
         console.log(' Loading prayer data...');
         appData = await loadPrayerData();
         console.log('✅ Data loaded:', appData);
@@ -395,7 +421,6 @@
           throw new Error('appData is empty after load');
         }
         
-        // Render
         renderList(appData, appState.completed);
         console.log('✅ List rendered');
         

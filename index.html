@@ -38,7 +38,7 @@
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
     .prayer-name { font-weight: 500; }
     .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; }
+    .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; background: rgba(16,185,129,0.05); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
     .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }
     .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
@@ -51,6 +51,7 @@
     @media (prefers-color-scheme: light) { 
       :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; } 
       .prayer-item { background: rgba(0,0,0,0.03); }
+      .prayer-item.sunnah { background: rgba(16,185,129,0.08); }
     }
   </style>
 </head>
@@ -133,84 +134,48 @@
 
     // === PARSE DATA ===
     const parsePrayerData = (json) => {
-      if (!json?.schedule || !Array.isArray(json.schedule)) {
-        console.error('❌ Нет массива schedule');
-        return null;
-      }
-      
+      if (!json?.schedule || !Array.isArray(json.schedule)) return null;
       const todayStr = getTodayDateStr();
       const todayEntry = json.schedule.find(item => item.date === todayStr);
-      
-      if (!todayEntry) {
-        console.warn(`⚠️ Не найдено "${todayStr}". Беру первую запись.`);
-        return extractTimings(json.schedule[0]);
-      }
-      
+      if (!todayEntry) return extractTimings(json.schedule[0]);
       return extractTimings(todayEntry);
     };
 
     const extractTimings = (entry) => {
       if (!entry) return null;
       const result = {};
-      
       for (const key of PRAYER_KEYS) {
-        if (entry[key]) {
-          result[key] = entry[key];
-        }
+        if (entry[key]) result[key] = entry[key];
       }
-      
-      if (Object.keys(result).length < 4) {
-        console.error('❌ Слишком мало таймингов');
-        return null;
-      }
-      
-      return result;
+      return Object.keys(result).length >= 4 ? result : null;
     };
 
     // === LOAD DATA ===
     const loadPrayerData = async () => {
       localStorage.removeItem(CACHE_KEY);
-      
       try {
         const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
-        
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        
         const json = await res.json();
         const timings = parsePrayerData(json);
-        
         if (!timings) throw new Error('Parse failed');
-        
         localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
         return timings;
-        
       } catch (e) {
         console.error('❌ Network error:', e.message);
         showError(true);
-        
-        console.log('🆘 Using fallback data');
         return getFallbackData();
       }
     };
 
     // === TIME LOGIC ===
     const parseTimeToday = (timeStr) => {
-      if (!timeStr || typeof timeStr !== 'string') {
-        return new Date();
-      }
-      
+      if (!timeStr || typeof timeStr !== 'string') return new Date();
       const parts = timeStr.split(':');
-      if (parts.length !== 2) {
-        return new Date();
-      }
-      
+      if (parts.length !== 2) return new Date();
       const h = parseInt(parts[0], 10);
       const m = parseInt(parts[1], 10);
-      
-      if (isNaN(h) || isNaN(m)) {
-        return new Date();
-      }
-      
+      if (isNaN(h) || isNaN(m)) return new Date();
       const d = new Date();
       d.setHours(h, m, 0, 0);
       return d;
@@ -220,30 +185,20 @@
       const now = new Date();
       let current = null;
       let next = null;
-
       for (const key of PRAYER_KEYS) {
         if (!timings[key]) continue;
-        
         const timeObj = parseTimeToday(timings[key]);
-        
-        if (timeObj <= now) {
-          current = { name: key, time: timeObj };
-        } else if (!next) {
-          next = { name: key, time: timeObj };
-          break;
-        }
+        if (timeObj <= now) current = { name: key, time: timeObj };
+        else if (!next) { next = { name: key, time: timeObj }; break; }
       }
-
       if (!next && current) {
         next = { name: 'fajr', time: parseTimeToday(timings['fajr']) };
         next.time.setDate(next.time.getDate() + 1);
       }
-      
       if (!current) {
         current = { name: 'isha', time: parseTimeToday(timings['isha']) };
         current.time.setDate(current.time.getDate() - 1);
       }
-
       return { current, next };
     };
 
@@ -261,77 +216,55 @@
       document.getElementById('date').textContent = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
     };
 
+    const renderSunnah = (container, completed, key, label) => {
+      const div = document.createElement('div');
+      div.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
+      div.innerHTML = `<span class="prayer-name">${label}</span><span class="prayer-time">${completed[key] ? '✓' : '—'}</span>`;
+      div.onclick = (e) => { e.stopPropagation(); toggleSunnah(key); };
+      container.appendChild(div);
+    };
+
     const renderList = (timings, completed) => {
       const list = document.getElementById('prayers-list');
       list.innerHTML = '';
-      
+      const isFriday = new Date().getDay() === 5;
+
       PRAYER_KEYS.forEach(key => {
-        if (key === 'sunrise') return;
-        if (!timings[key]) return;
-        
-        // Основной намаз
+        if (key === 'sunrise' || !timings[key]) return;
+
+        // Фард
         const mainDiv = document.createElement('div');
         mainDiv.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
-        mainDiv.innerHTML = `
-          <span class="prayer-name">${NAMES_RU[key]}</span>
-          <span class="prayer-time">${timings[key]}</span>
-        `;
+        mainDiv.innerHTML = `<span class="prayer-name">${NAMES_RU[key]}</span><span class="prayer-time">${timings[key]}</span>`;
         list.appendChild(mainDiv);
-        
-        // Сунны Зухра
+
+        // Сунны (Ханафи)
+        if (key === 'fajr') renderSunnah(list, completed, 'fajr_sunnah', 'Сунна до (2 ракаата)');
         if (key === 'dhuhr') {
-          // Сунна до
-          const sunnahBefore = document.createElement('div');
-          sunnahBefore.className = `prayer-item sunnah ${completed['dhuhr_sunnah_before'] ? 'completed' : ''}`;
-          sunnahBefore.innerHTML = `
-            <span class="prayer-name">Сунна до (4 ракаата)</span>
-            <span class="prayer-time">${completed['dhuhr_sunnah_before'] ? '✓' : '—'}</span>
-          `;
-          sunnahBefore.onclick = (e) => {
-            e.stopPropagation();
-            toggleSunnah('dhuhr_sunnah_before');
-          };
-          list.appendChild(sunnahBefore);
-          
-          // Сунна после
-          const sunnahAfter = document.createElement('div');
-          sunnahAfter.className = `prayer-item sunnah ${completed['dhuhr_sunnah_after'] ? 'completed' : ''}`;
-          sunnahAfter.innerHTML = `
-            <span class="prayer-name">Сунна после (2 ракаата)</span>
-            <span class="prayer-time">${completed['dhuhr_sunnah_after'] ? '✓' : '—'}</span>
-          `;
-          sunnahAfter.onclick = (e) => {
-            e.stopPropagation();
-            toggleSunnah('dhuhr_sunnah_after');
-          };
-          list.appendChild(sunnahAfter);
+          renderSunnah(list, completed, 'dhuhr_sunnah_before', 'Сунна до (4 ракаата)');
+          const afterCount = isFriday ? 4 : 2;
+          renderSunnah(list, completed, 'dhuhr_sunnah_after', `Сунна после (${afterCount} ракаата)`);
         }
+        if (key === 'maghrib') renderSunnah(list, completed, 'maghrib_sunnah', 'Сунна после (2 ракаата)');
+        if (key === 'isha') renderSunnah(list, completed, 'isha_sunnah', 'Сунна после (2 ракаата)');
       });
     };
 
     const getHadith = (name) => {
-  const isFriday = new Date().getDay() === 5; // 5 = пятница
-  
-  const db = {
-    fajr: { t: '«Два ракаата рассветного намаза лучше, чем весь мир и всё, что в нём»', s: 'Муслим, 725' },
-    
-    dhuhr: isFriday 
-      ? { t: '«Кто совершит омовение в пятницу и пойдёт на Джума — награда как за год поста»', s: 'Бухари, 883' }
-      : { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269; хасан' },
-    
-    dhuhr_sunnah_before: { t: '«Да помилует Аллах того, кто совершит четыре ракаата до Зухра»', s: 'Абу Дауд, Тирмизи' },
-    
-    dhuhr_sunnah_after: isFriday
-      ? { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269; хасан' }
-      : { t: '«Пророк ﷺ совершал два ракаата после Зухра и не оставлял их»', s: 'Бухари, 1180' },
-    
-    asr: { t: '«Кто пропустил послеполуденный намаз — словно потерял семью и имущество»', s: 'Бухари, 552' },
-    maghrib: { t: '«Магриб — это витраж дня. Совершайте его вовремя»', s: 'Тирмизи' },
-    isha: { t: '«Если бы люди знали о пользе Иша и Фаджра — пришли бы даже ползком»', s: 'Бухари, 615' }
-  };
-  
-  return db[name] || { t: '«Намаз — столп религии»', s: 'Общий смысл' };
-};
+      const isFriday = new Date().getDay() === 5;
+      const db = {
+        fajr: { t: '«Два ракаата Фаджра лучше мира и всего, что в нём»', s: 'Муслим, 725' },
+        fajr_sunnah: { t: '«Два ракаата до Фаджра лучше мира и всего, что в нём»', s: 'Муслим, 725' },
+        dhuhr: isFriday ? { t: '«Кто совершит омовение в пятницу и пойдёт на Джума...»', s: 'Бухари, 883' } : { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269' },
+        dhuhr_sunnah_before: { t: '«Да помилует Аллах того, кто совершит четыре ракаата до Зухра»', s: 'Абу Дауд, 1274' },
+        dhuhr_sunnah_after: isFriday ? { t: '«Кто сохранит четыре ракаата до Зухра и четыре после...»', s: 'Абу Дауд, 1269' } : { t: '«Пророк ﷺ совершал два ракаата после Зухра»', s: 'Бухари, 1180' },
+        maghrib: { t: '«Магриб — витр дня. Совершайте его вовремя»', s: 'Тирмизи' },
+        maghrib_sunnah: { t: '«Совершайте два ракаата после Магриба в своих домах»', s: 'Бухари, Муслим (смысл)' },
+        isha: { t: '«Если бы люди знали о пользе Иша и Фаджра — пришли бы даже ползком»', s: 'Бухари, 615' },
+        isha_sunnah: { t: '«Кто будет совершать 12 ракаатов сунны в сутки — Аллах построит ему дом в Раю»', s: 'Муслим, 728' }
+      };
+      return db[name] || { t: '«Намаз — столп религии»', s: 'Общий смысл' };
+    };
 
     // === TOGGLE SUNNAH ===
     const toggleSunnah = (key) => {
@@ -349,17 +282,11 @@
 
     // === TIMER ===
     const startTimer = () => {
-      if (!appData) {
-        console.error('⚠️ startTimer: appData is null');
-        return;
-      }
-      
+      if (!appData) return;
       const update = () => {
         const { current, next } = findPrayerContext(appData);
-        
         document.getElementById('current-name').textContent = NAMES_RU[current.name] || current.name;
         document.getElementById('current-time-info').textContent = `время с ${appData[current.name]}`;
-        
         document.getElementById('next-name').textContent = `Следующий: ${NAMES_RU[next.name]}`;
         const diff = next.time - new Date();
         document.getElementById('countdown').textContent = formatDuration(diff);
@@ -378,7 +305,6 @@
            document.getElementById('countdown').style.color = "var(--text)";
         }
       };
-      
       update();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(update, 1000);
@@ -388,11 +314,7 @@
       if (!appData) return;
       const { current } = findPrayerContext(appData);
       const name = current.name;
-      
-      if (appState.completed[name]) {
-        showToast('Уже отмечено ✓');
-        return;
-      }
+      if (appState.completed[name]) { showToast('Уже отмечено ✓'); return; }
       
       appState.completed[name] = true;
       appState.completed[name + '_at'] = new Date().toISOString();
@@ -405,47 +327,45 @@
       document.getElementById('hadith-text').textContent = t;
       document.getElementById('hadith-source').textContent = `📚 ${s}`;
       document.getElementById('hadith-card').classList.add('show');
-      
       startTimer(); 
     };
 
     // === INIT ===
     const init = async () => {
       console.log('🚀 Init started');
-      
       try {
         renderDate();
         
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
           appState = saved ? JSON.parse(saved) : { completed: {} };
-        } catch (e) { 
-          console.warn('State error:', e);
-          appState = { completed: {} }; 
-        }
+        } catch (e) { appState = { completed: {} }; }
         
-        console.log(' Loading prayer data...');
         appData = await loadPrayerData();
-        console.log('✅ Data loaded:', appData);
+        if (!appData || Object.keys(appData).length === 0) throw new Error('appData is empty');
         
-        if (!appData || Object.keys(appData).length === 0) {
-          throw new Error('appData is empty after load');
-        }
+        // 🧹 АВТО-ОЧИСТКА: сбрасывает отметки, если время намаза ещё не пришло
+        const now = new Date();
+        PRAYER_KEYS.forEach(key => {
+          if (appData[key] && appState.completed[key]) {
+            const prayerTime = parseTimeToday(appData[key]);
+            if (prayerTime > now) {
+              delete appState.completed[key];
+              delete appState.completed[key + '_at'];
+              console.log(`🧹 Авто-очистка: ${key} сброшен (время ещё не пришло)`);
+            }
+          }
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         
         renderList(appData, appState.completed);
-        console.log('✅ List rendered');
-        
         startTimer();
-        console.log('✅ Timer started');
         
         document.getElementById('mark-done').addEventListener('click', handleMarkDone);
-        
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('SW error:', e));
         }
-        
         console.log('🎉 Init complete');
-        
       } catch (error) {
         console.error('❌ Init failed:', error);
         document.getElementById('current-name').textContent = 'Ошибка';

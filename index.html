@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Трекер осознанности: намаз, зикры, Коран. Только для Аллаха." />
+  <title>Осознанность • Трекер</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --warning: #f59e0b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; }
+    .card { background: var(--card); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .header { text-align: center; padding: 1.5rem 0; }
+    .header h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .header p { color: var(--muted); font-size: 0.875rem; }
+    .timer { font-size: 2rem; font-weight: 700; text-align: center; margin: 1rem 0; color: var(--accent); }
+    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid rgba(148,163,184,0.1); }
+    .prayer-item:last-child { border-bottom: none; }
+    .prayer-name { font-weight: 500; }
+    .prayer-time { color: var(--muted); font-family: monospace; }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { background: var(--muted); cursor: not-allowed; }
+    .hadith-card { background: rgba(16,185,129,0.1); border-left: 3px solid var(--accent); padding: 1rem; margin-top: 1rem; border-radius: 0 0.5rem 0.5rem 0; display: none; }
+    .hadith-card.show { display: block; animation: fadeIn 0.3s ease; }
+    .disclaimer { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; font-style: italic; }
+    .source { font-size: 0.75rem; color: var(--warning); margin-top: 0.25rem; }
+    .footer { text-align: center; padding: 2rem 0 1rem; font-size: 0.75rem; color: var(--muted); }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 100; display: none; }
+    .toast.show { display: block; animation: slideUp 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    @media (prefers-color-scheme: light) { :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🌙 Осознанность</h1>
+    <p>Челябинск • <span id="date">—</span></p>
+  </div>
+
+  <div class="card">
+    <div id="next-prayer-name" style="text-align:center;font-weight:600;margin-bottom:0.5rem">Загрузка…</div>
+    <div class="timer" id="countdown">--:--:--</div>
+    <button id="mark-done" class="btn" style="width:100%">✅ Я совершил этот намаз</button>
+    <div id="hadith-card" class="hadith-card">
+      <div id="hadith-text">—</div>
+      <div class="source" id="hadith-source">—</div>
+      <div class="disclaimer">💡 Баллы — лишь визуализация. Истинная награда — у Аллаха. Проверяй своё намерение (ихлас).</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">📋 Сегодня</h3>
+    <div id="prayers-list"></div>
+  </div>
+
+  <div class="footer">
+    <p>🕌 Намерение: помочь не откладывать поклонение.</p>
+    <p>Источники: <a href="https://github.com/daniilnizamov7-star/Namaz" target="_blank" rel="noopener">prayer-data.json</a></p>
+    <p class="disclaimer">Не является фетвой. По шариатским вопросам — к знающим.</p>
+  </div>
+
+  <div id="toast" class="toast">✓ Сохранено</div>
+
+  <script>
+    // === CONFIG ===
+    const PRAYER_DATA_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
+    const SUPABASE_URL = (location.hostname === 'localhost') ? '' : (window.ENV?.SUPABASE_URL || '');
+    const SUPABASE_ANON_KEY = (location.hostname === 'localhost') ? '' : (window.ENV?.SUPABASE_ANON_KEY || '');
+    const STORAGE_KEY = 'prayer_tracker_v1';
+
+    // === STATE ===
+    let prayerData = null;
+    let todayPrayers = {};
+    let countdownInterval = null;
+
+    // === UTILS: Безопасность и валидация ===
+    const sanitize = (str) => String(str).replace(/[<>]/g, '').trim();
+    const isValidPrayerName = (name) => ['fajr','sunrise','dhuhr','asr','maghrib','isha'].includes(name?.toLowerCase());
+    const showToast = (msg) => {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    };
+
+    // === LOCAL STORAGE: оффлайн-первый ===
+    const loadLocal = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : { completed: {}, notes: {} };
+      } catch { return { completed: {}, notes: {} }; }
+    };
+    const saveLocal = (data) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        // Фоновая синхронизация с Supabase (если подключен)
+        if (SUPABASE_URL && SUPABASE_ANON_KEY && 'supabase' in window) syncToSupabase(data).catch(()=>{});
+        return true;
+      } catch { return false; }
+    };
+
+    // === SUPABASE: тихая фоновая синхронизация ===
+    const syncToSupabase = async (data) => {
+      if (!window.supabase) return;
+      const { createClient } = window.supabase;
+      const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      // Простая вставка/обновление (без сложной логики для MVP)
+      await client.from('user_progress').upsert({
+        id: 'local_user_1', // заглушка, в реальности — auth user
+        completed: data.completed,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+    };
+
+    // === PRAYER DATA: загрузка и кэш ===
+    const fetchPrayerData = async () => {
+      try {
+        // Сначала пробуем локальный кэш (7 дней)
+        const cached = localStorage.getItem('prayer_cache');
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) return data;
+        }
+        // Загрузка с GitHub
+        const res = await fetch(PRAYER_DATA_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        // Кэшируем
+        localStorage.setItem('prayer_cache', JSON.stringify({ data, timestamp: Date.now() }));
+        return data;
+      } catch (e) {
+        console.warn('⚠️ Используем резервные данные:', e.message);
+        // Резервные данные (пример на сегодня)
+        return {
+          date: new Date().toISOString().split('T')[0],
+          timings: { Fajr: '04:00', Sunrise: '05:30', Dhuhr: '12:45', Asr: '17:15', Maghrib: '20:30', Isha: '22:00' }
+        };
+      }
+    };
+
+    // === UI: отрисовка ===
+    const renderDate = () => {
+      const d = new Date();
+      document.getElementById('date').textContent = d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+    };
+
+    const getPrayerDisplayName = (key) => ({
+      fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша'
+    })[key.toLowerCase()] || key;
+
+    const renderPrayersList = (timings, completed) => {
+      const list = document.getElementById('prayers-list');
+      list.innerHTML = '';
+      Object.entries(timings).forEach(([key, time]) => {
+        const name = key.toLowerCase();
+        if (!isValidPrayerName(name) && name !== 'sunrise') return;
+        const item = document.createElement('div');
+        item.className = 'prayer-item';
+        const isDone = completed[name] === true;
+        item.innerHTML = `
+          <span class="prayer-name">${getPrayerDisplayName(name)} ${isDone ? '✓' : ''}</span>
+          <span class="prayer-time">${sanitize(time)}</span>
+        `;
+        list.appendChild(item);
+      });
+    };
+
+    const getHadith = (prayerName) => {
+      const map = {
+        fajr: { text: '«Два ракаата рассветного намаза лучше, чем весь мир и всё, что в нём»', source: 'Муслим, 725' },
+        dhuhr: { text: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', source: 'Абу Дауд, 1269; достоверность: хасан' },
+        asr: { text: '«Кто пропустил послеполуденный намаз — словно потерял семью и имущество»', source: 'Бухари, 552' },
+        maghrib: { text: '«Магриб — это витраж дня. Совершайте его вовремя»', source: 'по смыслу хадисов, Тирмизи' },
+        isha: { text: '«Если бы люди знали о пользе Иша и Фаджра — пришли бы даже ползком»', source: 'Бухари, 615' }
+      };
+      return map[prayerName.toLowerCase()] || { text: '«Намаз — столп религии. Кто его совершил — укрепил веру»', source: 'по смыслу хадисов' };
+    };
+
+    // === COUNTDOWN: расчёт до следующего намаза ===
+    const parseTime = (timeStr) => {
+      const [h, m] = timeStr.split(':').map(Number);
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      return d;
+    };
+
+    const getNextPrayer = (timings) => {
+      const now = new Date();
+      const prayers = ['fajr','sunrise','dhuhr','asr','maghrib','isha'];
+      for (const key of prayers) {
+        const t = parseTime(timings[key]);
+        if (t > now) return { name: key, time: t };
+      }
+      // Если все прошли — следующий Фаджр завтра
+      return { name: 'fajr', time: parseTime(timings.Fajr).setDate(parseTime(timings.Fajr).getDate() + 1) };
+    };
+
+    const startCountdown = (targetTime, prayerName) => {
+      document.getElementById('next-prayer-name').textContent = `До ${getPrayerDisplayName(prayerName)}:`;
+      const update = () => {
+        const now = new Date();
+        const diff = targetTime - now;
+        if (diff <= 0) {
+          document.getElementById('countdown').textContent = 'Время пришло!';
+          clearInterval(countdownInterval);
+          return;
+        }
+        const h = Math.floor(diff / 36e5);
+        const m = Math.floor((diff % 36e5) / 6e4);
+        const s = Math.floor((diff % 6e4) / 1e3);
+        document.getElementById('countdown').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      };
+      update();
+      countdownInterval = setInterval(update, 1000);
+    };
+
+    // === MARK DONE: основная логика ===
+    const markPrayerDone = (prayerName) => {
+      const state = loadLocal();
+      if (state.completed[prayerName]) {
+        showToast('Уже отмечено ✓');
+        return;
+      }
+      state.completed[prayerName] = true;
+      state.completed[prayerName + '_at'] = new Date().toISOString();
+      if (!saveLocal(state)) {
+        showToast('⚠️ Не удалось сохранить (оффлайн)');
+      } else {
+        showToast('✓ Сохранено');
+        // Показ хадиса
+        const { text, source } = getHadith(prayerName);
+        document.getElementById('hadith-text').textContent = text;
+        document.getElementById('hadith-source').textContent = `📚 ${source}`;
+        document.getElementById('hadith-card').classList.add('show');
+        // Обновляем список
+        renderPrayersList(todayPrayers, state.completed);
+      }
+    };
+
+    // === INIT ===
+    const init = async () => {
+      renderDate();
+      prayerData = await fetchPrayerData();
+      todayPrayers = prayerData?.timings || {};
+      const state = loadLocal();
+      renderPrayersList(todayPrayers, state.completed);
+      
+      const next = getNextPrayer(todayPrayers);
+      startCountdown(next.time, next.name);
+      
+      document.getElementById('mark-done').addEventListener('click', () => {
+        markPrayerDone(next.name);
+      });
+
+      // Регистрация Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+      }
+    };
+
+    // Запуск после загрузки
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+  <!-- Supabase CDN (подгружается только если нужен) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+</html>

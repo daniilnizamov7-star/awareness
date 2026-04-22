@@ -247,7 +247,7 @@
     
     let appData = null, appState = null, timerInterval = null;
     let zikrPhase = 0, zikrCount = 0, zikrPrayerName = '';
-    let dhuhaModalShown = false, tahajjudModalShown = false;
+    let dhuhaModalShown = false;
 
     // === PHRASES ===
     const PHASE_FAJR_MAGHRIB = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ля-hуль-мульку ва ляhуль-хамду юхйи ва юмиту ва hува ‘аля кулли шайъин кадир';
@@ -391,13 +391,6 @@
       return currentMins >= (getMins('sunrise') + 30) && currentMins < getMins('dhuhr');
     };
 
-    const isTahajjudTime = (timings) => {
-      if (!timings.isha) return false;
-      const now = new Date(), currentMins = now.getHours() * 60 + now.getMinutes();
-      const [h, m] = timings.isha.split(':').map(Number);
-      return currentMins >= (h * 60 + m);
-    };
-
     // === MODALS ===
     const showDhuhaModal = () => {
       if (dhuhaModalShown || appState.completed.dhuha) return;
@@ -412,9 +405,9 @@
       showToast(`✓ Духа (${rakaats} р.)`); closeDhuhaModal(); renderList(appData, appState.completed);
     };
 
+    // 🔧 ИЗМЕНЕНО: Тахаджуд теперь показывается только по запросу
     const showTahajjudModal = () => {
-      if (tahajjudModalShown || appState.completed.tahajjud) return;
-      tahajjudModalShown = true;
+      if (appState.completed.tahajjud) return;
       document.getElementById('tahajjud-modal').classList.add('show');
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     };
@@ -540,14 +533,28 @@
       if (!appData) return;
       const { current } = findCurrentNext(appData);
       if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
-      appState.completed[current.name] = true; appState.completed[current.name + '_at'] = new Date().toISOString();
+      
+      appState.completed[current.name] = true; 
+      appState.completed[current.name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      showToast(`✓ ${NAMES[current.name]}`); renderList(appData, appState.completed);
-      zikrPrayerName = current.name; zikrPhase = 0; zikrCount = 0;
+      
+      showToast(`✓ ${NAMES[current.name]}`); 
+      renderList(appData, appState.completed);
+      
+      zikrPrayerName = current.name; 
+      zikrPhase = 0; 
+      zikrCount = 0;
       document.getElementById('zikr-card').classList.add('show');
       document.getElementById('zikr-done-btn').style.display = 'block';
       document.getElementById('zikr-btn').classList.remove('done');
-      updateZikrUI(); startTimer();
+      updateZikrUI(); 
+      
+      // 🔧 ИЗМЕНЕНО: Если это Иша, показываем окно Тахаджуда
+      if (current.name === 'isha') {
+        setTimeout(() => showTahajjudModal(), 500);
+      }
+      
+      startTimer();
     };
 
     const startTimer = () => {
@@ -562,7 +569,6 @@
         btn.disabled = done;
         btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
         if (isDhuhaTime(appData)) showDhuhaModal();
-        if (isTahajjudTime(appData)) showTahajjudModal();
       };
       update();
       if (timerInterval) clearInterval(timerInterval);
@@ -626,7 +632,7 @@
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      dhuhaModalShown = false; tahajjudModalShown = false;
+      dhuhaModalShown = false;
 
       appData = await loadData();
       renderList(appData, appState.completed);

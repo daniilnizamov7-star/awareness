@@ -23,9 +23,8 @@
     .current-prayer .time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
     .countdown { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
     .next-prayer-label { font-size: 1rem; color: var(--text); font-weight: 500; }
-    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.5rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-    .btn:active { transform: translateY(0); }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 0.5rem; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.98); }
     .btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.7; }
     .hadith-card { background: rgba(16,185,129,0.08); border-left: 4px solid var(--accent); padding: 1rem; margin-top: 1rem; border-radius: 0 0.5rem 0.5rem 0; display: none; }
     .hadith-card.show { display: block; }
@@ -38,16 +37,23 @@
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
     .prayer-name { font-weight: 500; }
     .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    /* Убрана анимация, чтобы не мигало */
     .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; background: rgba(16,185,129,0.05); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
-    .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }
-    .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
+    /* Zikr Card Styles */
+    .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.05); border-radius: 0.75rem; border: 1px dashed var(--accent); text-align: center; }
+    .zikr-card.show { display: block; animation: fadeIn 0.3s ease; }
+    .zikr-counter { font-size: 2.5rem; font-weight: 800; color: var(--text); margin: 0.5rem 0; }
+    .zikr-text { font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; min-height: 1.5em; }
+    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.5rem; border-radius: 1rem; font-size: 1.5rem; width: 100%; font-weight: 800; box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+    .btn-zikr:active { background: #059669; transform: scale(0.97); }
+    .btn-zikr.done { background: var(--muted); color: #fff; box-shadow: none; pointer-events: none; }
+    .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }    .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
     .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .error-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem; margin-bottom: 1rem; display: none; text-align: center; }
     .error-banner.show { display: block; animation: shake 0.3s ease; }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-color-scheme: light) { 
       :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; } 
       .prayer-item { background: rgba(0,0,0,0.03); }
@@ -77,11 +83,20 @@
     <button id="mark-done" class="btn">
       <span>✅</span> <span id="btn-text">Я совершил этот намаз</span>
     </button>
+    
+    <!-- ZIKR CARD (New) -->
+    <div id="zikr-card" class="zikr-card">
+      <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem">Зикры после намаза</div>
+      <div class="zikr-text" id="zikr-phrase">Нажми кнопку ниже</div>
+      <div class="zikr-counter" id="zikr-count">0</div>
+      <button id="zikr-btn" class="btn btn-zikr" onclick="handleZikr()">Тап</button>
+      <div style="margin-top:0.5rem; font-size:0.75rem; color:var(--muted)">СубханАллах (33) → Альхамдулиллях (33) → Аллаху Акбар (33)</div>
+    </div>
+
     <div id="hadith-card" class="hadith-card">
       <div class="hadith-text" id="hadith-text">—</div>
       <div class="hadith-source" id="hadith-source">—</div>
-      <div class="disclaimer">💡 Визуальные баллы — лишь мотивация. Истинная награда — у Аллаха. Проверяй намерение (ихлас).</div>
-    </div>
+      <div class="disclaimer">💡 Визуальные баллы — лишь мотивация. Истинная награда — у Аллаха. Проверяй намерение (ихлас).</div>    </div>
   </div>
 
   <div class="card">
@@ -111,6 +126,11 @@
     let appData = null;
     let appState = null;
     let timerInterval = null;
+    
+    // Zikr State
+    let zikrPhase = 0; // 0: Subhan, 1: Alhamdulillah, 2: Allahu Akbar, 3: Done
+    let zikrCount = 0;
+    const zikrPhrases = ['СубханАллах', 'Альхамдулиллях', 'Аллаху Акбар'];
 
     // === UTILS ===
     const showToast = (msg) => {
@@ -125,8 +145,7 @@
     // === DATE HELPERS ===
     const getTodayDateStr = () => {
       const d = new Date();
-      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
-    };
+      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;    };
 
     const getFallbackData = () => ({
       fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50"
@@ -152,8 +171,14 @@
 
     // === LOAD DATA ===
     const loadPrayerData = async () => {
-      localStorage.removeItem(CACHE_KEY);
+      // localStorage.removeItem(CACHE_KEY); // Uncomment only if data is broken
       try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+           const { data, timestamp } = JSON.parse(cached);
+           if (Date.now() - timestamp < 24 * 60 * 60 * 1000) return data;
+        }
+
         const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const json = await res.json();
@@ -169,8 +194,7 @@
     };
 
     // === TIME LOGIC ===
-    const parseTimeToday = (timeStr) => {
-      if (!timeStr || typeof timeStr !== 'string') return new Date();
+    const parseTimeToday = (timeStr) => {      if (!timeStr || typeof timeStr !== 'string') return new Date();
       const parts = timeStr.split(':');
       if (parts.length !== 2) return new Date();
       const h = parseInt(parts[0], 10);
@@ -210,40 +234,26 @@
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
-    // === SUNNAH VISIBILITY LOGIC (ИСПРАВЛЕНА) ===
+    // === SUNNAH VISIBILITY ===
     const shouldShowSunnah = (sunnahKey, timings, completed) => {
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      
       const getTimeMinutes = (key) => {
         if (!timings[key]) return null;
         const [h, m] = timings[key].split(':').map(Number);
         return h * 60 + m;
       };
-      
-      const fajrTime = getTimeMinutes('fajr');
-      const sunriseTime = getTimeMinutes('sunrise');
+      const fajrTime = getTimeMinutes('fajr');      const sunriseTime = getTimeMinutes('sunrise');
       const dhuhrTime = getTimeMinutes('dhuhr');
       const asrTime = getTimeMinutes('asr');
       const maghribTime = getTimeMinutes('maghrib');
       const ishaTime = getTimeMinutes('isha');
       
-      // Фаджр сунна: от Фаджра до Восхода
       if (sunnahKey === 'fajr_sunnah') return currentMinutes >= fajrTime && currentMinutes < sunriseTime;
-      
-      // 🔧 ИСПРАВЛЕНИЕ: Зухр сунна до показывается до самого Асра
-      // Раньше она пропадала, если нажать фард. Теперь она висит до Асра.
       if (sunnahKey === 'dhuhr_sunnah_before') return currentMinutes >= dhuhrTime && currentMinutes < asrTime;
-      
-      // Зухр сунна после: после совершения фарда Зухра
       if (sunnahKey === 'dhuhr_sunnah_after') return completed['dhuhr'] && currentMinutes >= dhuhrTime;
-      
-      // Магриб сунна: после совершения фарда Магриба
       if (sunnahKey === 'maghrib_sunnah') return completed['maghrib'] && currentMinutes >= maghribTime;
-      
-      // Иша сунна: после совершения фарда Иша
       if (sunnahKey === 'isha_sunnah') return completed['isha'] && currentMinutes >= ishaTime;
-      
       return false;
     };
 
@@ -268,33 +278,21 @@
 
       PRAYER_KEYS.forEach(key => {
         if (key === 'sunrise' || !timings[key]) return;
-
-        // Фард
         const mainDiv = document.createElement('div');
         mainDiv.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
         mainDiv.innerHTML = `<span class="prayer-name">${NAMES_RU[key]}</span><span class="prayer-time">${timings[key]}</span>`;
         list.appendChild(mainDiv);
 
-        // Сунны
-        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) {
-          renderSunnah(list, completed, 'fajr_sunnah', 'Сунна до (2 ракаата)');
-        }
+        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) renderSunnah(list, completed, 'fajr_sunnah', 'Сунна до (2 ракаата)');
         if (key === 'dhuhr') {
-          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) {
-            renderSunnah(list, completed, 'dhuhr_sunnah_before', 'Сунна до (4 ракаата)');
-          }
+          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) renderSunnah(list, completed, 'dhuhr_sunnah_before', 'Сунна до (4 ракаата)');
           if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) {
             const afterCount = isFriday ? 4 : 2;
             renderSunnah(list, completed, 'dhuhr_sunnah_after', `Сунна после (${afterCount} ракаата)`);
           }
         }
-        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) {
-          renderSunnah(list, completed, 'maghrib_sunnah', 'Сунна после (2 ракаата)');
-        }
-        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) {
-          renderSunnah(list, completed, 'isha_sunnah', 'Сунна после (2 ракаата)');
-        }
-      });
+        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) renderSunnah(list, completed, 'maghrib_sunnah', 'Сунна после (2 ракаата)');
+        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) renderSunnah(list, completed, 'isha_sunnah', 'Сунна после (2 ракаата)');      });
     };
 
     const getHadith = (name) => {
@@ -302,18 +300,62 @@
       const db = {
         fajr: { t: '«Два ракаата Фаджра лучше мира и всего, что в нём»', s: 'Муслим, 725' },
         fajr_sunnah: { t: '«Два ракаата до Фаджра лучше мира и всего, что в нём»', s: 'Муслим, 725' },
-        dhuhr: isFriday ? { t: '«Кто совершит омовение в пятницу и пойдёт на Джума...»', s: 'Бухари, 883' } : { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269' },
+        dhuhr: isFriday ? { t: '«Кто совершит омовение в пятницу...»', s: 'Бухари, 883' } : { t: '«Кто сохранит четыре ракаата до Зухра и четыре после — Аллах запретит ему Огонь»', s: 'Абу Дауд, 1269' },
         dhuhr_sunnah_before: { t: '«Да помилует Аллах того, кто совершит четыре ракаата до Зухра»', s: 'Абу Дауд, 1274' },
         dhuhr_sunnah_after: isFriday ? { t: '«Кто сохранит четыре ракаата до Зухра и четыре после...»', s: 'Абу Дауд, 1269' } : { t: '«Пророк ﷺ совершал два ракаата после Зухра»', s: 'Бухари, 1180' },
         maghrib: { t: '«Магриб — витр дня. Совершайте его вовремя»', s: 'Тирмизи' },
-        maghrib_sunnah: { t: '«Совершайте два ракаата после Магриба в своих домах»', s: 'Бухари, Муслим (смысл)' },
-        isha: { t: '«Если бы люди знали о пользе Иша и Фаджра — пришли бы даже ползком»', s: 'Бухари, 615' },
-        isha_sunnah: { t: '«Кто будет совершать 12 ракаатов сунны в сутки — Аллах построит ему дом в Раю»', s: 'Муслим, 728' }
+        maghrib_sunnah: { t: '«Совершайте два ракаата после Магриба»', s: 'Бухари, Муслим' },
+        isha: { t: '«Если бы люди знали о пользе Иша и Фаджра...»', s: 'Бухари, 615' },
+        isha_sunnah: { t: '«Кто будет совершать 12 ракаатов сунны...»', s: 'Муслим, 728' }
       };
       return db[name] || { t: '«Намаз — столп религии»', s: 'Общий смысл' };
     };
 
-    // === TOGGLE SUNNAH ===
+    // === ZIKR LOGIC ===
+    const resetZikr = () => {
+      document.getElementById('zikr-card').classList.remove('show');
+      zikrPhase = 0;
+      zikrCount = 0;
+      document.getElementById('zikr-btn').classList.remove('done');
+      document.getElementById('zikr-btn').textContent = 'Тап';
+    };
+
+    const showZikr = () => {
+      const card = document.getElementById('zikr-card');
+      card.classList.add('show');
+      updateZikrUI();
+    };
+
+    const updateZikrUI = () => {
+      if (zikrPhase < 3) {
+        document.getElementById('zikr-phrase').textContent = zikrPhrases[zikrPhase];
+        document.getElementById('zikr-count').textContent = `${zikrCount} / 33`;
+        document.getElementById('zikr-btn').textContent = `${zikrPhrases[zikrPhase]} (${zikrCount + 1})`;
+      } else {
+        document.getElementById('zikr-phrase').textContent = "Аллаху Акбар (33) — Завершено ✓";
+        document.getElementById('zikr-count').textContent = "✓";
+        document.getElementById('zikr-btn').textContent = "Да примет Аллах";
+        document.getElementById('zikr-btn').classList.add('done');
+      }
+    };
+
+    window.handleZikr = function() {
+      if (zikrPhase >= 3) return; // Already done
+            zikrCount++;
+      
+      if (zikrCount > 33) {
+        zikrCount = 1;
+        zikrPhase++;
+      }
+      
+      // Vibration feedback (if supported)
+      if (navigator.vibrate) navigator.vibrate(50);
+      
+      updateZikrUI();
+      
+      if (zikrPhase >= 3) showToast('✓ Зикры завершены');
+    };
+
     const toggleSunnah = (key) => {
       appState.completed[key] = !appState.completed[key];
       if (appState.completed[key]) {
@@ -327,7 +369,7 @@
       renderList(appData, appState.completed);
     };
 
-    // === TIMER (ОБНОВЛЕН: только цифры) ===
+    // === TIMER ===
     const startTimer = () => {
       if (!appData) return;
       const update = () => {
@@ -348,8 +390,7 @@
         if (diff <= 60000 && diff > -60000) {
            document.getElementById('countdown').textContent = "ВРЕМЯ ПРИШЛО";
            document.getElementById('countdown').style.color = "var(--warning)";
-        } else {
-           document.getElementById('countdown').style.color = "var(--text)";
+        } else {           document.getElementById('countdown').style.color = "var(--text)";
         }
       };
       update();
@@ -367,36 +408,38 @@
       appState.completed[name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      showToast(`✓ ${NAMES_RU[name]} сохранён. Да примет Аллах!`);
+      showToast(`✓ ${NAMES_RU[name]} сохранён`);
       renderList(appData, appState.completed);
       
+      // Show Hadith
       const { t, s } = getHadith(name);
       document.getElementById('hadith-text').textContent = t;
       document.getElementById('hadith-source').textContent = `📚 ${s}`;
       document.getElementById('hadith-card').classList.add('show');
+      
+      // Show Zikr
+      resetZikr();
+      showZikr();
+      
       startTimer(); 
     };
 
     // === INIT ===
     const init = async () => {
-      console.log('🚀 Init started');
       try {
         renderDate();
-        
         try {
           const saved = localStorage.getItem(STORAGE_KEY);
           appState = saved ? JSON.parse(saved) : { completed: {} };
         } catch (e) { appState = { completed: {} }; }
         
         appData = await loadPrayerData();
-        if (!appData || Object.keys(appData).length === 0) throw new Error('appData is empty');
+        if (!appData) throw new Error('appData is empty');
         
-        // 🧹 АВТО-ОЧИСТКА
         const now = new Date();
         PRAYER_KEYS.forEach(key => {
           if (appData[key] && appState.completed[key]) {
-            const prayerTime = parseTimeToday(appData[key]);
-            if (prayerTime > now) {
+            const prayerTime = parseTimeToday(appData[key]);            if (prayerTime > now) {
               delete appState.completed[key];
               delete appState.completed[key + '_at'];
             }
@@ -406,20 +449,12 @@
         
         renderList(appData, appState.completed);
         startTimer();
-        
-        // Обновляем список раз в 30 секунд
         setInterval(() => renderList(appData, appState.completed), 30000);
         
         document.getElementById('mark-done').addEventListener('click', handleMarkDone);
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('SW error:', e));
-        }
-        console.log('🎉 Init complete');
       } catch (error) {
         console.error('❌ Init failed:', error);
         document.getElementById('current-name').textContent = 'Ошибка';
-        document.getElementById('current-time-info').textContent = error.message;
-        document.getElementById('countdown').textContent = '--:--:--';
         showError(true);
       }
     };

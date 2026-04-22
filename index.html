@@ -33,12 +33,12 @@
     .hadith-source { font-size: 0.75rem; color: var(--warning); font-weight: 600; }
     .disclaimer { font-size: 0.7rem; color: var(--muted); margin-top: 0.75rem; font-style: italic; line-height: 1.4; }
     .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; transition: background 0.2s; cursor: pointer; }
+    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; transition: all 0.2s; cursor: pointer; }
     .prayer-item.completed { opacity: 0.6; }
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
     .prayer-name { font-weight: 500; }
     .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; background: rgba(16,185,129,0.05); }
+    .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; background: rgba(16,185,129,0.05); animation: fadeIn 0.3s ease; }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
     .footer { margin-top: auto; text-align: center; padding: 1.5rem 0 1rem; font-size: 0.75rem; color: var(--muted); }
     .footer a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed var(--accent); }
@@ -48,6 +48,7 @@
     .error-banner.show { display: block; animation: shake 0.3s ease; }
     @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     @media (prefers-color-scheme: light) { 
       :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; } 
       .prayer-item { background: rgba(0,0,0,0.03); }
@@ -210,6 +211,51 @@
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
+    // === SUNNAH VISIBILITY LOGIC ===
+    const shouldShowSunnah = (sunnahKey, timings, completed) => {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      
+      const getTimeMinutes = (key) => {
+        if (!timings[key]) return null;
+        const [h, m] = timings[key].split(':').map(Number);
+        return h * 60 + m;
+      };
+      
+      const fajrTime = getTimeMinutes('fajr');
+      const sunriseTime = getTimeMinutes('sunrise');
+      const dhuhrTime = getTimeMinutes('dhuhr');
+      const maghribTime = getTimeMinutes('maghrib');
+      const ishaTime = getTimeMinutes('isha');
+      
+      // Фаджр сунна: от Фаджра до Восхода
+      if (sunnahKey === 'fajr_sunnah') {
+        return currentMinutes >= fajrTime && currentMinutes < sunriseTime;
+      }
+      
+      // Зухр сунна до: от Зухра до совершения фарда
+      if (sunnahKey === 'dhuhr_sunnah_before') {
+        return currentMinutes >= dhuhrTime && !completed['dhuhr'];
+      }
+      
+      // Зухр сунна после: после совершения фарда Зухра
+      if (sunnahKey === 'dhuhr_sunnah_after') {
+        return completed['dhuhr'] && currentMinutes >= dhuhrTime;
+      }
+      
+      // Магриб сунна: после совершения фарда Магриба
+      if (sunnahKey === 'maghrib_sunnah') {
+        return completed['maghrib'] && currentMinutes >= maghribTime;
+      }
+      
+      // Иша сунна: после совершения фарда Иша
+      if (sunnahKey === 'isha_sunnah') {
+        return completed['isha'] && currentMinutes >= ishaTime;
+      }
+      
+      return false;
+    };
+
     // === RENDER ===
     const renderDate = () => {
       const d = new Date();
@@ -238,15 +284,25 @@
         mainDiv.innerHTML = `<span class="prayer-name">${NAMES_RU[key]}</span><span class="prayer-time">${timings[key]}</span>`;
         list.appendChild(mainDiv);
 
-        // Сунны (Ханафи)
-        if (key === 'fajr') renderSunnah(list, completed, 'fajr_sunnah', 'Сунна до (2 ракаата)');
-        if (key === 'dhuhr') {
-          renderSunnah(list, completed, 'dhuhr_sunnah_before', 'Сунна до (4 ракаата)');
-          const afterCount = isFriday ? 4 : 2;
-          renderSunnah(list, completed, 'dhuhr_sunnah_after', `Сунна после (${afterCount} ракаата)`);
+        // Сунны (показываем только когда пришло их время)
+        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) {
+          renderSunnah(list, completed, 'fajr_sunnah', 'Сунна до (2 ракаата)');
         }
-        if (key === 'maghrib') renderSunnah(list, completed, 'maghrib_sunnah', 'Сунна после (2 ракаата)');
-        if (key === 'isha') renderSunnah(list, completed, 'isha_sunnah', 'Сунна после (2 ракаата)');
+        if (key === 'dhuhr') {
+          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) {
+            renderSunnah(list, completed, 'dhuhr_sunnah_before', 'Сунна до (4 ракаата)');
+          }
+          if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) {
+            const afterCount = isFriday ? 4 : 2;
+            renderSunnah(list, completed, 'dhuhr_sunnah_after', `Сунна после (${afterCount} ракаата)`);
+          }
+        }
+        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) {
+          renderSunnah(list, completed, 'maghrib_sunnah', 'Сунна после (2 ракаата)');
+        }
+        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) {
+          renderSunnah(list, completed, 'isha_sunnah', 'Сунна после (2 ракаата)');
+        }
       });
     };
 
@@ -304,6 +360,9 @@
         } else {
            document.getElementById('countdown').style.color = "var(--text)";
         }
+        
+        // Обновляем список (чтобы сунны появлялись/исчезали вовремя)
+        renderList(appData, appState.completed);
       };
       update();
       if (timerInterval) clearInterval(timerInterval);
@@ -344,7 +403,7 @@
         appData = await loadPrayerData();
         if (!appData || Object.keys(appData).length === 0) throw new Error('appData is empty');
         
-        // 🧹 АВТО-ОЧИСТКА: сбрасывает отметки, если время намаза ещё не пришло
+        // 🧹 АВТО-ОЧИСТКА
         const now = new Date();
         PRAYER_KEYS.forEach(key => {
           if (appData[key] && appState.completed[key]) {
@@ -352,7 +411,6 @@
             if (prayerTime > now) {
               delete appState.completed[key];
               delete appState.completed[key + '_at'];
-              console.log(`🧹 Авто-очистка: ${key} сброшен (время ещё не пришло)`);
             }
           }
         });

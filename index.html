@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
   <title>Осознанность • Трекер</title>
   <style>
-    :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --danger: #ef4444; --dhuha: #f59e0b; }
+    :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --danger: #ef4444; --dhuha: #f59e0b; --witr: #8b5cf6; }
     .light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; }
@@ -28,88 +28,49 @@
     .countdown { font-size: 3rem; font-weight: 800; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
     .btn { background: var(--accent); color: #0f172a; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1.1rem; }
     .btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.6; }
+    
+    /* Zikr Styles */
     .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.1); border-radius: 0.75rem; border: 2px dashed var(--accent); text-align: center; }
     .zikr-card.show { display: block; }
     .zikr-counter { font-size: 3rem; font-weight: 800; margin: 0.5rem 0; }
-    .zikr-text { font-size: 1.2rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; }
-    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.5rem; font-size: 1.5rem; font-weight: 800; }
+    .zikr-text { font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; min-height: 3em; }
+    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.2rem; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .btn-zikr-tap { width: 100%; }
+    .btn-zikr-done { background: var(--witr); color: #fff; font-size: 1rem; padding: 0.8rem; }
+    .btn-zikr.done { background: var(--muted); pointer-events: none; opacity: 0.5; }
+
     .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem; background: rgba(148,163,184,0.1); border-radius: 0.6rem; cursor: pointer; }
     .prayer-item.completed { opacity: 0.5; }
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
     .prayer-item.dhuha { background: rgba(245,158,11,0.15); border: 1px solid var(--dhuha); }
     .prayer-item.dhuha .prayer-name { color: var(--dhuha); }
+    .prayer-item.witr { background: rgba(139,92,246,0.15); border: 1px solid var(--witr); }
+    .prayer-item.witr .prayer-name { color: var(--witr); }
     .prayer-item.sunnah { padding-left: 2.5rem; background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
     
-    /* 🔔 МОДАЛЬНОЕ ОКНО ДУХИ */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 1rem;
-      backdrop-filter: blur(4px);
-    }
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
     .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-    .modal-card {
-      background: var(--card);
-      border-radius: 1.5rem;
-      padding: 2rem;
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      border: 2px solid var(--dhuha);
-      animation: slideUp 0.3s ease;
-    }
+    .modal-card { background: var(--card); border-radius: 1.5rem; padding: 2rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 2px solid var(--dhuha); animation: slideUp 0.3s ease; }
     .modal-icon { font-size: 4rem; margin-bottom: 1rem; }
     .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--dhuha); margin-bottom: 1rem; }
     .modal-text { font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; }
-    .modal-hadith {
-      background: rgba(245,158,11,0.1);
-      border-left: 3px solid var(--dhuha);
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      text-align: left;
-      border-radius: 0 0.5rem 0.5rem 0;
-    }
+    .modal-hadith { background: rgba(245,158,11,0.1); border-left: 3px solid var(--dhuha); padding: 1rem; margin-bottom: 1.5rem; text-align: left; border-radius: 0 0.5rem 0.5rem 0; }
     .modal-hadith p { font-style: italic; margin-bottom: 0.5rem; font-size: 0.95rem; }
     .modal-hadith cite { font-size: 0.8rem; color: var(--muted); font-style: normal; }
     .rakaat-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
-    .btn-rakaat {
-      background: rgba(245,158,11,0.2);
-      border: 2px solid var(--dhuha);
-      color: var(--text);
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 1rem;
-    }
+    .btn-rakaat { background: rgba(245,158,11,0.2); border: 2px solid var(--dhuha); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
     .btn-rakaat:hover { background: var(--dhuha); color: #0f172a; transform: translateY(-2px); }
     .btn-rakaat:active { transform: translateY(0); }
-    .btn-close {
-      background: transparent;
-      border: 2px solid var(--muted);
-      color: var(--muted);
-      padding: 0.75rem 2rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 0.5rem;
-    }
+    .btn-close { background: transparent; border: 2px solid var(--muted); color: var(--muted); padding: 0.75rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
     .btn-close:hover { border-color: var(--text); color: var(--text); }
-    
+
     .error-banner { background: rgba(239,68,68,0.15); border: 1px solid var(--danger); color: var(--danger); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
     .error-banner.show { display: block; }
     .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .toast.show { opacity: 1; }
-    
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
@@ -139,7 +100,8 @@
       <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem">Зикры после намаза</div>
       <div class="zikr-text" id="zikr-phrase">Нажми кнопку</div>
       <div class="zikr-counter" id="zikr-count">0</div>
-      <button id="zikr-btn" class="btn btn-zikr" onclick="handleZikr()">Тап</button>
+      <button id="zikr-btn" class="btn btn-zikr btn-zikr-tap" onclick="handleZikr()">Тап</button>
+      <button id="zikr-done-btn" class="btn btn-zikr btn-zikr-done" onclick="finishZikr()">✅ Я выполнил зикры</button>
     </div>
   </div>
 
@@ -148,28 +110,22 @@
     <div id="prayers-list" class="prayer-list"></div>
   </div>
 
-  <!-- 🔔 МОДАЛЬНОЕ ОКНО ДУХИ -->
+  <!-- Dhuha Modal -->
   <div id="dhuha-modal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-icon">🌤️</div>
       <div class="modal-title">Намаз Духа</div>
-      <div class="modal-text">
-        Сейчас лучшее время для совершения добровольного намаза Духа.<br><br>
-        <strong>Сколько ракаатов совершить?</strong>
-      </div>
-      
+      <div class="modal-text">Сейчас лучшее время для совершения добровольного намаза Духа.<br><br><strong>Сколько ракаатов совершить?</strong></div>
       <div class="modal-hadith">
         <p>«Пророк ﷺ сказал: «Каждое утро каждый сустав одного из вас должен дать садаку... И достаточно ему двух ракаатов Духа»»</p>
         <cite>📚 Муслим, 720</cite>
       </div>
-      
       <div class="rakaat-buttons">
         <button class="btn-rakaat" onclick="markDhuha(2)">2 ракаата</button>
         <button class="btn-rakaat" onclick="markDhuha(4)">4 ракаата</button>
         <button class="btn-rakaat" onclick="markDhuha(6)">6 ракаатов</button>
         <button class="btn-rakaat" onclick="markDhuha(8)">8 ракаатов</button>
       </div>
-      
       <button class="btn-close" onclick="closeDhuhaModal()">Понял, спасибо</button>
     </div>
   </div>
@@ -188,7 +144,8 @@
     let appData = null, appState = null, timerInterval = null;
     let zikrPhase = 0, zikrCount = 0;
     let dhuhaModalShown = false;
-    const ZIKR_PHRASES = ['СубханАллах', 'Альхамдулиллях', 'Аллаху Акбар'];
+    // 🔔 Обновленные фразы зикров (4-я фаза - Тахлиль)
+    const ZIKR_PHRASES = ['СубханАллах', 'Альхамдулиллях', 'Аллаху Акбар', 'Ля иляха илля Ллаху вахдаху...'];
 
     const showToast = (msg) => {
       const t = document.getElementById('toast');
@@ -213,7 +170,6 @@
           if (data && Date.now() - timestamp < 24 * 60 * 60 * 1000) return data;
         }
       } catch (e) { console.warn('Cache error:', e); }
-
       try {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 5000);
@@ -256,43 +212,29 @@
       return { current, next };
     };
 
-    // 🔔 ЛОГИКА ДУХИ
     const isDhuhaTime = (timings) => {
       const now = new Date();
       const currentMins = now.getHours() * 60 + now.getMinutes();
       const getMins = (k) => { if (!timings[k]) return 0; const [h, m] = timings[k].split(':').map(Number); return h * 60 + m; };
-      
       const sunriseMins = getMins('sunrise');
       const dhuhrMins = getMins('dhuhr');
-      
-      // Время Духи: от восхода + 30 мин до начала Зухра
       return currentMins >= (sunriseMins + 30) && currentMins < dhuhrMins;
     };
 
-    // Показать модальное окно Духи
+    // 🔔 МОДАЛЬНОЕ ОКНО ДУХИ
     const showDhuhaModal = () => {
       if (dhuhaModalShown || appState.completed.dhuha) return;
-      
       dhuhaModalShown = true;
       document.getElementById('dhuha-modal').classList.add('show');
-      
-      // Вибрация (если поддерживается)
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     };
-
-    // Закрыть модальное окно
-    window.closeDhuhaModal = function() {
-      document.getElementById('dhuha-modal').classList.remove('show');
-    };
-
-    // Отметить Духу
+    window.closeDhuhaModal = function() { document.getElementById('dhuha-modal').classList.remove('show'); };
     window.markDhuha = function(rakaats) {
       appState.completed.dhuha = true;
       appState.completed.dhuha_rakaats = rakaats;
       appState.completed.dhuha_at = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      
-      showToast(`✓ Духа (${rakaats} ракаатов)`);
+      showToast(`✓ Духа (${rakaats} р.)`);
       closeDhuhaModal();
       renderList(appData, appState.completed);
     };
@@ -319,11 +261,22 @@
       list.innerHTML = '';
       const isFriday = new Date().getDay() === 5;
 
-      // 🌤️ Рендер Духи (если отмечена)
       if (completed.dhuha) {
         const div = document.createElement('div');
         div.className = 'prayer-item dhuha completed';
         div.innerHTML = `<span class="prayer-name">🌤️ Духа (${completed.dhuha_rakaats || '?'} р.)</span><span>✓</span>`;
+        list.appendChild(div);
+      }
+
+      // 🔔 Рендер Витра (после Иша)
+      const ishaTime = timings.isha ? parseTime(timings.isha) : null;
+      const now = new Date();
+      if (ishaTime && now >= ishaTime) {
+        const div = document.createElement('div');
+        const isWitrDone = completed.witr;
+        div.className = `prayer-item witr ${isWitrDone ? 'completed' : ''}`;
+        div.innerHTML = `<span class="prayer-name">🌙 Витр (3 ракаата)</span><span style="font-family:monospace">${isWitrDone ? '✓' : timings.isha + ' — Фаджр'}</span>`;
+        div.onclick = () => toggleWitr();
         list.appendChild(div);
       }
 
@@ -344,6 +297,16 @@
       });
     };
 
+    // 🔔 Витр Логика
+    window.toggleWitr = function() {
+      if (appState.completed.witr) return showToast('Уже отмечено ✓');
+      appState.completed.witr = true;
+      appState.completed.witr_at = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      showToast('✓ Витр');
+      renderList(appData, appState.completed);
+    };
+
     const addSunnah = (container, key, label, completed) => {
       const div = document.createElement('div');
       div.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
@@ -361,21 +324,41 @@
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
+    // 🔔 ЗИКРЫ (ИСПРАВЛЕННЫЕ)
     window.handleZikr = function() {
-      if (zikrPhase >= 3) return;
+      if (zikrPhase >= 4) return; // 4 фазы (0,1,2,3)
       zikrCount++;
       if (zikrCount > 33) { zikrCount = 1; zikrPhase++; }
       if (navigator.vibrate) navigator.vibrate(50);
-      if (zikrPhase < 3) {
-        document.getElementById('zikr-phrase').textContent = ZIKR_PHRASES[zikrPhase];
-        document.getElementById('zikr-count').textContent = `${zikrCount} / 33`;
-        document.getElementById('zikr-btn').textContent = `${ZIKR_PHRASES[zikrPhase]} (${zikrCount})`;
+      updateZikrUI();
+    };
+
+    window.finishZikr = function() {
+      // Сброс зикра и завершение
+      zikrPhase = 4;
+      zikrCount = 0;
+      updateZikrUI();
+      showToast('✓ Зикры завершены');
+    };
+
+    const updateZikrUI = () => {
+      const phraseEl = document.getElementById('zikr-phrase');
+      const countEl = document.getElementById('zikr-count');
+      const btnEl = document.getElementById('zikr-btn');
+      const doneBtnEl = document.getElementById('zikr-done-btn');
+
+      if (zikrPhase < 4) {
+        phraseEl.textContent = ZIKR_PHRASES[zikrPhase];
+        countEl.textContent = `${zikrCount} / 33`;
+        btnEl.textContent = `${ZIKR_PHRASES[zikrPhase]} (${zikrCount})`;
+        btnEl.classList.remove('done');
+        doneBtnEl.style.display = 'block'; // Показываем кнопку "Выполнил"
       } else {
-        document.getElementById('zikr-phrase').textContent = '✓ Завершено';
-        document.getElementById('zikr-count').textContent = '✓';
-        document.getElementById('zikr-btn').textContent = 'Да примет Аллах';
-        document.getElementById('zikr-btn').disabled = true;
-        showToast('✓ Зикры');
+        phraseEl.textContent = '✓ Завершено';
+        countEl.textContent = '✓';
+        btnEl.textContent = 'Да примет Аллах';
+        btnEl.classList.add('done');
+        doneBtnEl.style.display = 'none'; // Скрываем кнопку
       }
     };
 
@@ -390,7 +373,7 @@
       renderList(appData, appState.completed);
       document.getElementById('zikr-card').classList.add('show');
       zikrPhase = 0; zikrCount = 0;
-      document.getElementById('zikr-btn').disabled = false;
+      updateZikrUI();
       startTimer();
     };
 
@@ -406,10 +389,7 @@
         btn.disabled = done;
         btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
         
-        // 🔔 Проверяем время для Духи каждую минуту
-        if (isDhuhaTime(appData)) {
-          showDhuhaModal();
-        }
+        if (isDhuhaTime(appData)) showDhuhaModal();
       };
       update();
       if (timerInterval) clearInterval(timerInterval);

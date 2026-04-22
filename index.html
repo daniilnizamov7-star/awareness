@@ -8,46 +8,56 @@
   <link rel="manifest" href="manifest.json" />
   <style>
     :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --warning: #f59e0b; --danger: #ef4444; }
+    .light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-    .card { background: var(--card); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); }
-    .header { text-align: center; padding: 0.5rem 0 1rem; }
-    .header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; transition: background 0.3s, color 0.3s; }
+    .card { background: var(--card); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid rgba(148,163,184,0.1); }
+    .header { text-align: center; padding: 0.5rem 0 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; }
     .header p { color: var(--muted); font-size: 0.875rem; }
+    .theme-btn { background: var(--card); border: 1px solid var(--muted); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
     .timer-card { text-align: center; }
-    .status-label { font-size: 0.875rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
-    .current-prayer { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(148,163,184,0.1); }
-    .current-prayer .name { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
+    .status-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
+    .current-prayer { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(148,163,184,0.15); }
+    .current-prayer .name { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
     .current-prayer .time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
-    .countdown { font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
-    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1rem; }
-    .btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.7; }
-    .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.05); border-radius: 0.75rem; border: 1px dashed var(--accent); text-align: center; }
-    .zikr-card.show { display: block; }
-    .zikr-counter { font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0; }
+    .countdown { font-size: 2.8rem; font-weight: 800; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 0.85rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1.05rem; transition: transform 0.1s, opacity 0.2s; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background: var(--muted); color: var(--bg); cursor: not-allowed; opacity: 0.6; }
+    .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.08); border-radius: 0.75rem; border: 1px dashed var(--accent); text-align: center; }
+    .zikr-card.show { display: block; animation: fadeIn 0.2s ease; }
+    .zikr-counter { font-size: 2.2rem; font-weight: 800; margin: 0.5rem 0; }
     .zikr-text { font-size: 1.1rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; }
-    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.5rem; border-radius: 1rem; font-size: 1.5rem; width: 100%; font-weight: 800; }
+    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1.2rem; border-radius: 1rem; font-size: 1.4rem; width: 100%; font-weight: 800; }
+    .btn-zikr.done { background: var(--muted); color: var(--bg); pointer-events: none; }
     .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(148,163,184,0.05); border-radius: 0.5rem; cursor: pointer; }
-    .prayer-item.completed { opacity: 0.6; }
+    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: rgba(148,163,184,0.08); border-radius: 0.6rem; cursor: pointer; transition: background 0.2s; }
+    .prayer-item.completed { opacity: 0.5; }
     .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
-    .prayer-item.sunnah { padding-left: 2.5rem; opacity: 0.85; font-size: 0.9rem; background: rgba(16,185,129,0.05); }
+    .prayer-name { font-weight: 500; }
+    .prayer-time { color: var(--muted); font-family: monospace; font-size: 0.9rem; }
+    .prayer-item.sunnah { padding-left: 2.2rem; opacity: 0.9; font-size: 0.9rem; background: rgba(16,185,129,0.05); border-left: 2px solid var(--accent); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
-    .error-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
+    .error-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: var(--danger); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; font-size: 0.9rem; }
     .error-banner.show { display: block; }
-    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--card); padding: 0.75rem 1.5rem; border-radius: 2rem; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .toast.show { opacity: 1; }
+    .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: all 0.3s; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>🌙 Осознанность</h1>
-    <p>Челябинск • <span id="date">—</span></p>
+  <div class="header">    <div>
+      <h1>🌙 Осознанность</h1>
+      <p>Челябинск • <span id="date">—</span></p>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" aria-label="Сменить тему">🌙</button>
   </div>
 
   <div id="error-banner" class="error-banner">⚠️ Ошибка загрузки. Используются резервные данные.</div>
 
-  <div class="card timer-card">    <div class="status-label">Текущий период</div>
+  <div class="card timer-card">
+    <div class="status-label">Текущий период</div>
     <div class="current-prayer">
       <div class="name" id="current-name">Загрузка…</div>
       <div class="time" id="current-time-info">—</div>
@@ -72,6 +82,7 @@
   <div id="toast" class="toast">✓</div>
 
   <script>
+    // === CONFIG ===
     const PRAYER_DATA_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
@@ -83,129 +94,92 @@
     let zikrPhase = 0, zikrCount = 0;
     const zikrPhrases = ['СубханАллах', 'Альхамдулиллях', 'Аллаху Акбар'];
 
+    // === UTILS ===
     const showToast = (msg) => {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.classList.add('show');
+      const t = document.getElementById('toast');      t.textContent = msg; t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 2000);
     };
 
-    const getTodayDateStr = () => {
-      const d = new Date();
-      return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
+    const toggleTheme = () => {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      document.querySelector('.theme-btn').textContent = isLight ? '🌞' : '🌙';
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', isLight ? '#f8fafc' : '#0f172a');
     };
 
-    // 🔧 НАДЕЖНЫЙ FALLBACK
-    const getFallbackData = () => {
-      console.log('🆘 Using fallback data');      return {
-        fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", 
-        asr: "17:03", maghrib: "20:12", isha: "21:50"
-      };
-    };
+    const getTodayDateStr = () => `${new Date().getDate()} ${MONTHS_RU[new Date().getMonth()]}`;
+    const getFallbackData = () => ({ fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" });
 
+    // === DATA LOADER ===
     const loadPrayerData = async () => {
-      // 1. Сначала пробуем кэш
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
           const { data } = JSON.parse(cached);
-          if (data && Object.keys(data).length > 3) {
-            console.log('✅ Loaded from cache');
-            return data;
-          }
+          if (data && Object.keys(data).length > 3) return data;
         }
-      } catch (e) { console.warn('Cache error:', e); }
-
-      // 2. Пробуем сеть
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const res = await fetch(PRAYER_DATA_URL, { 
-          cache: 'no-store',
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        
+        const res = await fetch(PRAYER_DATA_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Network');
         const json = await res.json();
         const todayStr = getTodayDateStr();
         const entry = json.schedule?.find(item => item.date === todayStr);
-        
         if (entry) {
           const timings = {};
           PRAYER_KEYS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
-          
           if (Object.keys(timings).length >= 4) {
             localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
-            console.log('✅ Loaded from network');
             return timings;
           }
         }
-        throw new Error('Invalid data');
+        throw new Error('Invalid');
       } catch (e) {
         console.warn('⚠️ Network failed:', e.message);
-        document.getElementById('error-banner').classList.add('show');      }
-
-      // 3. Возвращаем fallback
-      return getFallbackData();
+        document.getElementById('error-banner').classList.add('show');
+        return getFallbackData();
+      }
     };
 
+    // === TIME LOGIC ===
     const parseTimeToday = (timeStr) => {
       if (!timeStr || typeof timeStr !== 'string') return new Date();
       const [h, m] = timeStr.split(':').map(Number);
-      const d = new Date();
-      d.setHours(h, m, 0, 0);
-      return d;
+      const d = new Date(); d.setHours(h, m, 0, 0); return d;
     };
-
     const findPrayerContext = (timings) => {
       const now = new Date();
       let current = null, next = null;
-      
       for (const key of PRAYER_KEYS) {
         if (!timings[key]) continue;
         const timeObj = parseTimeToday(timings[key]);
         if (timeObj <= now) current = { name: key, time: timeObj };
         else if (!next) { next = { name: key, time: timeObj }; break; }
       }
-      
-      if (!next && current) {
-        next = { name: 'fajr', time: parseTimeToday(timings.fajr) };
-        next.time.setDate(next.time.getDate() + 1);
-      }
-      if (!current) {
-        current = { name: 'isha', time: parseTimeToday(timings.isha) };
-        current.time.setDate(current.time.getDate() - 1);
-      }
-      
+      if (!next && current) { next = { name: 'fajr', time: parseTimeToday(timings.fajr) }; next.time.setDate(next.time.getDate() + 1); }
+      if (!current) { current = { name: 'isha', time: parseTimeToday(timings.isha) }; current.time.setDate(current.time.getDate() - 1); }
       return { current, next };
     };
 
     const formatDuration = (ms) => {
       if (ms < 0) return "00:00:00";
-      const h = Math.floor(ms / 3600000);
-      const m = Math.floor((ms % 3600000) / 60000);
-      const s = Math.floor((ms % 60000) / 1000);
+      const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
 
     const shouldShowSunnah = (key, timings, completed) => {
-      const now = new Date();
-      const mins = now.getHours() * 60 + now.getMinutes();
-      const getMins = (k) => {
-        if (!timings[k]) return 0;        const [h, m] = timings[k].split(':').map(Number);
-        return h * 60 + m;
-      };
+      const mins = new Date().getHours() * 60 + new Date().getMinutes();
+      const getMins = (k) => { if (!timings[k]) return 0; const [h, m] = timings[k].split(':').map(Number); return h * 60 + m; };
       
       if (key === 'fajr_sunnah') return mins >= getMins('fajr') && mins < getMins('sunrise');
       if (key === 'dhuhr_sunnah_before') return mins >= getMins('dhuhr') && mins < getMins('asr');
+      // 🔧 ИСПРАВЛЕНО: Сунна после Зухра появляется ПОСЛЕ отметки фарда
       if (key === 'dhuhr_sunnah_after') return completed.dhuhr && mins >= getMins('dhuhr');
       if (key === 'maghrib_sunnah') return completed.maghrib && mins >= getMins('maghrib');
       if (key === 'isha_sunnah') return completed.isha && mins >= getMins('isha');
       return false;
     };
 
+    // === RENDER ===
     const renderList = (timings, completed) => {
       const list = document.getElementById('prayers-list');
       list.innerHTML = '';
@@ -216,47 +190,28 @@
         
         const div = document.createElement('div');
         div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
-        div.innerHTML = `<span>${NAMES_RU[key]}</span><span style="font-family:monospace">${timings[key]}</span>`;
+        div.innerHTML = `<span class="prayer-name">${NAMES_RU[key]}</span><span class="prayer-time">${timings[key]}</span>`;
         list.appendChild(div);
 
-        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) {
-          const s = document.createElement('div');
-          s.className = `prayer-item sunnah ${completed.fajr_sunnah ? 'completed' : ''}`;
-          s.innerHTML = `<span>🌿 Сунна до (2)</span><span>${completed.fajr_sunnah ? '✓' : ''}</span>`;
-          s.onclick = (e) => { e.stopPropagation(); toggleSunnah('fajr_sunnah'); };
-          list.appendChild(s);
-        }
-        if (key === 'dhuhr') {
-          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) {
-            const s = document.createElement('div');
-            s.className = `prayer-item sunnah ${completed.dhuhr_sunnah_before ? 'completed' : ''}`;
-            s.innerHTML = `<span>🌿 Сунна до (4)</span><span>${completed.dhuhr_sunnah_before ? '✓' : ''}</span>`;
-            s.onclick = (e) => { e.stopPropagation(); toggleSunnah('dhuhr_sunnah_before'); };
-            list.appendChild(s);
-          }
+        // Сунны
+        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) addSunnah(list, 'fajr_sunnah', 'Сунна до (2)', completed);        if (key === 'dhuhr') {
+          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) addSunnah(list, 'dhuhr_sunnah_before', 'Сунна до (4)', completed);
           if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) {
             const cnt = isFriday ? 4 : 2;
-            const s = document.createElement('div');
-            s.className = `prayer-item sunnah ${completed.dhuhr_sunnah_after ? 'completed' : ''}`;
-            s.innerHTML = `<span>🌿 Сунна после (${cnt})</span><span>${completed.dhuhr_sunnah_after ? '✓' : ''}</span>`;
-            s.onclick = (e) => { e.stopPropagation(); toggleSunnah('dhuhr_sunnah_after'); };
-            list.appendChild(s);
+            addSunnah(list, 'dhuhr_sunnah_after', `Сунна после (${cnt})`, completed);
           }
         }
-        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) {          const s = document.createElement('div');
-          s.className = `prayer-item sunnah ${completed.maghrib_sunnah ? 'completed' : ''}`;
-          s.innerHTML = `<span>🌿 Сунна после (2)</span><span>${completed.maghrib_sunnah ? '✓' : ''}</span>`;
-          s.onclick = (e) => { e.stopPropagation(); toggleSunnah('maghrib_sunnah'); };
-          list.appendChild(s);
-        }
-        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) {
-          const s = document.createElement('div');
-          s.className = `prayer-item sunnah ${completed.isha_sunnah ? 'completed' : ''}`;
-          s.innerHTML = `<span>🌿 Сунна после (2)</span><span>${completed.isha_sunnah ? '✓' : ''}</span>`;
-          s.onclick = (e) => { e.stopPropagation(); toggleSunnah('isha_sunnah'); };
-          list.appendChild(s);
-        }
+        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) addSunnah(list, 'maghrib_sunnah', 'Сунна после (2)', completed);
+        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);
       });
+    };
+
+    const addSunnah = (container, key, label, completed) => {
+      const s = document.createElement('div');
+      s.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
+      s.innerHTML = `<span class="prayer-name">${label}</span><span>${completed[key] ? '✓' : '—'}</span>`;
+      s.onclick = (e) => { e.stopPropagation(); toggleSunnah(key); };
+      container.appendChild(s);
     };
 
     const toggleSunnah = (key) => {
@@ -268,11 +223,12 @@
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
+    // === ZIKR ===
     window.handleZikr = function() {
       if (zikrPhase >= 3) return;
       zikrCount++;
       if (zikrCount > 33) { zikrCount = 1; zikrPhase++; }
-      if (navigator.vibrate) navigator.vibrate(30);
+      if (navigator.vibrate) navigator.vibrate(40);
       
       if (zikrPhase < 3) {
         document.getElementById('zikr-phrase').textContent = zikrPhrases[zikrPhase];
@@ -282,17 +238,19 @@
         document.getElementById('zikr-phrase').textContent = '✓ Завершено';
         document.getElementById('zikr-count').textContent = '✓';
         document.getElementById('zikr-btn').textContent = 'Да примет Аллах';
+        document.getElementById('zikr-btn').classList.add('done');
         showToast('✓ Зикры завершены');
       }
     };
 
-    const startTimer = () => {
+    // === MAIN LOOP ===    const startTimer = () => {
       if (!appData) return;
       const update = () => {
         const { current, next } = findPrayerContext(appData);
         document.getElementById('current-name').textContent = NAMES_RU[current.name];
         document.getElementById('current-time-info').textContent = `с ${appData[current.name]}`;
-        document.getElementById('countdown').textContent = formatDuration(next.time - new Date());        
+        document.getElementById('countdown').textContent = formatDuration(next.time - new Date());
+        
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
         btn.disabled = done;
@@ -313,14 +271,18 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       showToast(`✓ ${NAMES_RU[current.name]}`);
-      renderList(appData, appState.completed);
+      renderList(appData, appState.completed); // 🔧 Мгновенное обновление списка
       document.getElementById('zikr-card').classList.add('show');
-      startTimer();
+      startTimer(); 
     };
 
+    // === INIT ===
     const init = async () => {
-      document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      // Theme restore
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      if (savedTheme === 'light') toggleTheme();
       
+      document.getElementById('date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         appState = saved ? JSON.parse(saved) : { completed: {} };
@@ -331,7 +293,6 @@
       startTimer();
       setInterval(() => renderList(appData, appState.completed), 30000);
     };
-
     document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>

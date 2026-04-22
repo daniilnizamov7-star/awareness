@@ -2,11 +2,15 @@
 const PRAYER_DATA_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
 const STORAGE_KEY = 'prayer_tracker_v1';
 const CACHE_KEY = 'prayer_cache_v1';
-const PRAYER_ORDER = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+// Порядок намазов (sunrise исключаем из молитв)
+const PRAYER_KEYS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const NAMES_RU = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
 
+// Русские месяцы для парсинга даты
+const MONTHS_RU = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+
 // === UTILS ===
-const sanitize = (str) => String(str || '').replace(/[<>]/g, '').trim();
 const showToast = (msg) => {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -16,127 +20,97 @@ const showError = (show) => {
   document.getElementById('error-banner').classList.toggle('show', show);
 };
 
-// === DEBUG: Показать, что реально приходит ===
-const debugFetch = async () => {
-  try {
-    const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
-    const text = await res.text();
-    console.log('🔍 RAW RESPONSE (' + res.status + '):', text.substring(0, 800));
-    try {
-      const json = JSON.parse(text);
-      console.log('🔍 PARSED TYPE:', Array.isArray(json) ? 'ARRAY' : typeof json, 'KEYS:', Object.keys(json).slice(0,10));
-    } catch(e) { console.log('🔍 NOT JSON'); }
-  } catch(e) { console.log('🔍 FETCH ERROR:', e.message); }
+// === ФОРМАТ ДАТЫ: "18 апр" ===
+const getTodayDateStr = () => {
+  const d = new Date();
+  return `${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
 };
-// Раскомментируй для отладки: 
-// debugFetch();
 
-// === DATA: Универсальный парсер ===
+// === РЕЗЕРВНЫЕ ДАННЫЕ (Челябинск) ===
 const getFallbackData = () => ({
   fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50"
 });
 
-const parseTodayFromSchedule = (schedule) => {
-  // Ищем запись на сегодня. Формат даты в файле может быть "27 мая" или "2026-04-22"
-  const today = new Date();
-  const todayStr1 = today.getDate() + ' ' + ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][today.getMonth()];
-  const todayStr2 = today.toISOString().split('T')[0];
-  
-  const entry = schedule.find(item => 
-    item.date === todayStr1 || item.date === todayStr2 || item.date?.includes(String(today.getDate()))
-  );
-  
-  if (!entry) {
-    console.warn('⚠️ Не найдена запись на сегодня в расписании. Беру первую.');
-    return schedule[0];
+// === ПАРСИНГ: из твоего JSON в плоский объект с таймингами ===
+const parsePrayerData = (json) => {
+  try {
+    // Твоя структура: { monthName: "...", schedule: [ { date: "18 апр", fajr: "...", ... }, ... ] }
+    if (!json?.schedule || !Array.isArray(json.schedule)) {
+      console.warn('⚠️ Нет массива schedule в данных');
+      return null;
+    }
+    
+    const todayStr = getTodayDateStr(); // "22 апр"
+    console.log('🔍 Ищу дату:', todayStr);
+    
+    // Ищем запись на сегодня
+    const todayEntry = json.schedule.find(item => item.date === todayStr);
+    
+    if (!todayEntry) {
+      console.warn(`⚠️ Не найдена запись на "${todayStr}". Доступные даты:`, json.schedule.slice(0,5).map(i=>i.date));
+      // Берем первую запись как фоллбэк
+      return extractTimings(json.schedule[0]);
+    }
+    
+    console.log('✅ Найдена запись:', todayEntry.date);
+    return extractTimings(todayEntry);
+    
+  } catch (e) {
+    console.error('❌ Ошибка парсинга:', e);
+    return null;
   }
-  return entry;
 };
 
-const extractTimings = (raw) => {
-  // Формат 1: { timings: { Fajr: "..." } }
-  if (raw?.timings && typeof raw.timings === 'object') return raw.timings;
+// === Извлечение таймингов из записи ===
+const extractTimings = (entry) => {
+  if (!entry) return null;
+  const result = {};
   
-  // Формат 2: Плоский объект { Fajr: "03:48", ... }
-  if (raw && typeof raw === 'object' && !Array.isArray(raw) && raw['Fajr'] || raw['fajr']) return raw;
-  
-  // Формат 3: Массив расписания [{ date: "...", fajr: "..." }]
-  if (Array.isArray(raw) && raw.length > 0) {
-    const todayEntry = parseTodayFromSchedule(raw);
-    if (todayEntry) {
-      // Конвертируем ключи в нижний регистр и маппим возможные названия
-      const map = { Fajr: 'fajr', Sunrise: 'sunrise', Dhuhr: 'dhuhr', Asr: 'asr', Maghrib: 'maghrib', Isha: 'isha' };
-      const result = {};
-      for (const [key, val] of Object.entries(todayEntry)) {
-        const lower = key.toLowerCase();
-        // Если ключ уже намаз — берем
-        if (PRAYER_ORDER.includes(lower)) result[lower] = val;
-        // Если ключ в маппинге — конвертируем
-        else if (map[key] && val) result[map[key]] = val;
-      }
-      if (Object.keys(result).length >= 3) return result; // минимум 3 намаза = валидно
+  for (const key of PRAYER_KEYS) {
+    if (entry[key]) {
+      result[key] = entry[key];
     }
   }
   
-  // Формат 4: Объект, где ключи — даты { "27 мая": { fajr: "..." } }
-  if (typeof raw === 'object' && !Array.isArray(raw)) {
-    const today = new Date().getDate() + ' ' + ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][new Date().getMonth()];
-    if (raw[today] && typeof raw[today] === 'object') return raw[today];
+  // Проверка: минимум 4 намаза должны быть
+  if (Object.keys(result).length < 4) {
+    console.warn('⚠️ Слишком мало таймингов:', result);
+    return null;
   }
   
-  return null;
+  return result;
 };
 
-const normalizeData = (raw) => {
-  const timings = extractTimings(raw);
-  if (!timings) {
-    console.warn('⚠️ Не удалось извлечь timings, структура:', raw);
-    return getFallbackData();
-  }
-  
-  const normalized = {};
-  for (const [key, val] of Object.entries(timings)) {
-    const k = key.toLowerCase();
-    // Поддержка разных написаний
-    if (PRAYER_ORDER.includes(k)) normalized[k] = val;
-    else if (k === 'fagr') normalized['fajr'] = val; // опечатки
-    else if (k === 'zuhr') normalized['dhuhr'] = val;
-  }
-  
-  // Проверка: есть ли хотя бы 3 намаза
-  const count = PRAYER_ORDER.filter(k => normalized[k]).length;
-  if (count < 3) {
-    console.warn('⚠️ Слишком мало намазов найдено (' + count + '), использую фоллбэк');
-    return getFallbackData();
-  }
-  
-  console.log('✅ Нормализовано:', normalized);
-  return normalized;
-};
-
+// === ЗАГРУЗКА ДАННЫХ ===
 const loadPrayerData = async () => {
-  // 1. Кэш (быстрый путь)
+  // 1. Пробуем кэш (быстро)
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       const { data, timestamp } = JSON.parse(cached);
       if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
         console.log('✅ Данные из кэша');
-        return normalizeData(data);
+        return data;
       }
     }
   } catch (e) { console.warn('Cache read error', e); }
 
-  // 2. Сеть
+  // 2. Загрузка с сервера
   try {
-    console.log('🔄 Загрузка с ' + PRAYER_DATA_URL);
+    console.log('🔄 Загрузка с GitHub...');
     const res = await fetch(PRAYER_DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
     
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: json, timestamp: Date.now() }));
-    console.log('✅ Данные обновлены');
-    return normalizeData(json);
+    const json = await res.json();
+    const timings = parsePrayerData(json);
+    
+    if (!timings) throw new Error('Не удалось распарсить данные');
+    
+    // Кэшируем результат
+    localStorage.setItem(CACHE_KEY, JSON.stringify({  timings, timestamp: Date.now() }));
+    console.log('✅ Данные обновлены:', timings);
+    return timings;
+    
   } catch (e) {
     console.warn('⚠️ Ошибка загрузки:', e.message);
     showError(true);
@@ -144,12 +118,17 @@ const loadPrayerData = async () => {
     // 3. Старый кэш
     const old = localStorage.getItem(CACHE_KEY);
     if (old) {
-      console.log('♻️ Старый кэш');
-      return normalizeData(JSON.parse(old).data);
+      try {
+        const parsed = JSON.parse(old);
+        if (parsed.data) {
+          console.log('♻️ Данные из старого кэша');
+          return parsed.data;
+        }
+      } catch {}
     }
     
     // 4. Фоллбэк
-    console.log('🆘 Резервные данные');
+    console.log('🆘 Используем резервные данные');
     return getFallbackData();
   }
 };

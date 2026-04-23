@@ -47,8 +47,7 @@
     .prayer-item.dhuha { background: rgba(245,158,11,0.15); border: 1px solid var(--dhuha); }
     .prayer-item.dhuha .prayer-name { color: var(--dhuha); }
     .prayer-item.witr { background: rgba(139,92,246,0.15); border: 1px solid var(--witr); }
-    .prayer-item.witr .prayer-name { color: var(--witr); }
-    .prayer-item.tahajjud { background: rgba(167,139,250,0.15); border: 1px solid var(--tahajjud); }
+    .prayer-item.witr .prayer-name { color: var(--witr); }    .prayer-item.tahajjud { background: rgba(167,139,250,0.15); border: 1px solid var(--tahajjud); }
     .prayer-item.tahajjud .prayer-name { color: var(--tahajjud); }
     .prayer-item.sunnah { padding-left: 2.5rem; background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent); }
     .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
@@ -75,7 +74,6 @@
     .btn-rakaat-tahajjud { border-color: var(--tahajjud); background: rgba(167,139,250,0.2); }
     .btn-rakaat-tahajjud:hover { background: var(--tahajjud); color: #fff; }
 
-    /* 📖 DUA COLLECTION STYLES */
     .dua-list-item { background: rgba(148,163,184,0.08); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; text-align: left; position: relative; }
     .dua-list-item h4 { font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--accent); }
     .dua-list-item p { font-size: 0.85rem; color: var(--text); white-space: pre-wrap; margin-bottom: 0.5rem; }
@@ -98,8 +96,7 @@
     .qibla-arrow { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 3px; height: 32px; background: linear-gradient(to top, var(--accent), transparent); border-radius: 2px; }
     .qibla-arrow::after { content: '🕋'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; }
     .compass-status { font-size: 0.85rem; color: var(--muted); min-height: 1.5rem; margin-bottom: 0.5rem; }
-    .btn-compass { background: #3b82f6; color: #fff; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; width: 100%; margin: 0.5rem 0; border: none; font-size: 1rem; }
-    .btn-compass:disabled { background: var(--muted); cursor: not-allowed; }
+    .btn-compass { background: #3b82f6; color: #fff; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; width: 100%; margin: 0.5rem 0; border: none; font-size: 1rem; }    .btn-compass:disabled { background: var(--muted); cursor: not-allowed; }
     .compass-note { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
     .compass-warning { font-size: 0.75rem; color: var(--warning); margin-top: 0.25rem; font-weight: 500; }
 
@@ -148,7 +145,6 @@
     </div>
     <div style="font-size: 2.5rem;">✨</div>
   </div>
-
   <div class="card timer-card">
     <div class="status-label">Текущий период</div>
     <div class="current-prayer">
@@ -198,9 +194,7 @@
     <div id="prayers-list" class="prayer-list"></div>
   </div>
 
-  <!-- 📖 DUA COLLECTION BUTTON -->
   <button class="btn btn-outline" onclick="openDuaModal()" style="width: 100%; margin-bottom: 1rem;">📖 Мои дуа и азкары</button>
-
   <div class="footer-warning">
     <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
@@ -247,10 +241,9 @@
     </div>
   </div>
 
-  <!-- 📖 DUA COLLECTION MODAL -->
+  <!-- Dua Collection Modal -->
   <div id="dua-modal" class="modal-overlay">
-    <div class="modal-card" style="border-color: var(--accent); text-align: left; max-height: 80vh; display: flex; flex-direction: column;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div class="modal-card" style="border-color: var(--accent); text-align: left; max-height: 80vh; display: flex; flex-direction: column;">      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
         <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">📖 Мои дуа и азкары</h3>
         <button onclick="closeDuaModal()" style="background: transparent; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
       </div>
@@ -299,8 +292,7 @@
     const toggleTheme = () => {
       document.documentElement.classList.toggle('light-mode');
       const isLight = document.documentElement.classList.contains('light-mode');
-      document.querySelector('.theme-btn').textContent = isLight ? '🌞' : '🌙';
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      document.querySelector('.theme-btn').textContent = isLight ? '🌞' : '🌙';      localStorage.setItem('theme', isLight ? 'light' : 'dark');
     };
 
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
@@ -349,8 +341,7 @@
             }));
             return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
           }
-        }
-        throw new Error('Invalid');
+        }        throw new Error('Invalid');
       } catch (e) {
         document.getElementById('error-banner').classList.add('show');
         return { timings: FALLBACK, hijriDay: '—', hijriMonth: '—' };
@@ -367,12 +358,22 @@
     const findCurrentNext = (timings) => {
       const now = new Date();
       let current = null, next = null;
+      
       for (const key of PRAYERS) {
         if (!timings[key]) continue;
         const time = parseTime(timings[key]);
         if (time <= now) current = { name: key, time };
         else if (!next) { next = { name: key, time }; break; }
       }
+      
+      // 🔧 ИСПРАВЛЕНИЕ 1: После Фаджра следующий - Восход
+      if (current && current.name === 'fajr') {
+        if (timings.sunrise) {
+          next = { name: 'sunrise', time: parseTime(timings.sunrise) };
+        }
+      }
+      
+      // Если все намазы прошли - следующий Фаджр завтра
       if (!next && current) {
         try {
           const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
@@ -389,8 +390,8 @@
         } catch {
           next = { name: 'fajr', time: parseTime(timings.fajr) };
           next.time.setDate(next.time.getDate() + 1);
-        }
-      }
+        }      }
+      
       if (!current) {
         current = { name: 'isha', time: parseTime(timings.isha) };
         current.time.setDate(current.time.getDate() - 1);
@@ -438,8 +439,7 @@
 
     window.openDuaModal = () => {
       renderDuas();
-      document.getElementById('dua-modal').classList.add('show');
-    };
+      document.getElementById('dua-modal').classList.add('show');    };
     window.closeDuaModal = () => document.getElementById('dua-modal').classList.remove('show');
 
     const renderDuas = () => {
@@ -488,7 +488,6 @@
       const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     };
-
     const shouldShowSunnah = (key, timings, completed) => {
       const mins = new Date().getHours() * 60 + new Date().getMinutes();
       const getMins = (k) => { if (!timings[k]) return 0; const [h, m] = timings[k].split(':').map(Number); return h * 60 + m; };
@@ -538,8 +537,7 @@
           if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) addSunnah(list, 'dhuhr_sunnah_after', `Сунна после (${isFriday ? 4 : 2})`, completed);
         }
         if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) addSunnah(list, 'maghrib_sunnah', 'Сунна после (2)', completed);
-        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);
-      });
+        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);      });
     };
 
     window.toggleWitr = () => {
@@ -566,31 +564,83 @@
 
     // === ZIKR ===
     window.handleZikr = () => {
+      // 🔧 ИСПРАВЛЕНИЕ 2: Кнопка "Тап" считает до лимита и переходит к следующему этапу
       if (zikrPhase >= 7) return;
       const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
+      
       zikrCount++;
-      if (zikrCount > limit) { zikrCount = 1; zikrPhase++; }
+      if (zikrCount > limit) {
+        zikrPhase++;
+        zikrCount = 1;
+      }
+      
       if (navigator.vibrate) navigator.vibrate(50);
       updateZikrUI();
     };
 
     window.finishZikr = () => {
-      zikrPhase = 7; zikrCount = 0; updateZikrUI(); showToast('✓ Зикры завершены');
+      // 🔧 ИСПРАВЛЕНИЕ 3: Кнопка "Я выполнил" переходит к следующему этапу
+      if (zikrPhase < 7) {
+        zikrPhase++;
+        zikrCount = 1;
+        updateZikrUI();
+        showToast(`✓ Переход к следующему зикру`);
+      } else {
+        zikrPhase = 7; zikrCount = 0;        updateZikrUI();
+        showToast('✓ Все зикры завершены');
+      }
     };
 
     const updateZikrUI = () => {
-      const p = document.getElementById('zikr-phrase'), c = document.getElementById('zikr-count'), b = document.getElementById('zikr-btn'), d = document.getElementById('zikr-done-btn');
-      if (zikrPhase === 0) { p.textContent = "СубханАллах"; c.textContent = `${zikrCount} / 33`; b.textContent = `СубханАллах (${zikrCount})`; }
-      else if (zikrPhase === 1) { p.textContent = "Альхамдулиллях"; c.textContent = `${zikrCount} / 33`; b.textContent = `Альхамдулиллях (${zikrCount})`; }
-      else if (zikrPhase === 2) { p.textContent = "Аллаху Акбар"; c.textContent = `${zikrCount} / 33`; b.textContent = `Аллаху Акбар (${zikrCount})`; }
+      const p = document.getElementById('zikr-phrase'), 
+            c = document.getElementById('zikr-count'), 
+            b = document.getElementById('zikr-btn'), 
+            d = document.getElementById('zikr-done-btn');
+      
+      const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
+      
+      if (zikrPhase === 0) { 
+        p.textContent = "СубханАллах"; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `СубханАллах (${zikrCount}/${limit})`; 
+      }
+      else if (zikrPhase === 1) { 
+        p.textContent = "Альхамдулиллях"; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `Альхамдулиллях (${zikrCount}/${limit})`; 
+      }
+      else if (zikrPhase === 2) { 
+        p.textContent = "Аллаху Акбар"; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `Аллаху Акбар (${zikrCount}/${limit})`; 
+      }
       else if (zikrPhase === 3) {
         const isFM = (zikrPrayerName === 'fajr' || zikrPrayerName === 'maghrib');
-        p.textContent = isFM ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA; c.textContent = `${zikrCount} / 10`; b.textContent = `Тахлиль (${zikrCount}/10)`;
+        p.textContent = isFM ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `Тахлиль (${zikrCount}/${limit})`;
       }
-      else if (zikrPhase === 4) { p.textContent = SURAH_IKHLAS; c.textContent = `${zikrCount} / 3`; b.textContent = `Ихлас (${zikrCount}/3)`; }
-      else if (zikrPhase === 5) { p.textContent = SURAH_FALAQ; c.textContent = `${zikrCount} / 1`; b.textContent = `Фаляк (${zikrCount}/1)`; }
-      else if (zikrPhase === 6) { p.textContent = SURAH_NAS; c.textContent = `${zikrCount} / 1`; b.textContent = `Нас (${zikrCount}/1)`; }
-      else { p.textContent = '✓ Завершено (Аллаху Акбар)'; c.textContent = '✓'; b.textContent = 'Да примет Аллах'; b.classList.add('done'); d.style.display = 'none'; }
+      else if (zikrPhase === 4) { 
+        p.textContent = SURAH_IKHLAS; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `Ихлас (${zikrCount}/${limit})`; 
+      }
+      else if (zikrPhase === 5) { 
+        p.textContent = SURAH_FALAQ; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `Фаляк (${zikrCount}/${limit})`; 
+      }
+      else if (zikrPhase === 6) { 
+        p.textContent = SURAH_NAS; 
+        c.textContent = `${zikrCount} / ${limit}`; 
+        b.textContent = `Нас (${zikrCount}/${limit})`; 
+      }
+      else {         p.textContent = '✓ Завершено (Аллаху Акбар)'; 
+        c.textContent = '✓'; 
+        b.textContent = 'Да примет Аллах'; 
+        b.classList.add('done'); 
+        d.style.display = 'none'; 
+      }
     };
 
     // === ACTIONS ===
@@ -634,8 +684,7 @@
         btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
         if (isDhuhaTime(appTimings)) showDhuhaModal();
       };
-      update();
-      if (timerInterval) clearInterval(timerInterval);
+      update();      if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(update, 1000);
     };
 
@@ -684,8 +733,7 @@
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
       
       const todayISO = getTodayISO();
-      ['dhuha', 'tahajjud'].forEach(key => {
-        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
+      ['dhuha', 'tahajjud'].forEach(key => {        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
           delete appState.completed[key]; delete appState.completed[key + '_rakaats']; delete appState.completed[key + '_at'];
         }
       });

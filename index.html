@@ -267,6 +267,7 @@
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
     const PRAYERS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+    const PRAYER_NAMES_ONLY = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']; // 🔧 Только настоящие намазы для зикров
     const NAMES = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
     const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const FALLBACK = { fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" };
@@ -291,8 +292,8 @@
 
     const toggleTheme = () => {
       document.documentElement.classList.toggle('light-mode');
-      const isLight = document.documentElement.classList.contains('light-mode');
-      document.querySelector('.theme-btn').textContent = isLight ? '🌞' : '🌙';      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      const isLight = document.documentElement.classList.contains('light-mode');      document.querySelector('.theme-btn').textContent = isLight ? '🌞' : '🌙';
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
     };
 
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
@@ -340,8 +341,8 @@
               timestamp: Date.now()
             }));
             return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
-          }
-        }        throw new Error('Invalid');
+          }        }
+        throw new Error('Invalid');
       } catch (e) {
         document.getElementById('error-banner').classList.add('show');
         return { timings: FALLBACK, hijriDay: '—', hijriMonth: '—' };
@@ -366,14 +367,14 @@
         else if (!next) { next = { name: key, time }; break; }
       }
       
-      // 🔧 ИСПРАВЛЕНИЕ 1: После Фаджра следующий - Восход
+      // После Фаджра следующий - Восход
       if (current && current.name === 'fajr') {
         if (timings.sunrise) {
           next = { name: 'sunrise', time: parseTime(timings.sunrise) };
         }
       }
       
-      // Если все намазы прошли - следующий Фаджр завтра
+      // Если все прошли - следующий Фаджр завтра
       if (!next && current) {
         try {
           const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
@@ -389,8 +390,8 @@
           }
         } catch {
           next = { name: 'fajr', time: parseTime(timings.fajr) };
-          next.time.setDate(next.time.getDate() + 1);
-        }      }
+          next.time.setDate(next.time.getDate() + 1);        }
+      }
       
       if (!current) {
         current = { name: 'isha', time: parseTime(timings.isha) };
@@ -438,8 +439,8 @@
     };
 
     window.openDuaModal = () => {
-      renderDuas();
-      document.getElementById('dua-modal').classList.add('show');    };
+      renderDuas();      document.getElementById('dua-modal').classList.add('show');
+    };
     window.closeDuaModal = () => document.getElementById('dua-modal').classList.remove('show');
 
     const renderDuas = () => {
@@ -536,8 +537,8 @@
           if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) addSunnah(list, 'dhuhr_sunnah_before', 'Сунна до (4)', completed);
           if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) addSunnah(list, 'dhuhr_sunnah_after', `Сунна после (${isFriday ? 4 : 2})`, completed);
         }
-        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) addSunnah(list, 'maghrib_sunnah', 'Сунна после (2)', completed);
-        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);      });
+        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) addSunnah(list, 'maghrib_sunnah', 'Сунна после (2)', completed);        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);
+      });
     };
 
     window.toggleWitr = () => {
@@ -564,7 +565,6 @@
 
     // === ZIKR ===
     window.handleZikr = () => {
-      // 🔧 ИСПРАВЛЕНИЕ 2: Кнопка "Тап" считает до лимита и переходит к следующему этапу
       if (zikrPhase >= 7) return;
       const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
       
@@ -579,15 +579,14 @@
     };
 
     window.finishZikr = () => {
-      // 🔧 ИСПРАВЛЕНИЕ 3: Кнопка "Я выполнил" переходит к следующему этапу
       if (zikrPhase < 7) {
         zikrPhase++;
         zikrCount = 1;
         updateZikrUI();
         showToast(`✓ Переход к следующему зикру`);
       } else {
-        zikrPhase = 7; zikrCount = 0;        updateZikrUI();
-        showToast('✓ Все зикры завершены');
+        zikrPhase = 7; zikrCount = 0;
+        updateZikrUI();        showToast('✓ Все зикры завершены');
       }
     };
 
@@ -600,46 +599,22 @@
       const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
       
       if (zikrPhase === 0) { 
-        p.textContent = "СубханАллах"; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `СубханАллах (${zikrCount}/${limit})`; 
-      }
-      else if (zikrPhase === 1) { 
-        p.textContent = "Альхамдулиллях"; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `Альхамдулиллях (${zikrCount}/${limit})`; 
-      }
-      else if (zikrPhase === 2) { 
-        p.textContent = "Аллаху Акбар"; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `Аллаху Акбар (${zikrCount}/${limit})`; 
-      }
-      else if (zikrPhase === 3) {
+        p.textContent = "СубханАллах"; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `СубханАллах (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 1) { 
+        p.textContent = "Альхамдулиллях"; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Альхамдулиллях (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 2) { 
+        p.textContent = "Аллаху Акбар"; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Аллаху Акбар (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 3) {
         const isFM = (zikrPrayerName === 'fajr' || zikrPrayerName === 'maghrib');
-        p.textContent = isFM ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `Тахлиль (${zikrCount}/${limit})`;
-      }
-      else if (zikrPhase === 4) { 
-        p.textContent = SURAH_IKHLAS; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `Ихлас (${zikrCount}/${limit})`; 
-      }
-      else if (zikrPhase === 5) { 
-        p.textContent = SURAH_FALAQ; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `Фаляк (${zikrCount}/${limit})`; 
-      }
-      else if (zikrPhase === 6) { 
-        p.textContent = SURAH_NAS; 
-        c.textContent = `${zikrCount} / ${limit}`; 
-        b.textContent = `Нас (${zikrCount}/${limit})`; 
-      }
-      else {         p.textContent = '✓ Завершено (Аллаху Акбар)'; 
-        c.textContent = '✓'; 
-        b.textContent = 'Да примет Аллах'; 
-        b.classList.add('done'); 
-        d.style.display = 'none'; 
+        p.textContent = isFM ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Тахлиль (${zikrCount}/${limit})`;
+      } else if (zikrPhase === 4) { 
+        p.textContent = SURAH_IKHLAS; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Ихлас (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 5) { 
+        p.textContent = SURAH_FALAQ; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Фаляк (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 6) { 
+        p.textContent = SURAH_NAS; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Нас (${zikrCount}/${limit})`; 
+      } else { 
+        p.textContent = '✓ Завершено (Аллаху Акбар)'; c.textContent = '✓'; b.textContent = 'Да примет Аллах'; b.classList.add('done'); d.style.display = 'none'; 
       }
     };
 
@@ -653,16 +628,20 @@
       appState.completed[current.name + '_at'] = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      showToast(`✓ ${NAMES[current.name]}`); 
+      showToast(`✓ ${NAMES[current.name] || current.name}`); 
       renderList(appTimings, appState.completed);
       
-      zikrPrayerName = current.name; 
-      zikrPhase = 0; 
-      zikrCount = 0;
-      document.getElementById('zikr-card').classList.add('show');
-      document.getElementById('zikr-done-btn').style.display = 'block';
-      document.getElementById('zikr-btn').classList.remove('done');
-      updateZikrUI(); 
+      // 🔧 ИСПРАВЛЕНИЕ: Зикры только для настоящих намазов
+      if (PRAYER_NAMES_ONLY.includes(current.name)) {
+        zikrPrayerName = current.name; 
+        zikrPhase = 0; 
+        zikrCount = 0;        document.getElementById('zikr-card').classList.add('show');
+        document.getElementById('zikr-done-btn').style.display = 'block';
+        document.getElementById('zikr-btn').classList.remove('done');
+        updateZikrUI(); 
+      } else {
+        document.getElementById('zikr-card').classList.remove('show');
+      }
       
       if (current.name === 'isha') {
         setTimeout(() => showTahajjudModal(), 500);
@@ -675,16 +654,17 @@
       if (!appTimings) return;
       const update = () => {
         const { current, next } = findCurrentNext(appTimings);
-        document.getElementById('current-name').textContent = NAMES[current.name];
+        document.getElementById('current-name').textContent = NAMES[current.name] || current.name;
         document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;
         document.getElementById('countdown').textContent = formatDuration(next.time - new Date());
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
         btn.disabled = done;
-        btn.textContent = done ? `${NAMES[current.name]} ✓` : `✅ ${NAMES[current.name]}`;
+        btn.textContent = done ? `${NAMES[current.name] || current.name} ✓` : `✅ ${NAMES[current.name] || current.name}`;
         if (isDhuhaTime(appTimings)) showDhuhaModal();
       };
-      update();      if (timerInterval) clearInterval(timerInterval);
+      update();
+      if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(update, 1000);
     };
 
@@ -704,8 +684,7 @@
           if (heading !== null) { const sh = smooth(heading); r.style.transform = `rotate(${-sh}deg)`; a.style.transform = `rotate(${229 - sh}deg)`; if(s.textContent.includes('Калибровка')) s.textContent = '✅ Компас работает'; }
         };
         if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', h, { passive: true });
-        else window.addEventListener('deviceorientation', h, { passive: true });
-      };
+        else window.addEventListener('deviceorientation', h, { passive: true });      };
       req();
     };
 
@@ -733,7 +712,8 @@
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
       
       const todayISO = getTodayISO();
-      ['dhuha', 'tahajjud'].forEach(key => {        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
+      ['dhuha', 'tahajjud'].forEach(key => {
+        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
           delete appState.completed[key]; delete appState.completed[key + '_rakaats']; delete appState.completed[key + '_at'];
         }
       });
@@ -744,7 +724,6 @@
       const data = await loadData();
       appTimings = data.timings;
       
-      // 📅 Render Hijri from JSON
       if (data.hijriDay && data.hijriMonth) {
         document.getElementById('hijri-date').textContent = `${data.hijriDay} ${data.hijriMonth}`;
         document.getElementById('hijri-month').textContent = 'По хиджре (из базы)';
@@ -754,8 +733,7 @@
 
       renderList(appTimings, appState.completed);
       startTimer();
-      startMidnightCheck();
-      setInterval(() => renderList(appTimings, appState.completed), 30000);
+      startMidnightCheck();      setInterval(() => renderList(appTimings, appState.completed), 30000);
       
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));

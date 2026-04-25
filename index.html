@@ -193,6 +193,22 @@
     </div>
   </div>
 
+  </div>
+
+  <!-- Аят дня + счётчик дней -->
+  <div class="card" style="padding:1rem 1.25rem">
+    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.5rem">🌿 Напоминание дня</div>
+    <div id="ayah-text" style="font-size:0.9rem;line-height:1.65;font-style:italic;color:var(--text);margin-bottom:0.3rem">…</div>
+    <div id="ayah-source" style="font-size:0.75rem;color:var(--accent);font-weight:600"></div>
+    <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(148,163,184,0.15);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">🔥 Дней подряд</div>
+        <div id="streak-text" style="font-size:0.85rem;color:var(--text);margin-top:0.2rem">—</div>
+      </div>
+      <div id="streak-count" style="font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1">0</div>
+    </div>
+  </div>
+
   <div class="card compass-card">
     <h3 style="margin-bottom: 0.5rem">🕋 Направление Киблы</h3>
     <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem">Для Челябинска (~229°)</p>
@@ -224,6 +240,40 @@
   </div>
 
   <button class="btn btn-outline" onclick="openDuaModal()" style="width: 100%; margin-bottom: 1rem;">📖 Мои дуа и азкары</button>
+
+  <!-- Утренние/вечерние азкары -->
+  <div class="card" id="azkar-card" style="margin-bottom:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <h3>📿 Азкары</h3>
+      <div style="display:flex;gap:0.5rem">
+        <button id="azkar-tab-morning" onclick="switchAzkar('morning')" style="padding:0.3rem 0.75rem;border-radius:1rem;border:1px solid var(--accent);background:var(--accent);color:#0f172a;font-size:0.8rem;font-weight:700;cursor:pointer">Утро</button>
+        <button id="azkar-tab-evening" onclick="switchAzkar('evening')" style="padding:0.3rem 0.75rem;border-radius:1rem;border:1px solid var(--muted);background:transparent;color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">Вечер</button>
+      </div>
+    </div>
+    <div id="azkar-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    <div id="azkar-done-msg" style="display:none;text-align:center;padding:1rem;color:var(--accent);font-weight:700;font-size:0.95rem">
+      ✅ Все азкары прочитаны! АльхамдулиЛлях 🤲
+    </div>
+  </div>
+
+  <!-- Калькулятор заката -->
+  <div class="card" style="margin-bottom:1rem">
+    <h3 style="margin-bottom:0.75rem">💰 Калькулятор Заката</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.5">Нисаб = 85г золота ≈ <strong id="nisab-val" style="color:var(--accent)">—</strong> ₽. Если ваши сбережения хранились год и превышают нисаб — закат обязателен (2.5%)</p>
+    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
+      <label style="font-size:0.8rem;color:var(--muted)">Ваши накопления (₽)</label>
+      <input id="zakat-amount" type="number" placeholder="Например: 500000" oninput="calcZakat()" style="background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);color:var(--text);padding:0.75rem;border-radius:0.6rem;font-size:1rem;font-family:inherit;width:100%">
+    </div>
+    <div id="zakat-result" style="display:none;background:rgba(16,185,129,0.1);border:1px solid var(--accent);border-radius:0.75rem;padding:1rem;text-align:center">
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.25rem">Сумма заката (2.5%)</div>
+      <div id="zakat-sum" style="font-size:1.8rem;font-weight:800;color:var(--accent)">—</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">в месяц: <span id="zakat-monthly">—</span></div>
+    </div>
+    <div id="zakat-below" style="display:none;background:rgba(148,163,184,0.1);border-radius:0.75rem;padding:0.75rem;text-align:center;font-size:0.85rem;color:var(--muted)">
+      Ваши накопления ниже нисаба — закат пока не обязателен
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.5">⚠️ Расчёт приблизительный. По точным вопросам заката — к знающим.</p>
+  </div>
   <div class="footer-warning">
     <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
@@ -316,7 +366,162 @@
   </nav>
 
   <script>
-    // === МОДАЛКА АЛЬХАМДУЛИЛЛЯХ ===
+    // === АЯТ ДНЯ ===
+    const AYAHS = [
+      { text:'Воистину, молитва предписана верующим в определённое время.', source:'📖 Коран 4:103' },
+      { text:'Поминайте Меня, и Я буду помнить вас. Благодарите Меня и не будьте неблагодарны.', source:'📖 Коран 2:152' },
+      { text:'Самое любимое дело перед Аллахом — это намаз в его время.', source:'📚 Бухари, 527' },
+      { text:'Воистину, намаз удерживает от мерзости и порицаемого.', source:'📖 Коран 29:45' },
+      { text:'Первое, о чём будет спрошен раб в Судный день — это его намаз.', source:'📚 Тирмизи, 413' },
+      { text:'Тот, кто совершает Фаджр и Аср — войдёт в Рай.', source:'📚 Бухари, 574' },
+      { text:'Улыбнуться брату — садака. Помочь человеку — садака. Убрать вредное с дороги — садака.', source:'📚 Тирмизи, 1956' },
+      { text:'Не уверует никто из вас, пока не будет желать брату того же, чего желает себе.', source:'📚 Бухари, 13' },
+      { text:'В поминании Аллаха успокаиваются сердца.', source:'📖 Коран 13:28' },
+      { text:'Лучшее из того, что я говорю: «Ля иляха илляллах»', source:'📚 Тирмизи, 3585' },
+      { text:'Поистине, с каждой трудностью — облегчение.', source:'📖 Коран 94:5' },
+      { text:'Взывайте ко Мне, и Я отвечу вам.', source:'📖 Коран 40:60' },
+      { text:'Поминание Аллаха — лекарство, а забвение Его — болезнь.', source:'📚 Ибн Аль-Каййим' },
+      { text:'Кто читает аят аль-Курси после каждого намаза — тому ничто не мешает войти в Рай, кроме смерти.', source:'📚 Насаи. Сахих.' },
+      { text:'Добрые нравы — тяжелейшее из того, что кладётся на весы в Судный день.', source:'📚 Тирмизи, 2002' },
+    ];
+    const renderAyah = () => {
+      const idx = Math.floor(Date.now() / 86400000) % AYAHS.length;
+      const el = document.getElementById('ayah-text'), src = document.getElementById('ayah-source');
+      if (el) el.textContent = AYAHS[idx].text;
+      if (src) src.textContent = AYAHS[idx].source;
+    };
+
+    // === СТРИК (дней подряд) ===
+    const STREAK_KEY = 'prayer_streak_v1';
+    const FARZ = ['fajr','dhuhr','asr','maghrib','isha'];
+    const calcStreak = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count:0, lastDate:'' };
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now()-86400000).toISOString().split('T')[0];
+        const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} };
+        const allDone = FARZ.every(p => state.completed[p]);
+
+        if (allDone && saved.lastDate !== today) {
+          const newCount = saved.lastDate === yesterday ? saved.count + 1 : 1;
+          localStorage.setItem(STREAK_KEY, JSON.stringify({ count:newCount, lastDate:today }));
+          return newCount;
+        }
+        if (saved.lastDate !== today && saved.lastDate !== yesterday) return 0;
+        return saved.count || 0;
+      } catch { return 0; }
+    };
+    const renderStreak = () => {
+      const n = calcStreak();
+      const el = document.getElementById('streak-count');
+      const txt = document.getElementById('streak-text');
+      if (el) el.textContent = n;
+      if (txt) {
+        if (n === 0) txt.textContent = 'Начни сегодня — соверши все 5 намазов';
+        else if (n === 1) txt.textContent = 'Отличное начало! Продолжай завтра';
+        else if (n < 7) txt.textContent = `${n} дня подряд — машааллах!`;
+        else if (n < 30) txt.textContent = `${n} дней подряд — субханАллах!`;
+        else txt.textContent = `${n} дней подряд — АльхамдулиЛлях! 🌟`;
+      }
+    };
+
+    // === АЗКАРЫ ===
+    const AZKAR = {
+      morning: [
+        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм...', count:1, hadith:'📚 Насаи — кто читает утром, под защитой Аллаха до вечера' },
+        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад, Ллахус-самад...', count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк...", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас...", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'СубханАллах (33)', full:'СубханАллах', count:33, hadith:'📚 Муслим, 597' },
+        { text:'АльхамдулиЛлях (33)', full:'АльхамдулиЛлях', count:33, hadith:'📚 Муслим, 597' },
+        { text:'АллахуАкбар (34)', full:'АллахуАкбар', count:34, hadith:'📚 Муслим, 597' },
+      ],
+      evening: [
+        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм...', count:1, hadith:'📚 Насаи — кто читает вечером, под защитой Аллаха до утра' },
+        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад, Ллахус-самад...', count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк...", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас...", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Истигфар (100 раз)', full:'АстагфируЛлах', count:100, hadith:'📚 Муслим, 2702 — Пророк ﷺ делал истигфар более 70 раз в день' },
+        { text:'Салават (10 раз)', full:'АллахуммА салли аля Мухаммад', count:10, hadith:'📚 Тирмизи, 484' },
+        { text:'Дуа перед сном', full:'БисмикАллахумма ахья ва амут', count:1, hadith:'📚 Бухари, 6312' },
+      ]
+    };
+    const AZKAR_KEY = 'azkar_state_v1';
+    let currentAzkarType = 'morning';
+
+    const getAzkarState = (type) => {
+      try {
+        const s = JSON.parse(localStorage.getItem(AZKAR_KEY)) || {};
+        const today = new Date().toISOString().split('T')[0];
+        if (s.date !== today) return {};
+        return s[type] || {};
+      } catch { return {}; }
+    };
+    const saveAzkarState = (type, state) => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const s = JSON.parse(localStorage.getItem(AZKAR_KEY)) || { date:today };
+        if (s.date !== today) { localStorage.setItem(AZKAR_KEY, JSON.stringify({ date:today, [type]:state })); return; }
+        s[type] = state; localStorage.setItem(AZKAR_KEY, JSON.stringify(s));
+      } catch {}
+    };
+
+    window.switchAzkar = (type) => {
+      currentAzkarType = type;
+      document.getElementById('azkar-tab-morning').style.background = type==='morning' ? 'var(--accent)' : 'transparent';
+      document.getElementById('azkar-tab-morning').style.color = type==='morning' ? '#0f172a' : 'var(--muted)';
+      document.getElementById('azkar-tab-morning').style.borderColor = type==='morning' ? 'var(--accent)' : 'var(--muted)';
+      document.getElementById('azkar-tab-evening').style.background = type==='evening' ? 'var(--accent)' : 'transparent';
+      document.getElementById('azkar-tab-evening').style.color = type==='evening' ? '#0f172a' : 'var(--muted)';
+      document.getElementById('azkar-tab-evening').style.borderColor = type==='evening' ? 'var(--accent)' : 'var(--muted)';
+      renderAzkar();
+    };
+
+    const renderAzkar = () => {
+      const list = document.getElementById('azkar-list');
+      const doneMsg = document.getElementById('azkar-done-msg');
+      if (!list) return;
+      const state = getAzkarState(currentAzkarType);
+      const items = AZKAR[currentAzkarType];
+      const allDone = items.every((_, i) => state[i]);
+      list.style.display = allDone ? 'none' : 'flex';
+      doneMsg.style.display = allDone ? 'block' : 'none';
+      list.innerHTML = '';
+      items.forEach((item, i) => {
+        const done = !!state[i];
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:${done?'rgba(16,185,129,0.08)':'rgba(148,163,184,0.08)'};border-radius:0.6rem;border:1px solid ${done?'rgba(16,185,129,0.3)':'transparent'};cursor:pointer;opacity:${done?0.6:1}`;
+        div.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'var(--accent)':'var(--muted)'};background:${done?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;font-weight:700;color:${done?'#0f172a':'var(--muted)'}">${done?'✓':''}</div><div style="flex:1"><div style="font-size:0.9rem;font-weight:600;${done?'text-decoration:line-through;color:var(--muted)':''}">${item.text}</div><div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">${item.hadith}</div></div>`;
+        div.onclick = () => {
+          const st = getAzkarState(currentAzkarType);
+          st[i] = !st[i];
+          saveAzkarState(currentAzkarType, st);
+          renderAzkar();
+          if (st[i]) showToast('✓ АльхамдулиЛлях!');
+        };
+        list.appendChild(div);
+      });
+    };
+
+    // === КАЛЬКУЛЯТОР ЗАКАТА ===
+    // Нисаб: 85г золота. Цена золота ~8500₽/г (приблизительно)
+    const GOLD_PRICE_PER_G = 8500;
+    const NISAB = 85 * GOLD_PRICE_PER_G;
+    document.getElementById('nisab-val').textContent = NISAB.toLocaleString('ru');
+
+    window.calcZakat = () => {
+      const val = parseFloat(document.getElementById('zakat-amount').value) || 0;
+      const res = document.getElementById('zakat-result');
+      const below = document.getElementById('zakat-below');
+      if (val <= 0) { res.style.display='none'; below.style.display='none'; return; }
+      if (val < NISAB) { res.style.display='none'; below.style.display='block'; return; }
+      const zakat = val * 0.025;
+      document.getElementById('zakat-sum').textContent = Math.round(zakat).toLocaleString('ru') + ' ₽';
+      document.getElementById('zakat-monthly').textContent = Math.round(zakat/12).toLocaleString('ru') + ' ₽';
+      res.style.display='block'; below.style.display='none';
+    };
+
+    // === CONFIG ===
     const ALHAMD_DATA = {
       fajr:    { icon:'🌅', title:'АльхамдулиЛлях! Фаджр совершён', body:'Ты встал, когда другие спали. Аллах видит каждое усилие. Фаджр — самый тяжёлый намаз, и ты его совершил. Пусть этот день будет благословлён, иншааллах.' },
       dhuhr:   { icon:'☀️', title:'АльхамдулиЛлях! Зухр совершён', body:'В середине дня ты остановился и вспомнил об Аллахе. Это и есть настоящее богатство — сердце, которое помнит своего Господа.' },
@@ -704,6 +909,7 @@
       
       showToast(`✓ ${NAMES[current.name] || current.name}`); 
       renderList(appTimings, appState.completed);
+      renderStreak();
 
       // Модалка АльхамдулиЛлях — только для фарзов
       if (PRAYER_NAMES_ONLY.includes(current.name)) {
@@ -870,6 +1076,10 @@
       renderList(appTimings, appState.completed);
       startTimer();
       startMidnightCheck();      setInterval(() => renderList(appTimings, appState.completed), 30000);
+
+      renderAyah();
+      renderStreak();
+      renderAzkar();
       
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));

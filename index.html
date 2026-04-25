@@ -764,30 +764,24 @@
       }
     };
 
-    // === НАВИГАЦИЯ ===
-    const NAV_SECTIONS = {
-      home: [],
-      prayers: ['prayers-section'],
-      zikr: ['zikr-section'],
-      more: ['more-section'],
-    };
-
+    // === НАВИГАЦИЯ (скролл к блокам) ===
     window.navTo = (tab) => {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('nav-' + tab).classList.add('active');
 
-      const allSections = ['prayers-section','zikr-section','more-section'];
-      allSections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
+      const scrollTargets = {
+        home: null,                  // вверх
+        prayers: 'prayers-list',     // список намазов
+        zikr: 'zikr-card',          // зикры
+        more: 'enable-compass-btn', // компас / дуа
+      };
 
-      if (tab === 'home') {
-        // показываем всё кроме доп секций — ничего не скрываем, просто скроллим вверх
-        window.scrollTo(0, 0);
+      const targetId = scrollTargets[tab];
+      if (!targetId) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        const el = document.getElementById(tab + '-section');
-        if (el) { el.style.display = 'block'; window.scrollTo(0, 0); }
+        const el = document.getElementById(targetId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
 

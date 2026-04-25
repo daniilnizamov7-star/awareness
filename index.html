@@ -183,6 +183,14 @@
       </div>
     </div>
     <button id="mark-done" class="btn">✅ Я совершил этот намаз</button>
+
+    <!-- Напоминание с ниятом за 10 минут -->
+    <div id="niyyah-banner" style="display:none; margin-top:0.75rem; background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.05)); border:1px solid rgba(16,185,129,0.4); border-radius:0.75rem; padding:0.9rem 1rem; text-align:center;">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--accent);margin-bottom:0.3rem" id="niyyah-title">🕌 Скоро намаз</div>
+      <div style="font-size:0.75rem;color:var(--muted);line-height:1.6;margin-bottom:0.5rem">Обнови намерение — ты делаешь это ради Аллаха</div>
+      <div style="font-size:0.85rem;color:var(--text);font-style:italic;line-height:1.6">"Наввайту ан усаллия фарда <span id="niyyah-prayer-name">—</span>"</div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">Намерение — в сердце, не обязательно вслух</div>
+    </div>
     
     <div id="zikr-card" class="zikr-card">
       <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem">Зикры после намаза</div>
@@ -1003,6 +1011,23 @@
         const done = appState.completed[current.name];
         btn.disabled = done;
         btn.textContent = done ? `${NAMES[current.name] || current.name} ✓` : `✅ ${NAMES[current.name] || current.name}`;
+
+        // Напоминание с ниятом за 10 минут
+        const niyyahBanner = document.getElementById('niyyah-banner');
+        const msLeft = next.time - new Date();
+        const minsLeft = msLeft / 60000;
+        const nextIsFarz = PRAYER_NAMES_ONLY.includes(next.name);
+        const nextDone = appState.completed[next.name];
+        if (niyyahBanner) {
+          if (minsLeft <= 10 && minsLeft > 0 && nextIsFarz && !nextDone) {
+            document.getElementById('niyyah-title').textContent = `🕌 До ${NAMES[next.name]} — ${Math.ceil(minsLeft)} мин.`;
+            document.getElementById('niyyah-prayer-name').textContent = NAMES[next.name];
+            niyyahBanner.style.display = 'block';
+          } else {
+            niyyahBanner.style.display = 'none';
+          }
+        }
+
         if (isDhuhaTime(appTimings)) showDhuhaModal();
       };
       update();

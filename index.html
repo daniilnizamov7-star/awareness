@@ -122,6 +122,15 @@
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+    /* Модалка АльхамдулиЛлях */
+    .alhamd-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:flex-end; justify-content:center; z-index:500; padding:1rem; backdrop-filter:blur(4px); }
+    .alhamd-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+    .alhamd-card { background:var(--card); border-radius:1.5rem 1.5rem 1rem 1rem; padding:2rem 1.5rem 1.5rem; width:100%; max-width:480px; border:1px solid var(--accent); text-align:center; animation:slideUp 0.3s ease; }
+    .alhamd-icon { font-size:3.5rem; margin-bottom:0.75rem; }
+    .alhamd-title { font-size:1.3rem; font-weight:800; color:var(--accent); margin-bottom:0.5rem; }
+    .alhamd-body { font-size:0.95rem; line-height:1.65; color:var(--text); margin-bottom:1.25rem; }
+    .alhamd-btn { width:100%; padding:1rem; background:var(--accent); color:#0f172a; border:none; border-radius:0.75rem; font-size:1.05rem; font-weight:800; cursor:pointer; }
+
     /* НИЖНЕЕ МЕНЮ */
     .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 68px; background: var(--card); border-top: 1px solid rgba(148,163,184,0.15); display: flex; z-index: 999; padding-bottom: env(safe-area-inset-bottom, 0); }
     .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; -webkit-tap-highlight-color: transparent; }
@@ -161,6 +170,18 @@
     </div>
     <div class="status-label">До следующего намаза</div>
     <div class="countdown" id="countdown">--:--:--</div>
+    <div id="forbidden-banner" style="display:none; background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:0.75rem; padding:0.75rem 1rem; margin-top:0.75rem; font-size:0.85rem; line-height:1.6; color:#fca5a5;">
+      🚫 <strong style="color:#ef4444">Запретное время для намаза</strong><br>
+      <span id="forbidden-reason">—</span><br>
+      <span style="font-size:0.75rem; color:var(--muted)">По ханафитскому мазхабу намаз в это время не совершается</span>
+      <div style="margin-top:0.6rem">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.textContent.includes('▼')?'📚 Доказательство ▼':'📚 Доказательство ▲'" style="background:none;border:none;color:#ef4444;font-size:0.75rem;font-weight:600;cursor:pointer;padding:0">📚 Доказательство ▼</button>
+        <div style="display:none;margin-top:0.5rem;padding:0.75rem;background:rgba(0,0,0,0.2);border-radius:0.5rem;border-left:2px solid #ef4444">
+          <p style="font-style:italic;font-size:0.8rem;line-height:1.6;margin-bottom:0.4rem;color:var(--text)">"Пророк ﷺ запретил совершать намаз в три времени: когда восходит солнце, пока оно не поднимется; когда солнце в зените, пока оно не склонится; и когда солнце склоняется к закату, пока оно не зайдёт"</p>
+          <cite style="font-size:0.75rem;color:var(--muted)">📚 Муслим, 831 — от Укбы ибн Амира (да будет доволен им Аллах)</cite>
+        </div>
+      </div>
+    </div>
     <button id="mark-done" class="btn">✅ Я совершил этот намаз</button>
     
     <div id="zikr-card" class="zikr-card">
@@ -266,6 +287,16 @@
     </div>
   </div>
 
+  <!-- Модалка АльхамдулиЛлях после намаза -->
+  <div id="alhamd-modal" class="alhamd-overlay">
+    <div class="alhamd-card">
+      <div class="alhamd-icon" id="alhamd-icon">🤲</div>
+      <div class="alhamd-title" id="alhamd-title">АльхамдулиЛлях!</div>
+      <div class="alhamd-body" id="alhamd-body">—</div>
+      <button class="alhamd-btn" onclick="document.getElementById('alhamd-modal').classList.remove('show')">АльхамдулиЛлях 🤲</button>
+    </div>
+  </div>
+
   <div id="toast" class="toast">✓</div>
 
   <!-- НИЖНЕЕ МЕНЮ -->
@@ -285,6 +316,25 @@
   </nav>
 
   <script>
+    // === МОДАЛКА АЛЬХАМДУЛИЛЛЯХ ===
+    const ALHAMD_DATA = {
+      fajr:    { icon:'🌅', title:'АльхамдулиЛлях! Фаджр совершён', body:'Ты встал, когда другие спали. Аллах видит каждое усилие. Фаджр — самый тяжёлый намаз, и ты его совершил. Пусть этот день будет благословлён, иншааллах.' },
+      dhuhr:   { icon:'☀️', title:'АльхамдулиЛлях! Зухр совершён', body:'В середине дня ты остановился и вспомнил об Аллахе. Это и есть настоящее богатство — сердце, которое помнит своего Господа.' },
+      asr:     { icon:'🌤️', title:'АльхамдулиЛлях! Аср совершён', body:'Аллах поклялся временем Аср в Коране — сурой "Аль-Аср". Ты совершил этот намаз. Тот, кто не пропускает Фаджр и Аср, под защитой Аллаха.' },
+      maghrib: { icon:'🌆', title:'АльхамдулиЛлях! Магриб совершён', body:'День завершается. Ты встретил закат с поклоном перед Аллахом. Пророк ﷺ сказал: кто совершил Магриб — тот под защитой Аллаха до утра.' },
+      isha:    { icon:'🌙', title:'АльхамдулиЛлях! Иша совершён', body:'Ты завершил день с именем Аллаха. Ложись спать с поминанием — и каждый твой сон будет наградой, иншааллах. "Кто совершит Иша в джамаате — как будто простоял половину ночи".' },
+    };
+
+    const showAlhamdModal = (prayerName) => {
+      const d = ALHAMD_DATA[prayerName];
+      if (!d) return;
+      document.getElementById('alhamd-icon').textContent = d.icon;
+      document.getElementById('alhamd-title').textContent = d.title;
+      document.getElementById('alhamd-body').textContent = d.body;
+      document.getElementById('alhamd-modal').classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    };
+
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
     const STORAGE_KEY = 'prayer_tracker_v1';
@@ -654,6 +704,11 @@
       
       showToast(`✓ ${NAMES[current.name] || current.name}`); 
       renderList(appTimings, appState.completed);
+
+      // Модалка АльхамдулиЛлях — только для фарзов
+      if (PRAYER_NAMES_ONLY.includes(current.name)) {
+        setTimeout(() => showAlhamdModal(current.name), 300);
+      }
       
       // 🔧 ИСПРАВЛЕНИЕ: Зикры только для настоящих намазов
       if (PRAYER_NAMES_ONLY.includes(current.name)) {
@@ -674,13 +729,70 @@
       startTimer();
     };
 
+    // === ЗАПРЕТНОЕ ВРЕМЯ (ханафитский мазхаб) ===
+    const getForbiddenTime = (timings) => {
+      if (!timings) return null;
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const nowSecs = nowMins * 60 + now.getSeconds();
+
+      const toSecs = (key) => {
+        if (!timings[key]) return null;
+        const [h, m] = timings[key].split(':').map(Number);
+        return (h * 60 + m) * 60;
+      };
+
+      const sunriseSecs = toSecs('sunrise');
+      const dhuhrSecs   = toSecs('dhuhr');
+      const maghribSecs = toSecs('maghrib');
+
+      if (!sunriseSecs || !dhuhrSecs || !maghribSecs) return null;
+
+      // 1. Восход: от восхода + 30 минут
+      if (nowSecs >= sunriseSecs && nowSecs < sunriseSecs + 30 * 60) {
+        const remaining = sunriseSecs + 30 * 60 - nowSecs;
+        const mins = Math.ceil(remaining / 60);
+        return { reason: `Время восхода солнца — подождите ещё ~${mins} мин.` };
+      }
+
+      // 2. Зенит: последние 5 минут до Зухра
+      if (nowSecs >= dhuhrSecs - 5 * 60 && nowSecs < dhuhrSecs) {
+        return { reason: 'Солнце в зените — подождите начала времени Зухра' };
+      }
+
+      // 3. Закат: последние 20 минут до Магриба
+      if (nowSecs >= maghribSecs - 20 * 60 && nowSecs < maghribSecs) {
+        const remaining = maghribSecs - nowSecs;
+        const mins = Math.ceil(remaining / 60);
+        return { reason: `Время захода солнца — подождите ещё ~${mins} мин.` };
+      }
+
+      return null;
+    };
+
     const startTimer = () => {
       if (!appTimings) return;
       const update = () => {
         const { current, next } = findCurrentNext(appTimings);
         document.getElementById('current-name').textContent = NAMES[current.name] || current.name;
         document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;
-        document.getElementById('countdown').textContent = formatDuration(next.time - new Date());
+
+        const forbidden = getForbiddenTime(appTimings);
+        const countdown = document.getElementById('countdown');
+        const banner = document.getElementById('forbidden-banner');
+        const reason = document.getElementById('forbidden-reason');
+
+        countdown.textContent = formatDuration(next.time - new Date());
+
+        if (forbidden) {
+          countdown.style.color = '#ef4444';
+          banner.style.display = 'block';
+          reason.textContent = forbidden.reason;
+        } else {
+          countdown.style.color = '';
+          banner.style.display = 'none';
+        }
+
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
         btn.disabled = done;

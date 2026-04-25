@@ -123,12 +123,12 @@
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     /* Модалка АльхамдулиЛлях */
-    .alhamd-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:flex-end; justify-content:center; z-index:500; padding:1rem; padding-bottom:calc(68px + 1rem); backdrop-filter:blur(4px); }
+    .alhamd-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:flex-end; justify-content:center; z-index:500; padding:0; backdrop-filter:blur(4px); }
     .alhamd-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
-    .alhamd-card { background:var(--card); border-radius:1.5rem; padding:2rem 1.5rem 1.5rem; width:100%; max-width:480px; border:1px solid var(--accent); text-align:center; animation:slideUp 0.3s ease; }
-    .alhamd-icon { font-size:3.5rem; margin-bottom:0.75rem; }
-    .alhamd-title { font-size:1.3rem; font-weight:800; color:var(--accent); margin-bottom:0.5rem; }
-    .alhamd-body { font-size:0.95rem; line-height:1.65; color:var(--text); margin-bottom:1.25rem; }
+    .alhamd-card { background:var(--card); border-radius:1.5rem 1.5rem 0 0; padding:1.5rem 1.5rem calc(68px + 1.25rem); width:100%; max-width:480px; border:1px solid var(--accent); border-bottom:none; text-align:center; animation:slideUp 0.3s ease; max-height:90vh; overflow-y:auto; }
+    .alhamd-icon { font-size:3rem; margin-bottom:0.5rem; }
+    .alhamd-title { font-size:1.2rem; font-weight:800; color:var(--accent); margin-bottom:0.5rem; }
+    .alhamd-body { font-size:0.9rem; line-height:1.65; color:var(--text); margin-bottom:1rem; }
     .alhamd-btn { width:100%; padding:1rem; background:var(--accent); color:#0f172a; border:none; border-radius:0.75rem; font-size:1.05rem; font-weight:800; cursor:pointer; }
 
     /* НИЖНЕЕ МЕНЮ */
@@ -436,22 +436,22 @@
     // === АЗКАРЫ ===
     const AZKAR = {
       morning: [
-        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм...', count:1, hadith:'📚 Насаи — кто читает утром, под защитой Аллаха до вечера' },
-        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад, Ллахус-самад...', count:3, hadith:'📚 Абу Дауд, 5082' },
-        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк...", count:3, hadith:'📚 Абу Дауд, 5082' },
-        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас...", count:3, hadith:'📚 Абу Дауд, 5082' },
-        { text:'СубханАллах (33)', full:'СубханАллах', count:33, hadith:'📚 Муслим, 597' },
-        { text:'АльхамдулиЛлях (33)', full:'АльхамдулиЛлях', count:33, hadith:'📚 Муслим, 597' },
-        { text:'АллахуАкбар (34)', full:'АллахуАкбар', count:34, hadith:'📚 Муслим, 597' },
+        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм. Ля та`хузуху синатун ва ля наум. Ляху ма фис-самавати ва ма филь-ард. Ман заллязи яшфа`у индаху илля би-изних. Я`ляму ма байна айдихим ва ма хальфахум. Ва ля юхитуна би-шайим-мин `ильмихи илля би-ма ша`а. Васи`а курсиюху-с-самавати валь-ард. Ва ля яудуху хифзухума ва хуваль-`алиюль-`азым.', count:1, hadith:'📚 Насаи — кто читает утром, под защитой Аллаха до вечера' },
+        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад.\nАллахус-самад.\nЛям ялид ва лям юляд.\nВа лям якун ляху куфуван ахад.', count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк.\nМин шарри ма халяк.\nВа мин шарри гасикин иза вакаб.\nВа мин шаррин-наффасати филь-'укад.\nВа мин шарри хасидин иза хасад.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас.\nМаликин-нас.\nИляхин-нас.\nМин шарриль-васвасиль-ханнас.\nАллязи ювасвису фи судурин-нас.\nМиналь-джиннати ван-нас.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'СубханАллах (33)', full:'СубханАллах\n\n(Пречист Аллах)', count:33, hadith:'📚 Муслим, 597' },
+        { text:'АльхамдулиЛлях (33)', full:'АльхамдулиЛлях\n\n(Хвала Аллаху)', count:33, hadith:'📚 Муслим, 597' },
+        { text:'АллахуАкбар (34)', full:'АллахуАкбар\n\n(Аллах Велик)', count:34, hadith:'📚 Муслим, 597' },
       ],
       evening: [
-        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм...', count:1, hadith:'📚 Насаи — кто читает вечером, под защитой Аллаха до утра' },
-        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад, Ллахус-самад...', count:3, hadith:'📚 Абу Дауд, 5082' },
-        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк...", count:3, hadith:'📚 Абу Дауд, 5082' },
-        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас...", count:3, hadith:'📚 Абу Дауд, 5082' },
-        { text:'Истигфар (100 раз)', full:'АстагфируЛлах', count:100, hadith:'📚 Муслим, 2702 — Пророк ﷺ делал истигфар более 70 раз в день' },
-        { text:'Салават (10 раз)', full:'АллахуммА салли аля Мухаммад', count:10, hadith:'📚 Тирмизи, 484' },
-        { text:'Дуа перед сном', full:'БисмикАллахумма ахья ва амут', count:1, hadith:'📚 Бухари, 6312' },
+        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм. Ля та`хузуху синатун ва ля наум. Ляху ма фис-самавати ва ма филь-ард. Ман заллязи яшфа`у индаху илля би-изних. Я`ляму ма байна айдихим ва ма хальфахум. Ва ля юхитуна би-шайим-мин `ильмихи илля би-ма ша`а. Васи`а курсиюху-с-самавати валь-ард. Ва ля яудуху хифзухума ва хуваль-`алиюль-`азым.', count:1, hadith:'📚 Насаи — кто читает вечером, под защитой Аллаха до утра' },
+        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад.\nАллахус-самад.\nЛям ялид ва лям юляд.\nВа лям якун ляху куфуван ахад.', count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк.\nМин шарри ма халяк.\nВа мин шарри гасикин иза вакаб.\nВа мин шаррин-наффасати филь-'укад.\nВа мин шарри хасидин иза хасад.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас.\nМаликин-нас.\nИляхин-нас.\nМин шарриль-васвасиль-ханнас.\nАллязи ювасвису фи судурин-нас.\nМиналь-джиннати ван-нас.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Истигфар (100 раз)', full:'АстагфируЛлах\n\n(Прошу прощения у Аллаха)\n\nИли полная форма:\nАстагфируЛлаха ва атубу иляйх\n(Прошу прощения у Аллаха и каюсь Ему)', count:100, hadith:'📚 Муслим, 2702 — Пророк ﷺ делал истигфар более 70 раз в день' },
+        { text:'Салават (10 раз)', full:'АллахуммА салли `аля Мухаммад ва `аля али Мухаммад\n\n(О Аллах, благослови Мухаммада и семью Мухаммада)', count:10, hadith:'📚 Тирмизи, 484' },
+        { text:'Дуа перед сном', full:'БисмикАллахумма ахья ва амут\n\n(С именем Твоим, о Аллах, я живу и умираю)', count:1, hadith:'📚 Бухари, 6312' },
       ]
     };
     const AZKAR_KEY = 'azkar_state_v1';
@@ -498,15 +498,48 @@
       items.forEach((item, i) => {
         const done = !!state[i];
         const div = document.createElement('div');
-        div.style.cssText = `display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:${done?'rgba(16,185,129,0.08)':'rgba(148,163,184,0.08)'};border-radius:0.6rem;border:1px solid ${done?'rgba(16,185,129,0.3)':'transparent'};cursor:pointer;opacity:${done?0.6:1}`;
-        div.innerHTML = `<div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'var(--accent)':'var(--muted)'};background:${done?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;font-weight:700;color:${done?'#0f172a':'var(--muted)'}">${done?'✓':''}</div><div style="flex:1"><div style="font-size:0.9rem;font-weight:600;${done?'text-decoration:line-through;color:var(--muted)':''}">${item.text}</div><div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">${item.hadith}</div></div>`;
-        div.onclick = () => {
+        div.style.cssText = `display:flex;flex-direction:column;padding:0.75rem;background:${done?'rgba(16,185,129,0.08)':'rgba(148,163,184,0.08)'};border-radius:0.6rem;border:1px solid ${done?'rgba(16,185,129,0.3)':'transparent'};gap:0.5rem`;
+
+        // Верхняя строка: чекбокс + название + кнопка текста
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex;align-items:center;gap:0.75rem;cursor:pointer';
+        topRow.innerHTML = `
+          <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'var(--accent)':'var(--muted)'};background:${done?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;font-weight:700;color:${done?'#0f172a':'var(--muted)'}">${done?'✓':''}</div>
+          <div style="flex:1">
+            <div style="font-size:0.9rem;font-weight:600;${done?'text-decoration:line-through;color:var(--muted)':''}">${item.text}</div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">${item.hadith}</div>
+          </div>
+          <button class="azkar-expand-btn" data-idx="${i}" style="background:none;border:1px solid var(--muted);color:var(--muted);border-radius:0.4rem;padding:0.25rem 0.5rem;font-size:0.7rem;cursor:pointer;flex-shrink:0;white-space:nowrap">Текст ▼</button>
+        `;
+
+        // Блок с полным текстом (скрыт по умолчанию)
+        const fullBlock = document.createElement('div');
+        fullBlock.style.cssText = 'display:none;background:rgba(16,185,129,0.06);border-left:3px solid var(--accent);border-radius:0 0.4rem 0.4rem 0;padding:0.75rem;font-size:0.85rem;line-height:1.7;white-space:pre-wrap;color:var(--text)';
+        fullBlock.textContent = item.full;
+
+        // Клик по чекбоксу/строке
+        topRow.onclick = (e) => {
+          if (e.target.closest('.azkar-expand-btn')) return; // не срабатывает на кнопку
           const st = getAzkarState(currentAzkarType);
           st[i] = !st[i];
           saveAzkarState(currentAzkarType, st);
           renderAzkar();
           if (st[i]) showToast('✓ АльхамдулиЛлях!');
         };
+
+        // Клик по кнопке "Текст ▼"
+        const expandBtn = topRow.querySelector('.azkar-expand-btn');
+        expandBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = fullBlock.style.display !== 'none';
+          fullBlock.style.display = isOpen ? 'none' : 'block';
+          expandBtn.textContent = isOpen ? 'Текст ▼' : 'Скрыть ▲';
+          expandBtn.style.color = isOpen ? 'var(--muted)' : 'var(--accent)';
+          expandBtn.style.borderColor = isOpen ? 'var(--muted)' : 'var(--accent)';
+        };
+
+        div.appendChild(topRow);
+        div.appendChild(fullBlock);
         list.appendChild(div);
       });
     };

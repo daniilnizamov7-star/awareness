@@ -123,9 +123,9 @@
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     /* Модалка АльхамдулиЛлях */
-    .alhamd-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:flex-end; justify-content:center; z-index:500; padding:1rem; backdrop-filter:blur(4px); }
+    .alhamd-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:flex-end; justify-content:center; z-index:500; padding:1rem; padding-bottom:calc(68px + 1rem); backdrop-filter:blur(4px); }
     .alhamd-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
-    .alhamd-card { background:var(--card); border-radius:1.5rem 1.5rem 1rem 1rem; padding:2rem 1.5rem 1.5rem; width:100%; max-width:480px; border:1px solid var(--accent); text-align:center; animation:slideUp 0.3s ease; }
+    .alhamd-card { background:var(--card); border-radius:1.5rem; padding:2rem 1.5rem 1.5rem; width:100%; max-width:480px; border:1px solid var(--accent); text-align:center; animation:slideUp 0.3s ease; }
     .alhamd-icon { font-size:3.5rem; margin-bottom:0.75rem; }
     .alhamd-title { font-size:1.3rem; font-weight:800; color:var(--accent); margin-bottom:0.5rem; }
     .alhamd-body { font-size:0.95rem; line-height:1.65; color:var(--text); margin-bottom:1.25rem; }
@@ -850,18 +850,19 @@
       showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
     };
 
+    const saveZikrState = () => {
+      localStorage.setItem('zikr_state_v1', JSON.stringify({ show: true, phase: zikrPhase, count: zikrCount, prayer: zikrPrayerName }));
+    };
+    const clearZikrState = () => localStorage.removeItem('zikr_state_v1');
+
     // === ZIKR ===
     window.handleZikr = () => {
       if (zikrPhase >= 7) return;
       const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
-      
       zikrCount++;
-      if (zikrCount > limit) {
-        zikrPhase++;
-        zikrCount = 1;
-      }
-      
+      if (zikrCount > limit) { zikrPhase++; zikrCount = 1; }
       if (navigator.vibrate) navigator.vibrate(50);
+      saveZikrState();
       updateZikrUI();
     };
 
@@ -870,10 +871,12 @@
         zikrPhase++;
         zikrCount = 1;
         updateZikrUI();
+        saveZikrState();
         showToast(`✓ Переход к следующему зикру`);
       } else {
         zikrPhase = 7; zikrCount = 0;
-        updateZikrUI();        showToast('✓ Все зикры завершены');
+        clearZikrState();
+        updateZikrUI(); showToast('✓ Все зикры завершены. Да примет Аллах!');
       }
     };
 
@@ -919,16 +922,19 @@
       renderList(appTimings, appState.completed);
       renderStreak();
 
-      // Модалка АльхамдулиЛлях — только для фарзов
+      // Модалка АльхамдулиЛлях — только для фарзов (не сунны, не витр, не духа)
       if (PRAYER_NAMES_ONLY.includes(current.name)) {
         setTimeout(() => showAlhamdModal(current.name), 300);
       }
       
-      // 🔧 ИСПРАВЛЕНИЕ: Зикры только для настоящих намазов
+      // Зикры только для фарзов
       if (PRAYER_NAMES_ONLY.includes(current.name)) {
         zikrPrayerName = current.name; 
         zikrPhase = 0; 
-        zikrCount = 0;        document.getElementById('zikr-card').classList.add('show');
+        zikrCount = 0;
+        // Сохраняем состояние зикров чтобы не закрывались при сворачивании
+        localStorage.setItem('zikr_state_v1', JSON.stringify({ show: true, phase: 0, count: 0, prayer: current.name }));
+        document.getElementById('zikr-card').classList.add('show');
         document.getElementById('zikr-done-btn').style.display = 'block';
         document.getElementById('zikr-btn').classList.remove('done');
         updateZikrUI(); 
@@ -1105,6 +1111,18 @@
       renderAyah();
       renderStreak();
       renderAzkar();
+
+      // Восстанавливаем зикры если были открыты до сворачивания
+      try {
+        const zs = JSON.parse(localStorage.getItem('zikr_state_v1'));
+        if (zs?.show && zs.phase < 7) {
+          zikrPhase = zs.phase; zikrCount = zs.count; zikrPrayerName = zs.prayer;
+          document.getElementById('zikr-card').classList.add('show');
+          document.getElementById('zikr-done-btn').style.display = 'block';
+          document.getElementById('zikr-btn').classList.remove('done');
+          updateZikrUI();
+        }
+      } catch {}
       
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));

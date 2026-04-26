@@ -271,6 +271,25 @@
       <div id="streak-count" style="font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1">0</div>
     </div>
   </div>
+
+  <!-- Имя Аллаха дня на главной -->
+  <div class="card" style="padding:1rem 1.25rem;cursor:pointer" onclick="navTo('more');setTimeout(()=>openMoreSub('sub-asma'),50)">
+    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem">☀️ Имя Аллаха дня</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div id="home-asma-name" style="font-size:1rem;font-weight:700;margin-bottom:0.15rem">—</div>
+        <div id="home-asma-meaning" style="font-size:0.78rem;color:var(--muted);line-height:1.5">—</div>
+      </div>
+      <div id="home-asma-arabic" style="font-size:1.6rem;color:var(--accent);direction:rtl;font-weight:600;flex-shrink:0;margin-left:0.75rem">—</div>
+    </div>
+  </div>
+
+  <!-- Времена намазов на день -->
+  <div class="card" style="padding:0">
+    <div style="padding:0.85rem 1.25rem 0.6rem;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid rgba(148,163,184,0.12)">🕌 Намазы сегодня</div>
+    <div id="prayers-list-home" style="padding:0.25rem 0"></div>
+  </div>
+
   <!-- Кнопка поделиться -->
   <button onclick="openShare()" style="width:100%;padding:0.85rem;background:transparent;border:1px solid rgba(148,163,184,0.25);color:var(--muted);border-radius:0.75rem;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem">
     📤 Поделиться приложением
@@ -741,13 +760,64 @@
       el('asma-meaning', item.meaning);
       el('asma-hadith', item.hadith || '📚 Тирмизи, 3507 — «У Аллаха 99 имён, тот кто их выучит — войдёт в Рай»');
 
+      // На главной
+      el('home-asma-arabic', item.ar);
+      el('home-asma-name', item.name);
+      el('home-asma-meaning', item.meaning.length > 60 ? item.meaning.slice(0,60)+'…' : item.meaning);
+
       const list = document.getElementById('asma-all-list'); if (!list) return;
       list.innerHTML = '';
       ASMA.forEach((a, i) => {
         const div = document.createElement('div');
         const isToday = i === idx;
-        div.style.cssText = `display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.85rem;background:${isToday?'rgba(16,185,129,0.12)':'rgba(148,163,184,0.06)'};border-radius:0.6rem;border:1px solid ${isToday?'rgba(16,185,129,0.4)':'transparent'}`;
-        div.innerHTML = `<span style="font-size:0.7rem;color:var(--muted);width:24px;flex-shrink:0">${i+1}</span><span style="font-size:1rem;direction:rtl;color:var(--accent);flex-shrink:0">${a.ar}</span><span style="font-size:0.85rem;font-weight:${isToday?700:400}">${a.name}</span>${isToday?'<span style="margin-left:auto;font-size:0.7rem;color:var(--accent);font-weight:700">сегодня</span>':''}`;
+        div.style.cssText = `display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0.85rem;background:${isToday?'rgba(16,185,129,0.12)':'rgba(148,163,184,0.06)'};border-radius:0.6rem;border:1px solid ${isToday?'rgba(16,185,129,0.4)':'transparent'};cursor:pointer;transition:background 0.15s`;
+        div.innerHTML = `
+          <span style="font-size:0.7rem;color:var(--muted);width:22px;flex-shrink:0;text-align:center">${i+1}</span>
+          <span style="font-size:1.1rem;direction:rtl;color:var(--accent);flex-shrink:0;min-width:40px;text-align:right">${a.ar}</span>
+          <span style="font-size:0.85rem;font-weight:${isToday?700:400};flex:1">${a.name}</span>
+          ${isToday?'<span style="font-size:0.65rem;color:var(--accent);font-weight:700;background:rgba(16,185,129,0.15);padding:0.15rem 0.4rem;border-radius:0.3rem">сегодня</span>':'<span style="font-size:0.75rem;color:var(--muted)">▼</span>'}
+        `;
+        // Разворачивающийся перевод
+        const detail = document.createElement('div');
+        detail.style.cssText = 'display:none;padding:0.6rem 0.85rem 0.85rem 3.5rem;font-size:0.82rem;color:var(--text);line-height:1.6';
+        detail.textContent = a.meaning;
+        div.onclick = () => {
+          const isOpen = detail.style.display !== 'none';
+          // Закрываем все
+          list.querySelectorAll('[data-detail]').forEach(d => d.style.display='none');
+          detail.style.display = isOpen ? 'none' : 'block';
+          const arrow = div.querySelector('.asma-arrow');
+          if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
+        };
+        detail.setAttribute('data-detail','1');
+        list.appendChild(div);
+        list.appendChild(detail);
+        // Помечаем стрелку
+        const arrows = div.querySelectorAll('span');
+        if (arrows.length) arrows[arrows.length-1].classList.add('asma-arrow');
+      });
+    };
+
+    const renderPrayersHome = (timings, completed) => {
+      const list = document.getElementById('prayers-list-home'); if (!list || !timings) return;
+      const { current } = findCurrentNext(timings);
+      list.innerHTML = '';
+      PRAYERS.forEach(key => {
+        if (key === 'sunrise' || !timings[key]) return;
+        const isDone = !!completed[key];
+        const isCur = current.name === key;
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1.25rem;border-bottom:1px solid rgba(148,163,184,0.08);background:${isCur?'rgba(16,185,129,0.07)':'transparent'}`;
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.6rem">
+            <div style="width:6px;height:6px;border-radius:50%;background:${isDone?'var(--accent)':isCur?'var(--accent)':'rgba(148,163,184,0.3)'};box-shadow:${isCur?'0 0 0 3px rgba(16,185,129,0.2)':'none'}"></div>
+            <span style="font-size:0.95rem;font-weight:${isCur?700:500};color:${isCur?'var(--accent)':'var(--text)'};opacity:${isDone?0.5:1}">${NAMES[key]}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <span style="font-size:0.9rem;color:var(--muted);font-variant-numeric:tabular-nums;opacity:${isDone?0.5:1}">${timings[key]}</span>
+            ${isDone?'<span style="color:var(--accent);font-size:0.85rem;font-weight:700">✓</span>':''}
+          </div>
+        `;
         list.appendChild(div);
       });
     };
@@ -1333,6 +1403,7 @@
       showToast(`✓ ${NAMES[current.name] || current.name}`); 
       renderList(appTimings, appState.completed);
       renderStreak();
+      renderPrayersHome(appTimings, appState.completed);
 
       // Модалка АльхамдулиЛлях — только для фарзов (не сунны, не витр, не духа)
       if (PRAYER_NAMES_ONLY.includes(current.name)) {
@@ -1531,6 +1602,8 @@
       renderAyah();
       renderStreak();
       renderAzkar();
+      renderPrayersHome(appTimings, appState.completed);
+      renderAsma();
       checkFriday();
       checkOnboard();
 

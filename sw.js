@@ -1,36 +1,1274 @@
-const CACHE_NAME = 'osoznanie-v4';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Осознанность" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <title>Осознанность • Трекер</title>
+  <style>
+    :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #10b981; --muted: #94a3b8; --danger: #ef4444; --dhuha: #f59e0b; --witr: #8b5cf6; --tahajjud: #a78bfa; }
+    .light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 1rem; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; transition: background 0.3s; padding-bottom: 80px; }
+    .card { background: var(--card); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { text-align: center; padding: 0.5rem 0 1rem; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; }
+    .header p { color: var(--muted); font-size: 0.875rem; }
+    .theme-btn { background: var(--card); border: 1px solid var(--muted); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
+    .timer-card { text-align: center; }
+    .status-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
+    .current-prayer { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(148,163,184,0.2); }
+    .current-prayer .name { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .current-prayer .time { color: var(--muted); font-family: monospace; }
+    .countdown { font-size: 3rem; font-weight: 800; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
+    .btn { background: var(--accent); color: #0f172a; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 0.5rem; font-size: 1.1rem; }
+    .btn:disabled { background: var(--muted); cursor: not-allowed; opacity: 0.6; }
+    .btn-outline { background: transparent; border: 2px solid var(--muted); color: var(--muted); width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
+    .btn-outline:hover { border-color: var(--text); color: var(--text); }
+    
+    .zikr-card { display: none; margin-top: 1rem; padding: 1rem; background: rgba(16,185,129,0.1); border-radius: 0.75rem; border: 2px dashed var(--accent); text-align: center; }
+    .zikr-card.show { display: block; }
+    .zikr-counter { font-size: 3rem; font-weight: 800; margin: 0.5rem 0; }
+    .zikr-text { font-size: 0.95rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; min-height: 4em; line-height: 1.4; text-align: center; }
+    .btn-zikr { background: var(--accent); color: #0f172a; padding: 1rem; font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .btn-zikr-tap { width: 100%; }
+    .btn-zikr-done { background: var(--witr); color: #fff; font-size: 0.95rem; padding: 0.7rem; }
+    .btn-zikr.done { background: var(--muted); pointer-events: none; opacity: 0.5; }
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
-  self.skipWaiting();
-});
+    .prayer-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .prayer-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem; background: rgba(148,163,184,0.1); border-radius: 0.6rem; cursor: pointer; }
+    .prayer-item.completed { opacity: 0.5; }
+    .prayer-item.completed .prayer-name::after { content: ' ✓'; color: var(--accent); font-weight: bold; }
+    .prayer-item.dhuha { background: rgba(245,158,11,0.15); border: 1px solid var(--dhuha); }
+    .prayer-item.dhuha .prayer-name { color: var(--dhuha); }
+    .prayer-item.witr { background: rgba(139,92,246,0.15); border: 1px solid var(--witr); }
+    .prayer-item.witr .prayer-name { color: var(--witr); }    .prayer-item.tahajjud { background: rgba(167,139,250,0.15); border: 1px solid var(--tahajjud); }
+    .prayer-item.tahajjud .prayer-name { color: var(--tahajjud); }
+    .prayer-item.sunnah { padding-left: 2.5rem; background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent); }
+    .prayer-item.sunnah .prayer-name::before { content: '🌿 '; }
+    
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
+    .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+    .modal-card { background: var(--card); border-radius: 1.5rem; padding: 2rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 2px solid var(--dhuha); animation: slideUp 0.3s ease; }
+    .modal-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--dhuha); margin-bottom: 1rem; }
+    .modal-text { font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; }
+    .modal-hadith { background: rgba(245,158,11,0.1); border-left: 3px solid var(--dhuha); padding: 1rem; margin-bottom: 1.5rem; text-align: left; border-radius: 0 0.5rem 0.5rem 0; }
+    .modal-hadith p { font-style: italic; margin-bottom: 0.5rem; font-size: 0.95rem; }
+    .modal-hadith cite { font-size: 0.8rem; color: var(--muted); font-style: normal; }
+    .rakaat-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
+    .btn-rakaat { background: rgba(245,158,11,0.2); border: 2px solid var(--dhuha); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
+    .btn-rakaat:hover { background: var(--dhuha); color: #0f172a; transform: translateY(-2px); }
+    .btn-rakaat:active { transform: translateY(0); }
+    .btn-close { background: transparent; border: 2px solid var(--muted); color: var(--muted); padding: 0.75rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+    .btn-close:hover { border-color: var(--text); color: var(--text); }
 
-self.addEventListener('activate', (e) => {
-  // Удаляем все старые кэши
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => clients.claim())
-  );
-});
+    .tahajjud-theme .modal-card { border-color: var(--tahajjud); }
+    .tahajjud-theme .modal-title { color: var(--tahajjud); }
+    .tahajjud-theme .modal-hadith { border-left-color: var(--tahajjud); background: rgba(167,139,250,0.1); }
+    .btn-rakaat-tahajjud { border-color: var(--tahajjud); background: rgba(167,139,250,0.2); }
+    .btn-rakaat-tahajjud:hover { background: var(--tahajjud); color: #fff; }
 
-self.addEventListener('fetch', (e) => {
-  // Для index.html — всегда сеть, кэш только если нет интернета
-  if (e.request.url.endsWith('/') || e.request.url.endsWith('/index.html')) {
-    e.respondWith(
-      fetch(e.request)
-        .then((res) => {
-          // Обновляем кэш свежей версией
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
-    return;
-  }
+    .dua-list-item { background: rgba(148,163,184,0.08); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; text-align: left; position: relative; }
+    .dua-list-item h4 { font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--accent); }
+    .dua-list-item p { font-size: 0.85rem; color: var(--text); white-space: pre-wrap; margin-bottom: 0.5rem; }
+    .dua-delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: transparent; border: none; color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
+    .dua-form { margin-top: 1rem; text-align: left; }
+    .dua-form input, .dua-form textarea { width: 100%; background: rgba(148,163,184,0.1); border: 1px solid var(--muted); color: var(--text); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; font-family: inherit; }
+    .dua-form textarea { min-height: 80px; resize: vertical; }
+    .dua-form button { width: 100%; margin-top: 0.5rem; }
 
-  // Для остального — кэш сначала (иконки, манифест)
-  e.respondWith(caches.match(e.request).then((cached) => cached || fetch(e.request)));
-});
+    .compass-card { text-align: center; }
+    .compass-wrapper { position: relative; width: 160px; height: 160px; margin: 0 auto 1rem; }
+    .compass-ring { position: absolute; inset: 0; transition: transform 0.1s linear; }
+    .compass-arrow { position: absolute; inset: 0; transition: transform 0.1s linear; }
+    .compass-center { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translate(-50%, -50%); z-index: 10; box-shadow: 0 0 0 3px var(--card); }
+    .compass-directions { position: absolute; inset: 8px; border: 2px solid var(--muted); border-radius: 50%; }
+    .compass-n { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 700; color: var(--danger); }
+    .compass-s { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: var(--muted); }
+    .compass-e { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); }
+    .compass-w { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); }
+    .qibla-arrow { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 3px; height: 32px; background: linear-gradient(to top, var(--accent), transparent); border-radius: 2px; }
+    .qibla-arrow::after { content: '🕋'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; }
+    .compass-status { font-size: 0.85rem; color: var(--muted); min-height: 1.5rem; margin-bottom: 0.5rem; }
+    .btn-compass { background: #3b82f6; color: #fff; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; width: 100%; margin: 0.5rem 0; border: none; font-size: 1rem; }    .btn-compass:disabled { background: var(--muted); cursor: not-allowed; }
+    .compass-note { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+    .compass-warning { font-size: 0.75rem; color: var(--warning); margin-top: 0.25rem; font-weight: 500; }
+
+    .error-banner { background: rgba(239,68,68,0.15); border: 1px solid var(--danger); color: var(--danger); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
+    .error-banner.show { display: block; }
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--card); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid var(--accent); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .toast.show { opacity: 1; }
+    
+    .hijri-banner { background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%); border: 1px solid var(--accent); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; text-align: center; }
+    .hijri-date { font-size: 1.1rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
+    .hijri-month { font-size: 0.85rem; color: var(--muted); }
+    .kurban-banner { background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%); border: 1px solid var(--dhuha); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; position: relative; overflow: hidden; }
+    .kurban-banner::before { content: '🕌'; position: absolute; right: -1rem; bottom: -1rem; font-size: 4rem; opacity: 0.1; }
+    .kurban-title { font-size: 0.9rem; font-weight: 700; color: var(--dhuha); margin-bottom: 0.25rem; }
+    .kurban-date { font-size: 0.85rem; color: var(--text); font-weight: 600; }
+    .kurban-greeting { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; font-style: italic; }
+    
+    .footer-warning { text-align: center; font-size: 0.75rem; color: var(--muted); padding: 1rem; margin-top: auto; line-height: 1.5; }
+    .footer-warning strong { color: var(--warning); }
+    
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Модалка АльхамдулиЛлях */
+    .alhamd-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:flex-end; justify-content:center; z-index:500; padding:0; backdrop-filter:blur(4px); }
+    .alhamd-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+    .alhamd-card { background:var(--card); border-radius:1.5rem 1.5rem 0 0; padding:1.5rem 1.5rem calc(68px + 1.25rem); width:100%; max-width:480px; border:1px solid var(--accent); border-bottom:none; text-align:center; animation:slideUp 0.3s ease; max-height:90vh; overflow-y:auto; }
+    .alhamd-icon { font-size:3rem; margin-bottom:0.5rem; }
+    .alhamd-title { font-size:1.2rem; font-weight:800; color:var(--accent); margin-bottom:0.5rem; }
+    .alhamd-body { font-size:0.9rem; line-height:1.65; color:var(--text); margin-bottom:1rem; }
+    .alhamd-btn { width:100%; padding:1rem; background:var(--accent); color:#0f172a; border:none; border-radius:0.75rem; font-size:1.05rem; font-weight:800; cursor:pointer; }
+
+    /* НИЖНЕЕ МЕНЮ */
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 68px; background: var(--card); border-top: 1px solid rgba(148,163,184,0.15); display: flex; z-index: 999; padding-bottom: env(safe-area-inset-bottom, 0); }
+    .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; -webkit-tap-highlight-color: transparent; }
+    .nav-btn .nav-icon { font-size: 1.5rem; line-height: 1; }
+    .nav-btn.active { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- ===== СЕКЦИЯ: ГЛАВНАЯ ===== -->
+  <div id="sec-home">
+  <div class="header">
+    <div>
+      <h1>🌙 Осознанность</h1>
+      <p>Челябинск • <span id="date">—</span></p>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <div id="error-banner" class="error-banner">⚠️ Ошибка загрузки. Используются резервные данные.</div>
+
+  <div class="hijri-banner">
+    <div class="hijri-date" id="hijri-date">—</div>
+    <div class="hijri-month" id="hijri-month">По хиджре</div>
+  </div>
+
+  <div class="kurban-banner" id="kurban-banner">
+    <div style="flex: 1;">
+      <div class="kurban-title">🌙 Курбан Байрам</div>
+      <div class="kurban-date" id="kurban-date">—</div>
+      <div class="kurban-greeting">Такъаббаль Аллаху минна ва минкум</div>
+    </div>
+    <div style="font-size: 2.5rem;">✨</div>
+  </div>
+  <div class="card timer-card">
+    <div class="status-label">Текущий период</div>
+    <div class="current-prayer">
+      <div class="name" id="current-name">Загрузка…</div>
+      <div class="time" id="current-time-info">—</div>
+    </div>
+    <div class="status-label">До следующего намаза</div>
+    <div class="countdown" id="countdown">--:--:--</div>
+    <div id="forbidden-banner" style="display:none; background:rgba(239,68,68,0.12); border:1px solid #ef4444; border-radius:0.75rem; padding:0.75rem 1rem; margin-top:0.75rem; font-size:0.85rem; line-height:1.6; color:#fca5a5;">
+      🚫 <strong style="color:#ef4444">Запретное время для намаза</strong><br>
+      <span id="forbidden-reason">—</span><br>
+      <span style="font-size:0.75rem; color:var(--muted)">По ханафитскому мазхабу намаз в это время не совершается</span>
+      <div style="margin-top:0.6rem">
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.textContent.includes('▼')?'📚 Доказательство ▼':'📚 Доказательство ▲'" style="background:none;border:none;color:#ef4444;font-size:0.75rem;font-weight:600;cursor:pointer;padding:0">📚 Доказательство ▼</button>
+        <div style="display:none;margin-top:0.5rem;padding:0.75rem;background:rgba(0,0,0,0.2);border-radius:0.5rem;border-left:2px solid #ef4444">
+          <p style="font-style:italic;font-size:0.8rem;line-height:1.6;margin-bottom:0.4rem;color:var(--text)">"Пророк ﷺ запретил совершать намаз в три времени: когда восходит солнце, пока оно не поднимется; когда солнце в зените, пока оно не склонится; и когда солнце склоняется к закату, пока оно не зайдёт"</p>
+          <cite style="font-size:0.75rem;color:var(--muted)">📚 Муслим, 831 — от Укбы ибн Амира (да будет доволен им Аллах)</cite>
+        </div>
+      </div>
+    </div>
+    <button id="mark-done" class="btn">✅ Я совершил этот намаз</button>
+    <div id="niyyah-banner" style="display:none; margin-top:0.75rem; background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.05)); border:1px solid rgba(16,185,129,0.4); border-radius:0.75rem; padding:0.9rem 1rem; text-align:center;">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--accent);margin-bottom:0.3rem" id="niyyah-title">🕌 Скоро намаз</div>
+      <div style="font-size:0.75rem;color:var(--muted);line-height:1.6;margin-bottom:0.5rem">Обнови намерение — ты делаешь это ради Аллаха</div>
+      <div style="font-size:0.85rem;color:var(--text);font-style:italic;line-height:1.6">"Наввайту ан усаллия фарда <span id="niyyah-prayer-name">—</span>"</div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">Намерение — в сердце, не обязательно вслух</div>
+    </div>
+    <div id="zikr-card" class="zikr-card">
+      <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem">Зикры после намаза</div>
+      <div class="zikr-text" id="zikr-phrase">Нажми кнопку</div>
+      <div class="zikr-counter" id="zikr-count">0</div>
+      <button id="zikr-btn" class="btn btn-zikr btn-zikr-tap" onclick="handleZikr()">Тап</button>
+      <button id="zikr-done-btn" class="btn btn-zikr btn-zikr-done" onclick="finishZikr()">✅ Я выполнил зикры</button>
+    </div>
+  </div>
+
+  <!-- Аят дня + счётчик дней -->
+  <div class="card" style="padding:1rem 1.25rem">
+    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.5rem">🌿 Напоминание дня</div>
+    <div id="ayah-text" style="font-size:0.9rem;line-height:1.65;font-style:italic;color:var(--text);margin-bottom:0.3rem">…</div>
+    <div id="ayah-source" style="font-size:0.75rem;color:var(--accent);font-weight:600"></div>
+    <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(148,163,184,0.15);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">🔥 Дней подряд</div>
+        <div id="streak-text" style="font-size:0.85rem;color:var(--text);margin-top:0.2rem">—</div>
+      </div>
+      <div id="streak-count" style="font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1">0</div>
+    </div>
+  </div>
+  <div class="footer-warning">
+    <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
+    <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
+    <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
+  </div>
+  </div>
+
+  <!-- ===== СЕКЦИЯ: НАМАЗЫ ===== -->
+  <div id="sec-prayers" style="display:none">
+  <div class="header">
+    <div><h1>📋 Намазы</h1><p>Челябинск • <span id="date2">—</span></p></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="card">
+    <div id="prayers-list" class="prayer-list"></div>
+  </div>
+  <div class="footer-warning">
+    <p>⚠️ Время намазов указано справочно. Сверяйтесь с расписанием мечети.</p>
+  </div>
+  </div>
+
+  <!-- ===== СЕКЦИЯ: ЗИКРЫ ===== -->
+  <div id="sec-zikr" style="display:none">
+  <div class="header">
+    <div><h1>📿 Зикры</h1><p>После намаза</p></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="card" style="text-align:center">
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">Зикры появляются после отметки намаза на главной</p>
+    <div style="font-size:0.85rem;line-height:1.8;color:var(--text)">
+      <p>📿 СубханАллах × 33</p>
+      <p>📿 АльхамдулиЛлях × 33</p>
+      <p>📿 АллахуАкбар × 33</p>
+      <p>📿 Тахлиль × 1</p>
+      <p>📖 Сура Ихлас × 3</p>
+      <p>📖 Сура Фаляк × 1</p>
+      <p>📖 Сура Нас × 1</p>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== СЕКЦИЯ: ЕЩЁ — главный экран с плитками ===== -->
+  <div id="sec-more" style="display:none">
+  <div class="header">
+    <div><h1>🔖 Ещё</h1></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+    <div onclick="openMoreSub('sub-compass')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">🕋</div>
+      <div style="font-weight:700;font-size:0.95rem">Кибла</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Направление на Мекку</div>
+    </div>
+    <div onclick="openMoreSub('sub-azkar')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">📿</div>
+      <div style="font-weight:700;font-size:0.95rem">Азкары</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Утро и вечер</div>
+    </div>
+    <div onclick="openMoreSub('sub-zakat')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">💰</div>
+      <div style="font-weight:700;font-size:0.95rem">Закат</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Калькулятор</div>
+    </div>
+    <div onclick="openDuaModal()" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">🤲</div>
+      <div style="font-weight:700;font-size:0.95rem">Мои дуа</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Личные азкары</div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: КИБЛА ===== -->
+  <div id="sub-compass" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div class="card compass-card">
+    <h3 style="margin-bottom: 0.5rem">🕋 Направление Киблы</h3>
+    <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem">Для Челябинска (~229°)</p>
+    <div class="compass-wrapper">
+      <div class="compass-ring" id="compass-ring">
+        <div class="compass-directions">
+          <span class="compass-n">С</span><span class="compass-s">Ю</span>
+          <span class="compass-e">В</span><span class="compass-w">З</span>
+        </div>
+      </div>
+      <div class="compass-arrow" id="compass-arrow"><div class="qibla-arrow"></div></div>
+      <div class="compass-center"></div>
+    </div>
+    <p class="compass-status" id="compass-status">Нажмите кнопку ниже</p>
+    <button id="enable-compass-btn" class="btn-compass" onclick="enableCompass()">📡 Включить компас</button>
+    <p class="compass-note">Держите телефон горизонтально</p>
+    <p class="compass-warning">⚠️ Компас может иметь погрешность</p>
+  </div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: АЗКАРЫ ===== -->
+  <div id="sub-azkar" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div class="card" id="azkar-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <h3>📿 Азкары</h3>
+      <div style="display:flex;gap:0.5rem">
+        <button id="azkar-tab-morning" onclick="switchAzkar('morning')" style="padding:0.3rem 0.75rem;border-radius:1rem;border:1px solid var(--accent);background:var(--accent);color:#0f172a;font-size:0.8rem;font-weight:700;cursor:pointer">Утро</button>
+        <button id="azkar-tab-evening" onclick="switchAzkar('evening')" style="padding:0.3rem 0.75rem;border-radius:1rem;border:1px solid var(--muted);background:transparent;color:var(--muted);font-size:0.8rem;font-weight:700;cursor:pointer">Вечер</button>
+      </div>
+    </div>
+    <div id="azkar-list" style="display:flex;flex-direction:column;gap:0.5rem"></div>
+    <div id="azkar-done-msg" style="display:none;text-align:center;padding:1rem;color:var(--accent);font-weight:700;font-size:0.95rem">
+      ✅ Все азкары прочитаны! АльхамдулиЛлях 🤲
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: ЗАКАТ ===== -->
+  <div id="sub-zakat" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">💰 Калькулятор Заката</h3>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.5">Нисаб = 85г золота ≈ <strong id="nisab-val" style="color:var(--accent)">—</strong> ₽. Если ваши сбережения хранились год и превышают нисаб — закат обязателен (2.5%)</p>
+    <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
+      <label style="font-size:0.8rem;color:var(--muted)">Ваши накопления (₽)</label>
+      <input id="zakat-amount" type="number" placeholder="Например: 500000" oninput="calcZakat()" style="background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);color:var(--text);padding:0.75rem;border-radius:0.6rem;font-size:1rem;font-family:inherit;width:100%">
+    </div>
+    <div id="zakat-result" style="display:none;background:rgba(16,185,129,0.1);border:1px solid var(--accent);border-radius:0.75rem;padding:1rem;text-align:center">
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.25rem">Сумма заката (2.5%)</div>
+      <div id="zakat-sum" style="font-size:1.8rem;font-weight:800;color:var(--accent)">—</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">в месяц: <span id="zakat-monthly">—</span></div>
+    </div>
+    <div id="zakat-below" style="display:none;background:rgba(148,163,184,0.1);border-radius:0.75rem;padding:0.75rem;text-align:center;font-size:0.85rem;color:var(--muted)">
+      Ваши накопления ниже нисаба — закат пока не обязателен
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.5">⚠️ Расчёт приблизительный. По точным вопросам заката — к знающим.</p>
+  </div>
+  </div>
+
+  <!-- Dhuha Modal -->
+  <div id="dhuha-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-icon">🌤️</div>
+      <div class="modal-title">Намаз Духа</div>
+      <div class="modal-text">Сейчас лучшее время для совершения добровольного намаза Духа.<br><br><strong>Сколько ракаатов совершить?</strong></div>
+      <div class="modal-hadith">
+        <p>«Пророк ﷺ сказал: «Каждое утро каждый сустав одного из вас должен дать садаку... И достаточно ему двух ракаатов Духа»»</p>
+        <cite>📚 Муслим, 720</cite>
+      </div>
+      <div class="rakaat-buttons">
+        <button class="btn-rakaat" onclick="markDhuha(2)">2 ракаата</button>
+        <button class="btn-rakaat" onclick="markDhuha(4)">4 ракаата</button>
+        <button class="btn-rakaat" onclick="markDhuha(6)">6 ракаатов</button>
+        <button class="btn-rakaat" onclick="markDhuha(8)">8 ракаатов</button>
+      </div>
+      <button class="btn-close" onclick="closeDhuhaModal()">Понял, спасибо</button>
+    </div>
+  </div>
+
+  <!-- Tahajjud Modal -->
+  <div id="tahajjud-modal" class="modal-overlay tahajjud-theme">
+    <div class="modal-card">
+      <div class="modal-icon">🌌</div>
+      <div class="modal-title">Намаз Тахаджуд</div>
+      <div class="modal-text">Ночь — лучшее время для общения с Аллахом. Соверши добровольный намаз Тахаджуд.<br><br><strong>Сколько ракаатов совершить?</strong></div>
+      <div class="modal-hadith">
+        <p>«Господь наш нисходит на небо мира в последнюю треть ночи и говорит: "Кто взывает ко Мне, чтобы Я ответил ему? Кто просит у Меня, чтобы Я дал ему? Кто просит прощения у Меня, чтобы Я простил его?"»</p>
+        <cite>📚 Бухари, 1145; Муслим, 758</cite>
+      </div>
+      <div class="rakaat-buttons">
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(2)">2 ракаата</button>
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(4)">4 ракаата</button>
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(6)">6 ракаатов</button>
+        <button class="btn-rakaat btn-rakaat-tahajjud" onclick="markTahajjud(8)">8 ракаатов</button>
+      </div>
+      <button class="btn-close" onclick="closeTahajjudModal()">Понял, спасибо</button>
+    </div>
+  </div>
+
+  <!-- Dua Collection Modal -->
+  <div id="dua-modal" class="modal-overlay">
+    <div class="modal-card" style="border-color: var(--accent); text-align: left; max-height: 80vh; display: flex; flex-direction: column;">      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">📖 Мои дуа и азкары</h3>
+        <button onclick="closeDuaModal()" style="background: transparent; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      
+      <div id="dua-list" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.5rem;"></div>
+      
+      <div class="dua-form">
+        <input type="text" id="dua-title" placeholder="Название (например: После намаза)" />
+        <textarea id="dua-text" placeholder="Текст дуа или зикра..."></textarea>
+        <button class="btn" onclick="addDua()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка АльхамдулиЛлях после намаза -->
+  <div id="alhamd-modal" class="alhamd-overlay">
+    <div class="alhamd-card">
+      <div class="alhamd-icon" id="alhamd-icon">🤲</div>
+      <div class="alhamd-title" id="alhamd-title">АльхамдулиЛлях!</div>
+      <div class="alhamd-body" id="alhamd-body">—</div>
+      <button class="alhamd-btn" onclick="document.getElementById('alhamd-modal').classList.remove('show')">АльхамдулиЛлях 🤲</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">✓</div>
+
+  <!-- НИЖНЕЕ МЕНЮ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="navTo('home')">
+      <span class="nav-icon">🕌</span><span>Главная</span>
+    </button>
+    <button class="nav-btn" id="nav-prayers" onclick="navTo('prayers')">
+      <span class="nav-icon">📋</span><span>Намазы</span>
+    </button>
+    <button class="nav-btn" id="nav-zikr" onclick="navTo('zikr')">
+      <span class="nav-icon">📿</span><span>Зикры</span>
+    </button>
+    <button class="nav-btn" id="nav-more" onclick="navTo('more')">
+      <span class="nav-icon">🔖</span><span>Ещё</span>
+    </button>
+  </nav>
+
+  <script>
+    // === АЯТ ДНЯ ===
+    const AYAHS = [
+      { text:'Воистину, молитва предписана верующим в определённое время.', source:'📖 Коран 4:103' },
+      { text:'Поминайте Меня, и Я буду помнить вас. Благодарите Меня и не будьте неблагодарны.', source:'📖 Коран 2:152' },
+      { text:'Самое любимое дело перед Аллахом — это намаз в его время.', source:'📚 Бухари, 527' },
+      { text:'Воистину, намаз удерживает от мерзости и порицаемого.', source:'📖 Коран 29:45' },
+      { text:'Первое, о чём будет спрошен раб в Судный день — это его намаз.', source:'📚 Тирмизи, 413' },
+      { text:'Тот, кто совершает Фаджр и Аср — войдёт в Рай.', source:'📚 Бухари, 574' },
+      { text:'Улыбнуться брату — садака. Помочь человеку — садака. Убрать вредное с дороги — садака.', source:'📚 Тирмизи, 1956' },
+      { text:'Не уверует никто из вас, пока не будет желать брату того же, чего желает себе.', source:'📚 Бухари, 13' },
+      { text:'В поминании Аллаха успокаиваются сердца.', source:'📖 Коран 13:28' },
+      { text:'Лучшее из того, что я говорю: «Ля иляха илляллах»', source:'📚 Тирмизи, 3585' },
+      { text:'Поистине, с каждой трудностью — облегчение.', source:'📖 Коран 94:5' },
+      { text:'Взывайте ко Мне, и Я отвечу вам.', source:'📖 Коран 40:60' },
+      { text:'Поминание Аллаха — лекарство, а забвение Его — болезнь.', source:'📚 Ибн Аль-Каййим' },
+      { text:'Кто читает аят аль-Курси после каждого намаза — тому ничто не мешает войти в Рай, кроме смерти.', source:'📚 Насаи. Сахих.' },
+      { text:'Добрые нравы — тяжелейшее из того, что кладётся на весы в Судный день.', source:'📚 Тирмизи, 2002' },
+    ];
+    const renderAyah = () => {
+      const idx = Math.floor(Date.now() / 86400000) % AYAHS.length;
+      const el = document.getElementById('ayah-text'), src = document.getElementById('ayah-source');
+      if (el) el.textContent = AYAHS[idx].text;
+      if (src) src.textContent = AYAHS[idx].source;
+    };
+
+    // === СТРИК (дней подряд) ===
+    const STREAK_KEY = 'prayer_streak_v1';
+    const FARZ = ['fajr','dhuhr','asr','maghrib','isha'];
+    const calcStreak = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count:0, lastDate:'' };
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now()-86400000).toISOString().split('T')[0];
+        const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} };
+        const allDone = FARZ.every(p => state.completed[p]);
+
+        if (allDone && saved.lastDate !== today) {
+          const newCount = saved.lastDate === yesterday ? saved.count + 1 : 1;
+          localStorage.setItem(STREAK_KEY, JSON.stringify({ count:newCount, lastDate:today }));
+          return newCount;
+        }
+        if (saved.lastDate !== today && saved.lastDate !== yesterday) return 0;
+        return saved.count || 0;
+      } catch { return 0; }
+    };
+    const renderStreak = () => {
+      const n = calcStreak();
+      const el = document.getElementById('streak-count');
+      const txt = document.getElementById('streak-text');
+      if (el) el.textContent = n;
+      if (txt) {
+        if (n === 0) txt.textContent = 'Начни сегодня — соверши все 5 намазов';
+        else if (n === 1) txt.textContent = 'Отличное начало! Продолжай завтра';
+        else if (n < 7) txt.textContent = `${n} дня подряд — машааллах!`;
+        else if (n < 30) txt.textContent = `${n} дней подряд — субханАллах!`;
+        else txt.textContent = `${n} дней подряд — АльхамдулиЛлях! 🌟`;
+      }
+    };
+
+    // === АЗКАРЫ ===
+    const AZKAR = {
+      morning: [
+        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм. Ля та`хузуху синатун ва ля наум. Ляху ма фис-самавати ва ма филь-ард. Ман заллязи яшфа`у индаху илля би-изних. Я`ляму ма байна айдихим ва ма хальфахум. Ва ля юхитуна би-шайим-мин `ильмихи илля би-ма ша`а. Васи`а курсиюху-с-самавати валь-ард. Ва ля яудуху хифзухума ва хуваль-`алиюль-`азым.', count:1, hadith:'📚 Насаи — кто читает утром, под защитой Аллаха до вечера' },
+        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад.\nАллахус-самад.\nЛям ялид ва лям юляд.\nВа лям якун ляху куфуван ахад.', count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк.\nМин шарри ма халяк.\nВа мин шарри гасикин иза вакаб.\nВа мин шаррин-наффасати филь-'укад.\nВа мин шарри хасидин иза хасад.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас.\nМаликин-нас.\nИляхин-нас.\nМин шарриль-васвасиль-ханнас.\nАллязи ювасвису фи судурин-нас.\nМиналь-джиннати ван-нас.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'СубханАллах (33)', full:'СубханАллах\n\n(Пречист Аллах)', count:33, hadith:'📚 Муслим, 597' },
+        { text:'АльхамдулиЛлях (33)', full:'АльхамдулиЛлях\n\n(Хвала Аллаху)', count:33, hadith:'📚 Муслим, 597' },
+        { text:'АллахуАкбар (34)', full:'АллахуАкбар\n\n(Аллах Велик)', count:34, hadith:'📚 Муслим, 597' },
+      ],
+      evening: [
+        { text:'АйятульКурси (1 раз)', full:'Аллаху ла иляха илля хуваль-хаййуль-кайюм. Ля та`хузуху синатун ва ля наум. Ляху ма фис-самавати ва ма филь-ард. Ман заллязи яшфа`у индаху илля би-изних. Я`ляму ма байна айдихим ва ма хальфахум. Ва ля юхитуна би-шайим-мин `ильмихи илля би-ма ша`а. Васи`а курсиюху-с-самавати валь-ард. Ва ля яудуху хифзухума ва хуваль-`алиюль-`азым.', count:1, hadith:'📚 Насаи — кто читает вечером, под защитой Аллаха до утра' },
+        { text:'Сура Ихлас (3 раза)', full:'Куль хува-Ллаху ахад.\nАллахус-самад.\nЛям ялид ва лям юляд.\nВа лям якун ляху куфуван ахад.', count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Фаляк (3 раза)', full:"Куль а'узу би-Раббиль-фаляк.\nМин шарри ма халяк.\nВа мин шарри гасикин иза вакаб.\nВа мин шаррин-наффасати филь-'укад.\nВа мин шарри хасидин иза хасад.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Сура Нас (3 раза)', full:"Куль а'узу би-Раббин-нас.\nМаликин-нас.\nИляхин-нас.\nМин шарриль-васвасиль-ханнас.\nАллязи ювасвису фи судурин-нас.\nМиналь-джиннати ван-нас.", count:3, hadith:'📚 Абу Дауд, 5082' },
+        { text:'Истигфар (100 раз)', full:'АстагфируЛлах\n\n(Прошу прощения у Аллаха)\n\nИли полная форма:\nАстагфируЛлаха ва атубу иляйх\n(Прошу прощения у Аллаха и каюсь Ему)', count:100, hadith:'📚 Муслим, 2702 — Пророк ﷺ делал истигфар более 70 раз в день' },
+        { text:'Салават (10 раз)', full:'АллахуммА салли `аля Мухаммад ва `аля али Мухаммад\n\n(О Аллах, благослови Мухаммада и семью Мухаммада)', count:10, hadith:'📚 Тирмизи, 484' },
+        { text:'Дуа перед сном', full:'БисмикАллахумма ахья ва амут\n\n(С именем Твоим, о Аллах, я живу и умираю)', count:1, hadith:'📚 Бухари, 6312' },
+      ]
+    };
+    const AZKAR_KEY = 'azkar_state_v1';
+    let currentAzkarType = 'morning';
+
+    const getAzkarState = (type) => {
+      try {
+        const s = JSON.parse(localStorage.getItem(AZKAR_KEY)) || {};
+        const today = new Date().toISOString().split('T')[0];
+        if (s.date !== today) return {};
+        return s[type] || {};
+      } catch { return {}; }
+    };
+    const saveAzkarState = (type, state) => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const s = JSON.parse(localStorage.getItem(AZKAR_KEY)) || { date:today };
+        if (s.date !== today) { localStorage.setItem(AZKAR_KEY, JSON.stringify({ date:today, [type]:state })); return; }
+        s[type] = state; localStorage.setItem(AZKAR_KEY, JSON.stringify(s));
+      } catch {}
+    };
+
+    window.switchAzkar = (type) => {
+      currentAzkarType = type;
+      document.getElementById('azkar-tab-morning').style.background = type==='morning' ? 'var(--accent)' : 'transparent';
+      document.getElementById('azkar-tab-morning').style.color = type==='morning' ? '#0f172a' : 'var(--muted)';
+      document.getElementById('azkar-tab-morning').style.borderColor = type==='morning' ? 'var(--accent)' : 'var(--muted)';
+      document.getElementById('azkar-tab-evening').style.background = type==='evening' ? 'var(--accent)' : 'transparent';
+      document.getElementById('azkar-tab-evening').style.color = type==='evening' ? '#0f172a' : 'var(--muted)';
+      document.getElementById('azkar-tab-evening').style.borderColor = type==='evening' ? 'var(--accent)' : 'var(--muted)';
+      renderAzkar();
+    };
+
+    const renderAzkar = () => {
+      const list = document.getElementById('azkar-list');
+      const doneMsg = document.getElementById('azkar-done-msg');
+      if (!list) return;
+      const state = getAzkarState(currentAzkarType);
+      const items = AZKAR[currentAzkarType];
+      const allDone = items.every((_, i) => state[i]);
+      list.style.display = allDone ? 'none' : 'flex';
+      doneMsg.style.display = allDone ? 'block' : 'none';
+      list.innerHTML = '';
+      items.forEach((item, i) => {
+        const done = !!state[i];
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;flex-direction:column;padding:0.75rem;background:${done?'rgba(16,185,129,0.08)':'rgba(148,163,184,0.08)'};border-radius:0.6rem;border:1px solid ${done?'rgba(16,185,129,0.3)':'transparent'};gap:0.5rem`;
+
+        // Верхняя строка: чекбокс + название + кнопка текста
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex;align-items:center;gap:0.75rem;cursor:pointer';
+        topRow.innerHTML = `
+          <div style="width:28px;height:28px;border-radius:50%;border:2px solid ${done?'var(--accent)':'var(--muted)'};background:${done?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;font-weight:700;color:${done?'#0f172a':'var(--muted)'}">${done?'✓':''}</div>
+          <div style="flex:1">
+            <div style="font-size:0.9rem;font-weight:600;${done?'text-decoration:line-through;color:var(--muted)':''}">${item.text}</div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:0.1rem">${item.hadith}</div>
+          </div>
+          <button class="azkar-expand-btn" data-idx="${i}" style="background:none;border:1px solid var(--muted);color:var(--muted);border-radius:0.4rem;padding:0.25rem 0.5rem;font-size:0.7rem;cursor:pointer;flex-shrink:0;white-space:nowrap">Текст ▼</button>
+        `;
+
+        // Блок с полным текстом (скрыт по умолчанию)
+        const fullBlock = document.createElement('div');
+        fullBlock.style.cssText = 'display:none;background:rgba(16,185,129,0.06);border-left:3px solid var(--accent);border-radius:0 0.4rem 0.4rem 0;padding:0.75rem;font-size:0.85rem;line-height:1.7;white-space:pre-wrap;color:var(--text)';
+        fullBlock.textContent = item.full;
+
+        // Клик по чекбоксу/строке
+        topRow.onclick = (e) => {
+          if (e.target.closest('.azkar-expand-btn')) return; // не срабатывает на кнопку
+          const st = getAzkarState(currentAzkarType);
+          st[i] = !st[i];
+          saveAzkarState(currentAzkarType, st);
+          renderAzkar();
+          if (st[i]) showToast('✓ АльхамдулиЛлях!');
+        };
+
+        // Клик по кнопке "Текст ▼"
+        const expandBtn = topRow.querySelector('.azkar-expand-btn');
+        expandBtn.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = fullBlock.style.display !== 'none';
+          fullBlock.style.display = isOpen ? 'none' : 'block';
+          expandBtn.textContent = isOpen ? 'Текст ▼' : 'Скрыть ▲';
+          expandBtn.style.color = isOpen ? 'var(--muted)' : 'var(--accent)';
+          expandBtn.style.borderColor = isOpen ? 'var(--muted)' : 'var(--accent)';
+        };
+
+        div.appendChild(topRow);
+        div.appendChild(fullBlock);
+        list.appendChild(div);
+      });
+    };
+
+    // === КАЛЬКУЛЯТОР ЗАКАТА ===
+    // Нисаб: 85г золота. Цена золота ~8500₽/г (приблизительно)
+    const GOLD_PRICE_PER_G = 8500;
+    const NISAB = 85 * GOLD_PRICE_PER_G;
+    document.getElementById('nisab-val').textContent = NISAB.toLocaleString('ru');
+
+    window.calcZakat = () => {
+      const val = parseFloat(document.getElementById('zakat-amount').value) || 0;
+      const res = document.getElementById('zakat-result');
+      const below = document.getElementById('zakat-below');
+      if (val <= 0) { res.style.display='none'; below.style.display='none'; return; }
+      if (val < NISAB) { res.style.display='none'; below.style.display='block'; return; }
+      const zakat = val * 0.025;
+      document.getElementById('zakat-sum').textContent = Math.round(zakat).toLocaleString('ru') + ' ₽';
+      document.getElementById('zakat-monthly').textContent = Math.round(zakat/12).toLocaleString('ru') + ' ₽';
+      res.style.display='block'; below.style.display='none';
+    };
+
+    // === CONFIG ===
+    const ALHAMD_DATA = {
+      fajr:    { icon:'🌅', title:'АльхамдулиЛлях! Фаджр совершён', body:'Ты встал, когда другие спали. Аллах видит каждое усилие. Фаджр — самый тяжёлый намаз, и ты его совершил. Пусть этот день будет благословлён, иншааллах.' },
+      dhuhr:   { icon:'☀️', title:'АльхамдулиЛлях! Зухр совершён', body:'В середине дня ты остановился и вспомнил об Аллахе. Это и есть настоящее богатство — сердце, которое помнит своего Господа.' },
+      asr:     { icon:'🌤️', title:'АльхамдулиЛлях! Аср совершён', body:'Аллах поклялся временем Аср в Коране — сурой "Аль-Аср". Ты совершил этот намаз. Тот, кто не пропускает Фаджр и Аср, под защитой Аллаха.' },
+      maghrib: { icon:'🌆', title:'АльхамдулиЛлях! Магриб совершён', body:'День завершается. Ты встретил закат с поклоном перед Аллахом. Пророк ﷺ сказал: кто совершил Магриб — тот под защитой Аллаха до утра.' },
+      isha:    { icon:'🌙', title:'АльхамдулиЛлях! Иша совершён', body:'Ты завершил день с именем Аллаха. Ложись спать с поминанием — и каждый твой сон будет наградой, иншааллах. "Кто совершит Иша в джамаате — как будто простоял половину ночи".' },
+    };
+
+    const showAlhamdModal = (prayerName) => {
+      const d = ALHAMD_DATA[prayerName];
+      if (!d) return;
+      document.getElementById('alhamd-icon').textContent = d.icon;
+      document.getElementById('alhamd-title').textContent = d.title;
+      document.getElementById('alhamd-body').textContent = d.body;
+      document.getElementById('alhamd-modal').classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    };
+
+    // === CONFIG ===
+    const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
+    const STORAGE_KEY = 'prayer_tracker_v1';
+    const CACHE_KEY = 'prayer_cache_v1';
+    const DUA_KEY = 'dua_collection_v1';
+    const PRAYERS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+    const PRAYER_NAMES_ONLY = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']; // 🔧 Только настоящие намазы для зикров
+    const NAMES = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
+    const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const FALLBACK = { fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" };
+    
+    let appTimings = null, appState = null, timerInterval = null;
+    let zikrPhase = 0, zikrCount = 0, zikrPrayerName = '';
+    let dhuhaModalShown = false;
+
+    // === PHRASES ===
+    const PHASE_FAJR_MAGHRIB = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ля-hуль-мульку ва ляhуль-хамду юхйи ва юмиту ва hува ‘аля кулли шайъин кадир';
+    const PHASE_DHUHR_ASR_ISHA = 'Ля иляhа илляллаhу вахдаhу ля шарика ляhу, ляhуль-мульку ва ляhуль-хамду ва hува ‘аля кулли шайъин кадир';
+    const SURAH_IKHLAS = "Куль хува-Ллаху ахад,\nЛлахус-самад.\nЛам ялид ва лам юляд,\nВа лам якун ляху куфуван ахад.";
+    const SURAH_FALAQ = "Куль а'узу би-Раббиль-фаляк,\nМин шарри ма халак,\nВа мин шарри гасикын иза вакаб,\nВа мин шаррин-наффасати филь-'укад,\nВа мин шарри хасидин иза хасад.";
+    const SURAH_NAS = "Куль а'узу би-Раббин-нас,\nМаликин-нас,\nИляхин-нас,\nМин шарриль-васвасиль-ханнас,\nАллязи ювасвису фи судури-н-нас,\nМиналь-джиннати ван-нас.";
+
+    // === UTILS ===
+    const showToast = (msg) => {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    };
+
+    const toggleTheme = () => {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');      document.querySelector('.theme-btn').textContent = isLight ? '🌞' : '🌙';
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    };
+
+    const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
+    const getTodayISO = () => new Date().toISOString().split('T')[0];
+
+    // === KURBAN BAYRAM ===
+    const getKurbanBayramDate = (year) => {
+      const dates = {
+        2026: { gregorian: '27 мая', dayOfWeek: 'Среда', hijri: '10 Зуль-Хиджа 1447' },
+        2027: { gregorian: '16 мая', dayOfWeek: 'Воскресенье', hijri: '10 Зуль-Хиджа 1448' },
+        2028: { gregorian: '5 мая', dayOfWeek: 'Пятница', hijri: '10 Зуль-Хиджа 1449' }
+      };
+      return dates[year] || dates[2026];
+    };
+
+    // === DATA LOADER ===
+    const loadData = async () => {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { timings, timestamp, hijriDay, hijriMonth } = JSON.parse(cached);
+          if (timings && Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+            return { timings, hijriDay, hijriMonth };
+          }
+        }
+      } catch (e) { console.warn('Cache error:', e); }
+
+      try {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(API_URL + '?t=' + Date.now(), { signal: controller.signal, cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        
+        const json = await res.json();
+        const entry = json.schedule?.find(item => item.date === getTodayStr());
+        if (entry) {
+          const timings = {};
+          PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
+          if (Object.keys(timings).length >= 4) {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+              timings,
+              schedule: json.schedule,
+              hijriDay: entry.d,
+              hijriMonth: json.monthName || '—',
+              timestamp: Date.now()
+            }));
+            return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
+          }        }
+        throw new Error('Invalid');
+      } catch (e) {
+        document.getElementById('error-banner').classList.add('show');
+        return { timings: FALLBACK, hijriDay: '—', hijriMonth: '—' };
+      }
+    };
+
+    // === TIME LOGIC ===
+    const parseTime = (timeStr) => {
+      if (!timeStr || typeof timeStr !== 'string') return new Date();
+      const [h, m] = timeStr.split(':').map(Number);
+      const d = new Date(); d.setHours(h, m, 0, 0); return d;
+    };
+
+    const findCurrentNext = (timings) => {
+      const now = new Date();
+      let current = null, next = null;
+      
+      for (const key of PRAYERS) {
+        if (!timings[key]) continue;
+        const time = parseTime(timings[key]);
+        if (time <= now) current = { name: key, time };
+        else if (!next) { next = { name: key, time }; break; }
+      }
+      
+      // После Фаджра следующий - Восход
+      if (current && current.name === 'fajr') {
+        if (timings.sunrise) {
+          next = { name: 'sunrise', time: parseTime(timings.sunrise) };
+        }
+      }
+      
+      // Если все прошли - следующий Фаджр завтра
+      if (!next && current) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+          const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = `${tomorrow.getDate()} ${MONTHS[tomorrow.getMonth()]}`;
+          const tomorrowEntry = cached.schedule?.find(d => d.date === tomorrowStr);
+          if (tomorrowEntry?.fajr) {
+            next = { name: 'fajr', time: parseTime(tomorrowEntry.fajr) };
+            next.time.setDate(next.time.getDate() + 1);
+          } else {
+            next = { name: 'fajr', time: parseTime(timings.fajr) };
+            next.time.setDate(next.time.getDate() + 1);
+          }
+        } catch {
+          next = { name: 'fajr', time: parseTime(timings.fajr) };
+          next.time.setDate(next.time.getDate() + 1);        }
+      }
+      
+      if (!current) {
+        current = { name: 'isha', time: parseTime(timings.isha) };
+        current.time.setDate(current.time.getDate() - 1);
+      }
+      return { current, next };
+    };
+
+    const isDhuhaTime = (timings) => {
+      const now = new Date(), currentMins = now.getHours() * 60 + now.getMinutes();
+      const getMins = (k) => { if (!timings[k]) return 0; const [h, m] = timings[k].split(':').map(Number); return h * 60 + m; };
+      return currentMins >= (getMins('sunrise') + 30) && currentMins < getMins('dhuhr');
+    };
+
+    // === MODALS ===
+    const showDhuhaModal = () => {
+      if (dhuhaModalShown || appState.completed.dhuha) return;
+      dhuhaModalShown = true;
+      document.getElementById('dhuha-modal').classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    };
+    window.closeDhuhaModal = () => document.getElementById('dhuha-modal').classList.remove('show');
+    window.markDhuha = (rakaats) => {
+      appState.completed.dhuha = true; appState.completed.dhuha_rakaats = rakaats; appState.completed.dhuha_at = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      showToast(`✓ Духа (${rakaats} р.)`); closeDhuhaModal(); renderList(appTimings, appState.completed);
+    };
+
+    const showTahajjudModal = () => {
+      if (appState.completed.tahajjud) return;
+      document.getElementById('tahajjud-modal').classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    };
+    window.closeTahajjudModal = () => document.getElementById('tahajjud-modal').classList.remove('show');
+    window.markTahajjud = (rakaats) => {
+      appState.completed.tahajjud = true; appState.completed.tahajjud_rakaats = rakaats; appState.completed.tahajjud_at = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      showToast(`✓ Тахаджуд (${rakaats} р.)`); closeTahajjudModal(); renderList(appTimings, appState.completed);
+    };
+
+    // === DUA COLLECTION ===
+    const getDuas = () => {
+      try { return JSON.parse(localStorage.getItem(DUA_KEY)) || []; }
+      catch { return []; }
+    };
+
+    window.openDuaModal = () => {
+      renderDuas();      document.getElementById('dua-modal').classList.add('show');
+    };
+    window.closeDuaModal = () => document.getElementById('dua-modal').classList.remove('show');
+
+    const renderDuas = () => {
+      const list = document.getElementById('dua-list');
+      const duas = getDuas();
+      list.innerHTML = duas.length === 0 ? '<p style="color: var(--muted); text-align: center; padding: 1rem;">Пока пусто. Добавь своё первое дуа 👇</p>' : '';
+      
+      duas.forEach((dua, index) => {
+        const div = document.createElement('div');
+        div.className = 'dua-list-item';
+        div.innerHTML = `
+          <button class="dua-delete-btn" onclick="deleteDua(${index})">🗑️</button>
+          <h4>${dua.title || 'Без названия'}</h4>
+          <p>${dua.text}</p>
+        `;
+        list.appendChild(div);
+      });
+    };
+
+    window.addDua = () => {
+      const title = document.getElementById('dua-title').value.trim();
+      const text = document.getElementById('dua-text').value.trim();
+      if (!text) return showToast('Введите текст дуа');
+      
+      const duas = getDuas();
+      duas.unshift({ title, text, date: new Date().toISOString() });
+      localStorage.setItem(DUA_KEY, JSON.stringify(duas));
+      
+      document.getElementById('dua-title').value = '';
+      document.getElementById('dua-text').value = '';
+      renderDuas();
+      showToast('✓ Сохранено');
+    };
+
+    window.deleteDua = (index) => {
+      if (!confirm('Удалить эту запись?')) return;
+      const duas = getDuas();
+      duas.splice(index, 1);
+      localStorage.setItem(DUA_KEY, JSON.stringify(duas));
+      renderDuas();
+      showToast('🗑️ Удалено');
+    };
+
+    const formatDuration = (ms) => {
+      if (ms < 0) return "00:00:00";
+      const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
+      return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    };
+    const shouldShowSunnah = (key, timings, completed) => {
+      const mins = new Date().getHours() * 60 + new Date().getMinutes();
+      const getMins = (k) => { if (!timings[k]) return 0; const [h, m] = timings[k].split(':').map(Number); return h * 60 + m; };
+      if (key === 'fajr_sunnah') return mins >= getMins('fajr') && mins < getMins('sunrise');
+      if (key === 'dhuhr_sunnah_before') return mins >= getMins('dhuhr') && mins < getMins('asr');
+      if (key === 'dhuhr_sunnah_after') return completed.dhuhr && mins >= getMins('dhuhr') && mins < getMins('asr');
+      if (key === 'maghrib_sunnah') return completed.maghrib && mins >= getMins('maghrib') && mins < getMins('isha');
+      if (key === 'isha_sunnah') return completed.isha && mins >= getMins('isha');
+      return false;
+    };
+
+    // === RENDER ===
+    const renderList = (timings, completed) => {
+      if (!timings) return;
+      const list = document.getElementById('prayers-list');
+      list.innerHTML = '';
+      const isFriday = new Date().getDay() === 5;
+
+      if (completed.dhuha) {
+        const div = document.createElement('div'); div.className = 'prayer-item dhuha completed';
+        div.innerHTML = `<span class="prayer-name">🌤️ Духа (${completed.dhuha_rakaats || '?'} р.)</span><span>✓</span>`; list.appendChild(div);
+      }
+      if (completed.tahajjud) {
+        const div = document.createElement('div'); div.className = 'prayer-item tahajjud completed';
+        div.innerHTML = `<span class="prayer-name">🌌 Тахаджуд (${completed.tahajjud_rakaats || '?'} р.)</span><span>✓</span>`; list.appendChild(div);
+      }
+
+      const ishaTime = timings.isha ? parseTime(timings.isha) : null;
+      const now = new Date();
+      if (ishaTime && now >= ishaTime) {
+        const div = document.createElement('div');
+        const isWitrDone = completed.witr;
+        div.className = `prayer-item witr ${isWitrDone ? 'completed' : ''}`;
+        div.innerHTML = `<span class="prayer-name">🌙 Витр (3 ракаата)</span><span style="font-family:monospace">${isWitrDone ? '✓' : timings.isha + ' — Фаджр'}</span>`;
+        div.onclick = () => toggleWitr(); list.appendChild(div);
+      }
+
+      PRAYERS.forEach(key => {
+        if (key === 'sunrise' || !timings[key]) return;
+        const div = document.createElement('div'); div.className = `prayer-item ${completed[key] ? 'completed' : ''}`;
+        div.innerHTML = `<span class="prayer-name">${NAMES[key]}</span><span style="font-family:monospace">${timings[key]}</span>`;
+        list.appendChild(div);
+        
+        if (key === 'fajr' && shouldShowSunnah('fajr_sunnah', timings, completed)) addSunnah(list, 'fajr_sunnah', 'Сунна до (2)', completed);
+        if (key === 'dhuhr') {
+          if (shouldShowSunnah('dhuhr_sunnah_before', timings, completed)) addSunnah(list, 'dhuhr_sunnah_before', 'Сунна до (4)', completed);
+          if (shouldShowSunnah('dhuhr_sunnah_after', timings, completed)) addSunnah(list, 'dhuhr_sunnah_after', `Сунна после (${isFriday ? 4 : 2})`, completed);
+        }
+        if (key === 'maghrib' && shouldShowSunnah('maghrib_sunnah', timings, completed)) addSunnah(list, 'maghrib_sunnah', 'Сунна после (2)', completed);        if (key === 'isha' && shouldShowSunnah('isha_sunnah', timings, completed)) addSunnah(list, 'isha_sunnah', 'Сунна после (2)', completed);
+      });
+    };
+
+    window.toggleWitr = () => {
+      if (appState.completed.witr) return showToast('Уже отмечено ✓');
+      appState.completed.witr = true; appState.completed.witr_at = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      showToast('✓ Витр'); renderList(appTimings, appState.completed);
+    };
+
+    const addSunnah = (container, key, label, completed) => {
+      const div = document.createElement('div'); div.className = `prayer-item sunnah ${completed[key] ? 'completed' : ''}`;
+      div.innerHTML = `<span class="prayer-name">${label}</span><span>${completed[key] ? '✓' : '—'}</span>`;
+      div.onclick = (e) => { e.stopPropagation(); toggleSunnah(key); }; container.appendChild(div);
+    };
+
+    const toggleSunnah = (key) => {
+      appState.completed[key] = !appState.completed[key];
+      if (appState.completed[key]) appState.completed[key + '_at'] = new Date().toISOString();
+      else delete appState.completed[key + '_at'];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      renderList(appTimings, appState.completed);
+      showToast(appState.completed[key] ? '✓ Сунна' : '↩ Отмена');
+    };
+
+    const saveZikrState = () => {
+      localStorage.setItem('zikr_state_v1', JSON.stringify({ show: true, phase: zikrPhase, count: zikrCount, prayer: zikrPrayerName }));
+    };
+    const clearZikrState = () => localStorage.removeItem('zikr_state_v1');
+
+    // === ZIKR ===
+    window.handleZikr = () => {
+      if (zikrPhase >= 7) return;
+      const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
+      zikrCount++;
+      if (zikrCount > limit) { zikrPhase++; zikrCount = 1; }
+      if (navigator.vibrate) navigator.vibrate(50);
+      saveZikrState();
+      updateZikrUI();
+    };
+
+    window.finishZikr = () => {
+      if (zikrPhase < 7) {
+        zikrPhase++;
+        zikrCount = 1;
+        updateZikrUI();
+        saveZikrState();
+        showToast(`✓ Переход к следующему зикру`);
+      } else {
+        zikrPhase = 7; zikrCount = 0;
+        clearZikrState();
+        updateZikrUI(); showToast('✓ Все зикры завершены. Да примет Аллах!');
+      }
+    };
+
+    const updateZikrUI = () => {
+      const p = document.getElementById('zikr-phrase'), 
+            c = document.getElementById('zikr-count'), 
+            b = document.getElementById('zikr-btn'), 
+            d = document.getElementById('zikr-done-btn');
+      
+      const limit = zikrPhase === 4 ? 3 : (zikrPhase < 3 ? 33 : 1);
+      
+      if (zikrPhase === 0) { 
+        p.textContent = "СубханАллах"; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `СубханАллах (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 1) { 
+        p.textContent = "Альхамдулиллях"; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Альхамдулиллях (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 2) { 
+        p.textContent = "Аллаху Акбар"; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Аллаху Акбар (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 3) {
+        const isFM = (zikrPrayerName === 'fajr' || zikrPrayerName === 'maghrib');
+        p.textContent = isFM ? PHASE_FAJR_MAGHRIB : PHASE_DHUHR_ASR_ISHA; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Тахлиль (${zikrCount}/${limit})`;
+      } else if (zikrPhase === 4) { 
+        p.textContent = SURAH_IKHLAS; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Ихлас (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 5) { 
+        p.textContent = SURAH_FALAQ; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Фаляк (${zikrCount}/${limit})`; 
+      } else if (zikrPhase === 6) { 
+        p.textContent = SURAH_NAS; c.textContent = `${zikrCount} / ${limit}`; b.textContent = `Нас (${zikrCount}/${limit})`; 
+      } else { 
+        p.textContent = '✓ Завершено (Аллаху Акбар)'; c.textContent = '✓'; b.textContent = 'Да примет Аллах'; b.classList.add('done'); d.style.display = 'none'; 
+      }
+    };
+
+    // === ACTIONS ===
+    document.getElementById('mark-done').onclick = () => {
+      if (!appTimings) return;
+      const { current } = findCurrentNext(appTimings);
+      if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
+      
+      appState.completed[current.name] = true; 
+      appState.completed[current.name + '_at'] = new Date().toISOString();
+      appState.date = getTodayISO();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      
+      showToast(`✓ ${NAMES[current.name] || current.name}`); 
+      renderList(appTimings, appState.completed);
+      renderStreak();
+
+      // Модалка АльхамдулиЛлях — только для фарзов (не сунны, не витр, не духа)
+      if (PRAYER_NAMES_ONLY.includes(current.name)) {
+        setTimeout(() => showAlhamdModal(current.name), 300);
+      }
+      
+      // Зикры только для фарзов
+      if (PRAYER_NAMES_ONLY.includes(current.name)) {
+        zikrPrayerName = current.name; 
+        zikrPhase = 0; 
+        zikrCount = 0;
+        // Сохраняем состояние зикров чтобы не закрывались при сворачивании
+        localStorage.setItem('zikr_state_v1', JSON.stringify({ show: true, phase: 0, count: 0, prayer: current.name }));
+        document.getElementById('zikr-card').classList.add('show');
+        document.getElementById('zikr-done-btn').style.display = 'block';
+        document.getElementById('zikr-btn').classList.remove('done');
+        updateZikrUI(); 
+      } else {
+        document.getElementById('zikr-card').classList.remove('show');
+      }
+      
+      if (current.name === 'isha') {
+        setTimeout(() => showTahajjudModal(), 500);
+      }
+      
+      startTimer();
+    };
+
+    // === ЗАПРЕТНОЕ ВРЕМЯ (ханафитский мазхаб) ===
+    const getForbiddenTime = (timings) => {
+      if (!timings) return null;
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const nowSecs = nowMins * 60 + now.getSeconds();
+
+      const toSecs = (key) => {
+        if (!timings[key]) return null;
+        const [h, m] = timings[key].split(':').map(Number);
+        return (h * 60 + m) * 60;
+      };
+
+      const sunriseSecs = toSecs('sunrise');
+      const dhuhrSecs   = toSecs('dhuhr');
+      const maghribSecs = toSecs('maghrib');
+
+      if (!sunriseSecs || !dhuhrSecs || !maghribSecs) return null;
+
+      // 1. Восход: от восхода + 30 минут
+      if (nowSecs >= sunriseSecs && nowSecs < sunriseSecs + 30 * 60) {
+        const remaining = sunriseSecs + 30 * 60 - nowSecs;
+        const mins = Math.ceil(remaining / 60);
+        return { reason: `Время восхода солнца — подождите ещё ~${mins} мин.` };
+      }
+
+      // 2. Зенит: последние 5 минут до Зухра
+      if (nowSecs >= dhuhrSecs - 5 * 60 && nowSecs < dhuhrSecs) {
+        return { reason: 'Солнце в зените — подождите начала времени Зухра' };
+      }
+
+      // 3. Закат: последние 20 минут до Магриба
+      if (nowSecs >= maghribSecs - 20 * 60 && nowSecs < maghribSecs) {
+        const remaining = maghribSecs - nowSecs;
+        const mins = Math.ceil(remaining / 60);
+        return { reason: `Время захода солнца — подождите ещё ~${mins} мин.` };
+      }
+
+      return null;
+    };
+
+    const startTimer = () => {
+      if (!appTimings) return;
+      const update = () => {
+        const { current, next } = findCurrentNext(appTimings);
+        document.getElementById('current-name').textContent = NAMES[current.name] || current.name;
+        document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;
+
+        const forbidden = getForbiddenTime(appTimings);
+        const countdown = document.getElementById('countdown');
+        const banner = document.getElementById('forbidden-banner');
+        const reason = document.getElementById('forbidden-reason');
+
+        countdown.textContent = formatDuration(next.time - new Date());
+
+        if (forbidden) {
+          countdown.style.color = '#ef4444';
+          banner.style.display = 'block';
+          reason.textContent = forbidden.reason;
+        } else {
+          countdown.style.color = '';
+          banner.style.display = 'none';
+        }
+
+        const btn = document.getElementById('mark-done');
+        const done = appState.completed[current.name];
+        btn.disabled = done;
+        btn.textContent = done ? `${NAMES[current.name] || current.name} ✓` : `✅ ${NAMES[current.name] || current.name}`;
+
+        // Напоминание с ниятом за 10 минут
+        const niyyahBanner = document.getElementById('niyyah-banner');
+        const msLeft = next.time - new Date();
+        const minsLeft = msLeft / 60000;
+        const nextIsFarz = PRAYER_NAMES_ONLY.includes(next.name);
+        const nextDone = appState.completed[next.name];
+        if (niyyahBanner) {
+          if (minsLeft <= 10 && minsLeft > 0 && nextIsFarz && !nextDone) {
+            document.getElementById('niyyah-title').textContent = `🕌 До ${NAMES[next.name]} — ${Math.ceil(minsLeft)} мин.`;
+            document.getElementById('niyyah-prayer-name').textContent = NAMES[next.name];
+            niyyahBanner.style.display = 'block';
+          } else {
+            niyyahBanner.style.display = 'none';
+          }
+        }
+
+        if (isDhuhaTime(appTimings)) showDhuhaModal();
+      };
+      update();
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(update, 1000);
+    };
+
+    // === COMPASS ===
+    window.enableCompass = () => {
+      const s = document.getElementById('compass-status'), b = document.getElementById('enable-compass-btn'), r = document.getElementById('compass-ring'), a = document.getElementById('compass-arrow');
+      const req = () => {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission().then(p => p === 'granted' ? start() : s.textContent = '⛔ Доступ запрещён').catch(console.error);
+        } else start();
+      };
+      const start = () => {
+        b.classList.add('hidden'); s.textContent = '🔄 Калибровка...';
+        const hist = [], smooth = v => { hist.push(v); if(hist.length>5) hist.shift(); return hist.reduce((a,b)=>a+b,0)/hist.length; };
+        const h = e => {
+          let heading = e.webkitCompassHeading !== undefined ? e.webkitCompassHeading : (e.alpha !== null ? (360 - e.alpha) % 360 : null);
+          if (heading !== null) { const sh = smooth(heading); r.style.transform = `rotate(${-sh}deg)`; a.style.transform = `rotate(${229 - sh}deg)`; if(s.textContent.includes('Калибровка')) s.textContent = '✅ Компас работает'; }
+        };
+        if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', h, { passive: true });
+        else window.addEventListener('deviceorientation', h, { passive: true });      };
+      req();
+    };
+
+    // === MIDNIGHT RELOAD ===
+    const startMidnightCheck = () => {
+      setInterval(() => {
+        const n = new Date();
+        if (n.getHours() === 0 && n.getMinutes() <= 1) { console.log('🌙 Midnight reload'); location.reload(); }
+      }, 60000);
+    };
+
+    // === INIT ===
+    const init = async () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelector('.theme-btn').textContent = '🌞'; }
+      
+      const today = new Date();
+      document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      
+      try {
+        const kurban = getKurbanBayramDate(today.getFullYear());
+        document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
+      } catch (e) { document.getElementById('kurban-date').textContent = '—'; }
+      
+      try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
+      
+      const todayISO = getTodayISO();
+
+      // Если новый день — сбрасываем все намазы
+      if (appState.date !== todayISO) {
+        appState.completed = {};
+        appState.date = todayISO;
+        localStorage.removeItem('zikr_state_v1'); // сбрасываем зикры тоже
+      }
+
+      ['dhuha', 'tahajjud'].forEach(key => {
+        if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
+          delete appState.completed[key]; delete appState.completed[key + '_rakaats']; delete appState.completed[key + '_at'];
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      
+      dhuhaModalShown = false;
+
+      const data = await loadData();
+      appTimings = data.timings;
+      
+      if (data.hijriDay && data.hijriMonth) {
+        document.getElementById('hijri-date').textContent = `${data.hijriDay} ${data.hijriMonth}`;
+        document.getElementById('hijri-month').textContent = 'По хиджре (из базы)';
+      } else {
+        document.getElementById('hijri-date').textContent = '—';
+      }
+
+      renderList(appTimings, appState.completed);
+      startTimer();
+      startMidnightCheck();      setInterval(() => renderList(appTimings, appState.completed), 30000);
+
+      renderAyah();
+      renderStreak();
+      renderAzkar();
+
+      // Восстанавливаем зикры если были открыты до сворачивания
+      try {
+        const zs = JSON.parse(localStorage.getItem('zikr_state_v1'));
+        if (zs?.show && zs.phase < 7) {
+          zikrPhase = zs.phase; zikrCount = zs.count; zikrPrayerName = zs.prayer;
+          document.getElementById('zikr-card').classList.add('show');
+          document.getElementById('zikr-done-btn').style.display = 'block';
+          document.getElementById('zikr-btn').classList.remove('done');
+          updateZikrUI();
+        }
+      } catch {}
+      
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));
+      }
+    };
+
+    // === НАВИГАЦИЯ ===
+    const SECTIONS = ['sec-home','sec-prayers','sec-zikr','sec-more'];
+    const SUBS = ['sub-compass','sub-azkar','sub-zakat'];
+
+    const hideAll = () => {
+      SECTIONS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+      SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    };
+
+    window.navTo = (tab) => {
+      hideAll();
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('nav-' + tab).classList.add('active');
+      const el = document.getElementById('sec-' + tab);
+      if (el) { el.style.display='block'; window.scrollTo(0,0); }
+      if (tab === 'prayers') renderList(appTimings, appState?.completed || {});
+    };
+
+    window.openMoreSub = (id) => {
+      hideAll();
+      const el = document.getElementById(id);
+      if (el) { el.style.display='block'; window.scrollTo(0,0); }
+      if (id === 'sub-azkar') renderAzkar();
+    };
+
+    window.closeMoreSub = () => {
+      SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+      const more = document.getElementById('sec-more');
+      if (more) { more.style.display='block'; window.scrollTo(0,0); }
+    };
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

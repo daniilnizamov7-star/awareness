@@ -949,6 +949,7 @@
       
       appState.completed[current.name] = true; 
       appState.completed[current.name + '_at'] = new Date().toISOString();
+      appState.date = getTodayISO();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       showToast(`✓ ${NAMES[current.name] || current.name}`); 
@@ -1115,9 +1116,17 @@
         document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
       } catch (e) { document.getElementById('kurban-date').textContent = '—'; }
       
-      try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {} }; } catch { appState = { completed: {} }; }
+      try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       
       const todayISO = getTodayISO();
+
+      // Если новый день — сбрасываем все намазы
+      if (appState.date !== todayISO) {
+        appState.completed = {};
+        appState.date = todayISO;
+        localStorage.removeItem('zikr_state_v1'); // сбрасываем зикры тоже
+      }
+
       ['dhuha', 'tahajjud'].forEach(key => {
         if (appState.completed[key] && appState.completed[key + '_at']?.split('T')[0] !== todayISO) {
           delete appState.completed[key]; delete appState.completed[key + '_rakaats']; delete appState.completed[key + '_at'];

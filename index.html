@@ -1600,11 +1600,16 @@
 
     // === DATA LOADER ===
     const loadData = async () => {
+      // Всегда используем реальную сегодняшнюю дату для расписания намазов
+      const realTodayISO = new Date().toISOString().split('T')[0];
+      const realTodayStr = getTodayStr();
+
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
-          const { timings, timestamp, hijriDay, hijriMonth } = JSON.parse(cached);
-          if (timings && Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          const { timings, cachedDate, hijriDay, hijriMonth } = JSON.parse(cached);
+          // Кэш валиден только если это сегодняшняя дата
+          if (timings && cachedDate === realTodayISO) {
             return { timings, hijriDay, hijriMonth };
           }
         }
@@ -1617,7 +1622,7 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         
         const json = await res.json();
-        const entry = json.schedule?.find(item => item.date === getPrayerDayStr());
+        const entry = json.schedule?.find(item => item.date === realTodayStr);
         if (entry) {
           const timings = {};
           PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
@@ -1627,10 +1632,12 @@
               schedule: json.schedule,
               hijriDay: entry.d,
               hijriMonth: json.monthName || '—',
-              timestamp: Date.now()
+              cachedDate: realTodayISO,   // дата вместо timestamp
+              timestamp: Date.now()       // оставляем для совместимости
             }));
             return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
-          }        }
+          }
+        }
         throw new Error('Invalid');
       } catch (e) {
         document.getElementById('error-banner').classList.add('show');

@@ -822,26 +822,33 @@
       });
     };
 
-    // === АЯТ ДНЯ ===
-    const AYAHS = [
-      { text:'Воистину, молитва предписана верующим в определённое время.', source:'📖 Коран 4:103' },
-      { text:'Поминайте Меня, и Я буду помнить вас. Благодарите Меня и не будьте неблагодарны.', source:'📖 Коран 2:152' },
-      { text:'Самое любимое дело перед Аллахом — это намаз в его время.', source:'📚 Бухари, 527' },
-      { text:'Воистину, намаз удерживает от мерзости и порицаемого.', source:'📖 Коран 29:45' },
-      { text:'Первое, о чём будет спрошен раб в Судный день — это его намаз.', source:'📚 Тирмизи, 413' },
-      { text:'Тот, кто совершает Фаджр и Аср — войдёт в Рай.', source:'📚 Бухари, 574' },
-      { text:'Улыбнуться брату — садака. Помочь человеку — садака. Убрать вредное с дороги — садака.', source:'📚 Тирмизи, 1956' },
-      { text:'Не уверует никто из вас, пока не будет желать брату того же, чего желает себе.', source:'📚 Бухари, 13' },
-      { text:'В поминании Аллаха успокаиваются сердца.', source:'📖 Коран 13:28' },
-      { text:'Лучшее из того, что я говорю: «Ля иляха илляллах»', source:'📚 Тирмизи, 3585' },
-      { text:'Поистине, с каждой трудностью — облегчение.', source:'📖 Коран 94:5' },
-      { text:'Взывайте ко Мне, и Я отвечу вам.', source:'📖 Коран 40:60' },
-      { text:'Поминание Аллаха — лекарство, а забвение Его — болезнь.', source:'📚 Ибн Аль-Каййим' },
-      { text:'Кто читает аят аль-Курси после каждого намаза — тому ничто не мешает войти в Рай, кроме смерти.', source:'📚 Насаи. Сахих.' },
-      { text:'Добрые нравы — тяжелейшее из того, что кладётся на весы в Судный день.', source:'📚 Тирмизи, 2002' },
-    ];
+    // === АЯТ ДНЯ (из ayahs.json) ===
+    let AYAHS = [];
+    const loadAyahs = async () => {
+      try {
+        const cached = localStorage.getItem('ayahs_cache_v1');
+        if (cached) { AYAHS = JSON.parse(cached); return; }
+        const res = await fetch('/ayahs.json');
+        if (!res.ok) throw new Error();
+        AYAHS = await res.json();
+        localStorage.setItem('ayahs_cache_v1', JSON.stringify(AYAHS));
+      } catch {
+        // Fallback — минимальный набор
+        AYAHS = [
+          {text:'Поминайте Меня, и Я буду помнить вас.', source:'📖 Коран 2:152'},
+          {text:'Воистину, с каждой трудностью — облегчение.', source:'📖 Коран 94:5'},
+          {text:'Самое любимое дело перед Аллахом — намаз в его время.', source:'📚 Бухари, 527'},
+          {text:'В поминании Аллаха успокаиваются сердца.', source:'📖 Коран 13:28'},
+          {text:'Кто уповает на Аллаха — Он ему достаточен.', source:'📖 Коран 65:3'},
+        ];
+      }
+    };
     const renderAyah = () => {
-      const idx = Math.floor(Date.now() / 86400000) % AYAHS.length;
+      if (!AYAHS.length) return;
+      // Индекс по дню года (0-364), цикл по длине массива
+      const start = new Date(new Date().getFullYear(), 0, 0);
+      const dayOfYear = Math.floor((new Date() - start) / 86400000);
+      const idx = dayOfYear % AYAHS.length;
       const el = document.getElementById('ayah-text'), src = document.getElementById('ayah-source');
       if (el) el.textContent = AYAHS[idx].text;
       if (src) src.textContent = AYAHS[idx].source;
@@ -1599,6 +1606,7 @@
       startTimer();
       startMidnightCheck();      setInterval(() => renderList(appTimings, appState.completed), 30000);
 
+      await loadAyahs();
       renderAyah();
       renderStreak();
       renderAzkar();

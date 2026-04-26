@@ -1554,6 +1554,37 @@
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
     const getTodayISO = () => new Date().toISOString().split('T')[0];
 
+    // Возвращает дату «намаз-дня»: после полуночи до Фаджра считается ещё вчерашний день
+    // Это нужно чтобы не сбрасывать намазы и не загружать расписание нового дня до Фаджра
+    const getPrayerDayDate = () => {
+      const now = new Date();
+      const h = now.getHours();
+      // Фаджр обычно не раньше 02:00 — до 04:00 считаем ещё «ночь предыдущего дня»
+      // Если appTimings уже загружен — используем точное время Фаджра
+      if (appTimings && appTimings.fajr) {
+        const [fh, fm] = appTimings.fajr.split(':').map(Number);
+        const nowMins = h * 60 + now.getMinutes();
+        const fajrMins = fh * 60 + fm;
+        if (nowMins < fajrMins) {
+          // До Фаджра — это ещё вчерашний намаз-день
+          const yesterday = new Date(now);
+          yesterday.setDate(yesterday.getDate() - 1);
+          return yesterday;
+        }
+      } else if (h < 4) {
+        // appTimings ещё не загружен, но очень ранее утро — используем вчера как безопасный fallback
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday;
+      }
+      return now;
+    };
+    const getPrayerDayISO = () => getPrayerDayDate().toISOString().split('T')[0];
+    const getPrayerDayStr = () => {
+      const d = getPrayerDayDate();
+      return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+    };
+
     // === KURBAN BAYRAM ===
     const getKurbanBayramDate = (year) => {
       const dates = {
@@ -1583,7 +1614,7 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         
         const json = await res.json();
-        const entry = json.schedule?.find(item => item.date === getTodayStr());
+        const entry = json.schedule?.find(item => item.date === getPrayerDayStr());
         if (entry) {
           const timings = {};
           PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
@@ -1615,18 +1646,24 @@
       const now = new Date();
       let current = null, next = null;
       
+      // После полуночи до Фаджра — особый случай
+      // current = Иша (вчерашняя ночь продолжается), next = Фаджр сегодня
+      if (timings.fajr) {
+        const fajrToday = parseTime(timings.fajr);
+        if (now < fajrToday) {
+          // Мы до Фаджра — текущий период это Иша прошлой ночи
+          current = { name: 'isha', time: parseTime(timings.isha) };
+          current.time.setDate(current.time.getDate() - 1); // вчера
+          next = { name: 'fajr', time: fajrToday };
+          return { current, next };
+        }
+      }
+      
       for (const key of PRAYERS) {
         if (!timings[key]) continue;
         const time = parseTime(timings[key]);
         if (time <= now) current = { name: key, time };
         else if (!next) { next = { name: key, time }; break; }
-      }
-      
-      // После Фаджра следующий - Восход
-      if (current && current.name === 'fajr') {
-        if (timings.sunrise) {
-          next = { name: 'sunrise', time: parseTime(timings.sunrise) };
-        }
       }
       
       // Если все прошли - следующий Фаджр завтра
@@ -1885,7 +1922,7 @@
       
       appState.completed[current.name] = true; 
       appState.completed[current.name + '_at'] = new Date().toISOString();
-      appState.date = getTodayISO();
+      appState.date = getPrayerDayISO();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       showToast(`✓ ${NAMES[current.name] || current.name}`); 
@@ -1986,7 +2023,10 @@
 
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
-        btn.disabled = done;
+        // После полуночи до Фаджра — текущий период "Иша" уже из прошлого дня, нельзя отмечать
+        const isAfterMidnightBeforeFajr = timings.fajr && new Date() < parseTime(timings.fajr);
+        const btnDisabled = done || (isAfterMidnightBeforeFajr && current.name === 'isha');
+        btn.disabled = btnDisabled;
         btn.textContent = done ? `${NAMES[current.name] || current.name} ✓` : `✅ ${NAMES[current.name] || current.name}`;
 
         // Напоминание с ниятом за 10 минут
@@ -2134,7 +2174,7 @@
       
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       
-      const todayISO = getTodayISO();
+      const todayISO = getPrayerDayISO();
 
       // Если новый день — сбрасываем все намазы
       if (appState.date !== todayISO) {

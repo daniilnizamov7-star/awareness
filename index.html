@@ -1292,7 +1292,6 @@
       HADITHS_ONLY = AYAHS.filter(d => d.source.includes('📚'));
     };
     const renderAyah = () => {
-      // Если аяты не загрузились — показываем базовый
       if (!AYAHS.length) {
         const el = document.getElementById('ayah-text');
         const src = document.getElementById('ayah-source');
@@ -1563,25 +1562,20 @@
     const getTodayStr = () => `${new Date().getDate()} ${MONTHS[new Date().getMonth()]}`;
     const getTodayISO = () => new Date().toISOString().split('T')[0];
 
-    // Возвращает дату «намаз-дня»: после полуночи до Фаджра считается ещё вчерашний день
-    // Это нужно чтобы не сбрасывать намазы и не загружать расписание нового дня до Фаджра
+    // Возвращает дату «намаз-дня»: после полуночи до Фаджра это ещё предыдущий день
     const getPrayerDayDate = () => {
       const now = new Date();
       const h = now.getHours();
-      // Фаджр обычно не раньше 02:00 — до 04:00 считаем ещё «ночь предыдущего дня»
-      // Если appTimings уже загружен — используем точное время Фаджра
       if (appTimings && appTimings.fajr) {
         const [fh, fm] = appTimings.fajr.split(':').map(Number);
         const nowMins = h * 60 + now.getMinutes();
         const fajrMins = fh * 60 + fm;
         if (nowMins < fajrMins) {
-          // До Фаджра — это ещё вчерашний намаз-день
           const yesterday = new Date(now);
           yesterday.setDate(yesterday.getDate() - 1);
           return yesterday;
         }
       } else if (h < 4) {
-        // appTimings ещё не загружен, но очень ранее утро — используем вчера как безопасный fallback
         const yesterday = new Date(now);
         yesterday.setDate(yesterday.getDate() - 1);
         return yesterday;
@@ -1654,15 +1648,13 @@
     const findCurrentNext = (timings) => {
       const now = new Date();
       let current = null, next = null;
-      
-      // После полуночи до Фаджра — особый случай
-      // current = Иша (вчерашняя ночь продолжается), next = Фаджр сегодня
+
+      // После полуночи до Фаджра: ночь продолжается, текущий период — Иша прошлой ночи
       if (timings.fajr) {
         const fajrToday = parseTime(timings.fajr);
         if (now < fajrToday) {
-          // Мы до Фаджра — текущий период это Иша прошлой ночи
           current = { name: 'isha', time: parseTime(timings.isha) };
-          current.time.setDate(current.time.getDate() - 1); // вчера
+          current.time.setDate(current.time.getDate() - 1);
           next = { name: 'fajr', time: fajrToday };
           return { current, next };
         }
@@ -1675,7 +1667,7 @@
         else if (!next) { next = { name: key, time }; break; }
       }
       
-      // После Фаджра следующий - Восход (нельзя делать намазы у восхода)
+      // После Фаджра следующий - Восход
       if (current && current.name === 'fajr') {
         if (timings.sunrise) {
           next = { name: 'sunrise', time: parseTime(timings.sunrise) };
@@ -2039,7 +2031,6 @@
 
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
-        // После полуночи до Фаджра — текущий период "Иша" уже из прошлого дня, нельзя отмечать
         const isAfterMidnightBeforeFajr = timings.fajr && new Date() < parseTime(timings.fajr);
         const btnDisabled = done || (isAfterMidnightBeforeFajr && current.name === 'isha');
         btn.disabled = btnDisabled;

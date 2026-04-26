@@ -1292,7 +1292,16 @@
       HADITHS_ONLY = AYAHS.filter(d => d.source.includes('📚'));
     };
     const renderAyah = () => {
-      if (!AYAHS.length) return;
+      // Если аяты не загрузились — показываем базовый
+      if (!AYAHS.length) {
+        const el = document.getElementById('ayah-text');
+        const src = document.getElementById('ayah-source');
+        const labelEl = document.getElementById('ayah-label');
+        if (el) el.textContent = 'В поминании Аллаха успокаиваются сердца.';
+        if (src) src.textContent = '📖 Коран 13:28';
+        if (labelEl) labelEl.textContent = '📖 Аят дня';
+        return;
+      }
       const start = new Date(new Date().getFullYear(), 0, 0);
       const dayOfYear = Math.floor((new Date() - start) / 86400000);
       const isAyahDay = dayOfYear % 2 === 0;
@@ -1664,6 +1673,13 @@
         const time = parseTime(timings[key]);
         if (time <= now) current = { name: key, time };
         else if (!next) { next = { name: key, time }; break; }
+      }
+      
+      // После Фаджра следующий - Восход (нельзя делать намазы у восхода)
+      if (current && current.name === 'fajr') {
+        if (timings.sunrise) {
+          next = { name: 'sunrise', time: parseTime(timings.sunrise) };
+        }
       }
       
       // Если все прошли - следующий Фаджр завтра

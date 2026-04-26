@@ -118,6 +118,20 @@
     
     .footer-warning { text-align: center; font-size: 0.75rem; color: var(--muted); padding: 1rem; margin-top: auto; line-height: 1.5; }
     .footer-warning strong { color: var(--warning); }
+
+    /* Модалка поделиться */
+    .share-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:none; align-items:flex-end; justify-content:center; z-index:600; backdrop-filter:blur(6px); }
+    .share-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+    .share-card { background:var(--card); border-radius:1.5rem 1.5rem 0 0; padding:1.5rem 1.5rem calc(68px + 1rem); width:100%; max-width:480px; text-align:center; animation:slideUp 0.3s ease; }
+    .share-title { font-size:1.1rem; font-weight:800; margin-bottom:0.25rem; }
+    .share-sub { font-size:0.8rem; color:var(--muted); margin-bottom:1.25rem; }
+    .share-qr { background:#fff; border-radius:1rem; padding:1rem; margin:0 auto 1.25rem; width:fit-content; }
+    .share-url { background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.2); border-radius:0.6rem; padding:0.6rem 1rem; font-size:0.8rem; color:var(--muted); margin-bottom:1rem; word-break:break-all; }
+    .share-btns { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+    .share-btn { padding:0.85rem; border:none; border-radius:0.75rem; font-size:0.9rem; font-weight:700; cursor:pointer; }
+    .share-btn-copy { background:var(--accent); color:#0f172a; }
+    .share-btn-native { background:rgba(148,163,184,0.15); color:var(--text); border:1px solid rgba(148,163,184,0.2); }
+    .share-close { width:100%; padding:0.75rem; background:transparent; border:1px solid rgba(148,163,184,0.2); color:var(--muted); border-radius:0.75rem; font-size:0.9rem; cursor:pointer; margin-top:0.5rem; }
     
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -136,21 +150,64 @@
     .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; -webkit-tap-highlight-color: transparent; }
     .nav-btn .nav-icon { font-size: 1.5rem; line-height: 1; }
     .nav-btn.active { color: var(--accent); }
+
+    /* ПЯТНИЦА */
+    .friday-bg { background: linear-gradient(135deg, #0d2818 0%, #0f172a 40%, #1a0d2e 100%) !important; }
+    .friday-banner { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(139,92,246,0.15)); border: 1px solid rgba(16,185,129,0.5); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; text-align: center; position: relative; overflow: hidden; }
+    .friday-banner::before { content: '✨'; position: absolute; top: -10px; right: -10px; font-size: 4rem; opacity: 0.08; }
+    .friday-banner::after { content: '✨'; position: absolute; bottom: -10px; left: -10px; font-size: 4rem; opacity: 0.08; }
+    .friday-title { font-size: 1.1rem; font-weight: 800; color: var(--accent); margin-bottom: 0.25rem; }
+    .friday-sub { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .friday-items { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+    .friday-item { background: rgba(16,185,129,0.08); border-radius: 0.6rem; padding: 0.6rem 0.85rem; font-size: 0.85rem; text-align: left; border: 1px solid rgba(16,185,129,0.15); }
+
+    /* ОНБОРДИНГ */
+    .onboard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 700; padding: 1.5rem; backdrop-filter: blur(8px); }
+    .onboard-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+    .onboard-card { background: var(--card); border-radius: 1.5rem; padding: 2rem 1.5rem; width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--accent); }
+    .onboard-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .onboard-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .onboard-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
+    .onboard-input { width: 100%; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.3); color: var(--text); padding: 0.9rem 1rem; border-radius: 0.75rem; font-size: 1.1rem; font-family: inherit; margin-bottom: 1rem; text-align: center; }
+    .onboard-btn { width: 100%; padding: 1rem; background: var(--accent); color: #0f172a; border: none; border-radius: 0.75rem; font-size: 1.05rem; font-weight: 800; cursor: pointer; }
   </style>
 </head>
 <body>
+
+  <!-- Онбординг — имя -->
+  <div id="onboard-modal" class="onboard-overlay">
+    <div class="onboard-card">
+      <div class="onboard-icon">🤲</div>
+      <div class="onboard-title">АссаляmuАлейкум!</div>
+      <div class="onboard-sub">Как тебя зовут? Будем обращаться по имени — это приложение для тебя лично.</div>
+      <input id="onboard-name" class="onboard-input" type="text" placeholder="Твоё имя" maxlength="30" />
+      <button class="onboard-btn" onclick="saveOnboardName()">Войти 🌙</button>
+    </div>
+  </div>
 
   <!-- ===== СЕКЦИЯ: ГЛАВНАЯ ===== -->
   <div id="sec-home">
   <div class="header">
     <div>
-      <h1>🌙 Осознанность</h1>
+      <h1>🌙 <span id="greeting-name">Осознанность</span></h1>
       <p>Челябинск • <span id="date">—</span></p>
     </div>
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
   </div>
 
   <div id="error-banner" class="error-banner">⚠️ Ошибка загрузки. Используются резервные данные.</div>
+
+  <!-- Пятничный баннер -->
+  <div id="friday-banner" style="display:none" class="friday-banner">
+    <div class="friday-title">✨ Джума Мубарак! ✨</div>
+    <div class="friday-sub">Пятница — лучший день недели. Используй его с умом.</div>
+    <div class="friday-items">
+      <div class="friday-item">📖 Прочитай суру Кахф сегодня</div>
+      <div class="friday-item">🤲 Читай салават на Пророка ﷺ как можно больше</div>
+      <div class="friday-item">⏰ Ищи час принятия дуа — после Аср до Магриба</div>
+      <div class="friday-item">💰 Сделай садака — в пятницу она особенно ценна</div>
+    </div>
+  </div>
 
   <div class="hijri-banner">
     <div class="hijri-date" id="hijri-date">—</div>
@@ -214,14 +271,33 @@
       <div id="streak-count" style="font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1">0</div>
     </div>
   </div>
+  <!-- Кнопка поделиться -->
+  <button onclick="openShare()" style="width:100%;padding:0.85rem;background:transparent;border:1px solid rgba(148,163,184,0.25);color:var(--muted);border-radius:0.75rem;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+    📤 Поделиться приложением
+  </button>
+
   <div class="footer-warning">
     <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
     <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
+  </div><!-- /sec-home -->
+
+  <!-- Модалка поделиться -->
+  <div id="share-modal" class="share-overlay">
+    <div class="share-card">
+      <div class="share-title">📤 Поделиться приложением</div>
+      <div class="share-sub">Отправь братьям и сёстрам — пусть не пропускают намазы</div>
+      <div class="share-qr"><canvas id="qr-canvas" width="180" height="180"></canvas></div>
+      <div class="share-url" id="share-url-text">awareness-ten.vercel.app</div>
+      <div class="share-btns">
+        <button class="share-btn share-btn-copy" onclick="copyShareUrl()">📋 Скопировать</button>
+        <button class="share-btn share-btn-native" onclick="nativeShare()">📤 Отправить</button>
+      </div>
+      <button class="share-close" onclick="closeShare()">Закрыть</button>
+    </div>
   </div>
 
-  <!-- ===== СЕКЦИЯ: НАМАЗЫ ===== -->
   <div id="sec-prayers" style="display:none">
   <div class="header">
     <div><h1>📋 Намазы</h1><p>Челябинск • <span id="date2">—</span></p></div>
@@ -281,6 +357,16 @@
       <div style="font-size:2.5rem;margin-bottom:0.5rem">🤲</div>
       <div style="font-weight:700;font-size:0.95rem">Мои дуа</div>
       <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Личные азкары</div>
+    </div>
+    <div onclick="openMoreSub('sub-duas-occasion')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">📚</div>
+      <div style="font-weight:700;font-size:0.95rem">Дуа на случай</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">На каждый момент</div>
+    </div>
+    <div onclick="openMoreSub('sub-asma')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">☀️</div>
+      <div style="font-weight:700;font-size:0.95rem">99 имён</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Имена Аллаха</div>
     </div>
   </div>
   </div>
@@ -351,6 +437,33 @@
       Ваши накопления ниже нисаба — закат пока не обязателен
     </div>
     <p style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.5">⚠️ Расчёт приблизительный. По точным вопросам заката — к знающим.</p>
+  </div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: ДУА НА СЛУЧАЙ ===== -->
+  <div id="sub-duas-occasion" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div id="duas-occasion-list" style="padding:0 0 1rem"></div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: 99 ИМЁН ===== -->
+  <div id="sub-asma" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div class="card" style="text-align:center;padding:1.5rem">
+    <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.5rem">☀️ Имя дня</div>
+    <div id="asma-number" style="font-size:0.8rem;color:var(--muted);margin-bottom:0.25rem">—</div>
+    <div id="asma-arabic" style="font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:0.25rem;direction:rtl">—</div>
+    <div id="asma-name" style="font-size:1.2rem;font-weight:700;margin-bottom:0.5rem">—</div>
+    <div id="asma-meaning" style="font-size:0.9rem;color:var(--muted);line-height:1.6;margin-bottom:1rem">—</div>
+    <div id="asma-hadith" style="font-size:0.78rem;color:var(--accent);font-style:italic">—</div>
+  </div>
+  <div style="padding:0 1rem">
+    <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.75rem">Все 99 имён</div>
+    <div id="asma-all-list" style="display:flex;flex-direction:column;gap:0.4rem"></div>
   </div>
   </div>
 
@@ -440,6 +553,205 @@
   </nav>
 
   <script>
+    // === ОНБОРДИНГ (имя) ===
+    const NAME_KEY = 'user_name_v1';
+    const getUserName = () => localStorage.getItem(NAME_KEY) || '';
+    window.saveOnboardName = () => {
+      const val = document.getElementById('onboard-name').value.trim();
+      if (!val) return showToast('Введи своё имя');
+      localStorage.setItem(NAME_KEY, val);
+      document.getElementById('onboard-modal').classList.remove('show');
+      applyUserName(val);
+      showToast(`АссалямуАлейкум, ${val}! 🤲`);
+    };
+    const applyUserName = (name) => {
+      const el = document.getElementById('greeting-name');
+      if (el) el.textContent = name ? `${name}` : 'Осознанность';
+      // Приветствие в зависимости от времени
+      const h = new Date().getHours();
+      const greet = h < 6 ? 'Ночь' : h < 12 ? 'Доброе утро' : h < 17 ? 'Добрый день' : h < 21 ? 'Добрый вечер' : 'Доброй ночи';
+      const dateEl = document.getElementById('date');
+      if (dateEl && name) dateEl.textContent = `${name} • ${dateEl.textContent}`;
+    };
+    const checkOnboard = () => {
+      const name = getUserName();
+      if (!name) {
+        setTimeout(() => document.getElementById('onboard-modal').classList.add('show'), 800);
+      } else {
+        applyUserName(name);
+      }
+    };
+    // Enter в поле имени
+    document.getElementById('onboard-name')?.addEventListener('keydown', e => { if (e.key === 'Enter') saveOnboardName(); });
+
+    // === ПЯТНИЦА ===
+    const checkFriday = () => {
+      const isFriday = new Date().getDay() === 5;
+      const banner = document.getElementById('friday-banner');
+      if (!banner) return;
+      banner.style.display = isFriday ? 'block' : 'none';
+      if (isFriday) document.body.classList.add('friday-bg');
+      else document.body.classList.remove('friday-bg');
+    };
+
+    // === ДУА НА СЛУЧАЙ ===
+    const DUAS_OCCASION = [
+      { icon:'🍽️', title:'Перед едой', ar:'بِسْمِ اللَّهِ', text:'БисмиЛлях', source:'📚 Бухари, 5376' },
+      { icon:'✅', title:'После еды', ar:'الْحَمْدُ لِلَّهِ', text:'АльхамдулиЛлях — или полная форма: Аль-хамду лил-ляхи-ллязи ат`амана ва сакана ва джа`алана мусульмин', source:'📚 Абу Дауд, 3850' },
+      { icon:'🚪', title:'Выходя из дома', ar:'بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ', text:'БисмиЛлях, таваккальту `аляЛлах, ва ля хавля ва ля куввата илля биЛлях', source:'📚 Абу Дауд, 5095' },
+      { icon:'🏠', title:'Входя в дом', ar:'بِسْمِ اللَّهِ وَلَجْنَا', text:'БисмиЛлях валяджна ва бисмиЛлях харажна ва `аля Раббина таваккальна', source:'📚 Абу Дауд, 5096' },
+      { icon:'🚽', title:'Входя в туалет', ar:'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ', text:'АллахуммА инни а`узу бика миналь-хубси валь-хабаис', source:'📚 Бухари, 142' },
+      { icon:'🌙', title:'Перед сном', ar:'بِسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا', text:'БисмикАллахуммА амуту ва ахья', source:'📚 Бухари, 6312' },
+      { icon:'☀️', title:'Просыпаясь', ar:'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا', text:'АльхамдулиЛлях аллязи ахяна ба`да ма аматана ва иляхин-нушур', source:'📚 Бухари, 6312' },
+      { icon:'🚗', title:'Садясь в транспорт', ar:'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا', text:'СубханАллязи саххара ляна хаза ва ма кунна ляху мукринин ва инна иля Раббина ля-мункалибун', source:'📚 Абу Дауд, 2602' },
+      { icon:'🤧', title:'При чихании', ar:'الْحَمْدُ لِلَّهِ', text:'АльхамдулиЛлях — тот, кто слышит, отвечает: ЯрхамукАллах', source:'📚 Бухари, 6224' },
+      { icon:'😰', title:'При тревоге/стрессе', ar:'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ', text:'ХасбунАллах ва ни`маль-вакиль', source:'📖 Коран 3:173' },
+      { icon:'😔', title:'В трудное время', ar:'إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ', text:'ИннА лиЛлях ва иннА иляйхи раджи`ун', source:'📖 Коран 2:156' },
+      { icon:'🌧️', title:'При дожде', ar:'اللَّهُمَّ صَيِّبًا نَافِعًا', text:'АллахуммА саййибан нафи`ан', source:'📚 Бухари, 1032' },
+    ];
+    const renderDuasOccasion = () => {
+      const list = document.getElementById('duas-occasion-list'); if (!list) return;
+      list.innerHTML = '';
+      DUAS_OCCASION.forEach(dua => {
+        const div = document.createElement('div');
+        div.style.cssText = 'background:var(--card);border-radius:1rem;padding:1.25rem;margin:0 0 0.75rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)';
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+            <span style="font-size:1.75rem">${dua.icon}</span>
+            <span style="font-weight:700;font-size:1rem">${dua.title}</span>
+          </div>
+          <div style="font-size:1.2rem;direction:rtl;text-align:right;color:var(--accent);margin-bottom:0.5rem;font-weight:600">${dua.ar}</div>
+          <div style="font-size:0.875rem;line-height:1.65;color:var(--text);margin-bottom:0.4rem">${dua.text}</div>
+          <div style="font-size:0.75rem;color:var(--muted)">${dua.source}</div>
+        `;
+        list.appendChild(div);
+      });
+    };
+
+    // === 99 ИМЁН АЛЛАХА ===
+    const ASMA = [
+      { ar:'الرَّحْمَن', name:'Ар-Рахман', meaning:'Милостивый — Тот, чья милость объемлет всё творение', hadith:'' },
+      { ar:'الرَّحِيم', name:'Ар-Рахим', meaning:'Милосердный — Тот, чья особая милость для верующих', hadith:'' },
+      { ar:'الْمَلِك', name:'Аль-Малик', meaning:'Царь — Властелин всего сущего', hadith:'' },
+      { ar:'الْقُدُّوس', name:'Аль-Куддус', meaning:'Пресвятой — Свободный от любых недостатков', hadith:'' },
+      { ar:'السَّلَام', name:'Ас-Салям', meaning:'Источник мира — Тот, от Кого исходит мир и безопасность', hadith:'' },
+      { ar:'الْمُؤْمِن', name:'Аль-Му`мин', meaning:'Дарующий веру и безопасность', hadith:'' },
+      { ar:'الْمُهَيْمِن', name:'Аль-Мухаймин', meaning:'Хранитель — Наблюдающий за всем', hadith:'' },
+      { ar:'الْعَزِيز', name:'Аль-Азиз', meaning:'Всемогущий — Непобедимый', hadith:'' },
+      { ar:'الْجَبَّار', name:'Аль-Джаббар', meaning:'Восстановитель — Исправляющий то, что сломлено', hadith:'' },
+      { ar:'الْمُتَكَبِّر', name:'Аль-Мутакаббир', meaning:'Превозвышенный — Единственный достойный величия', hadith:'' },
+      { ar:'الْخَالِق', name:'Аль-Халик', meaning:'Творец — Создавший всё из ничего', hadith:'' },
+      { ar:'الْبَارِئ', name:'Аль-Бари', meaning:'Создатель форм — Придающий форму творениям', hadith:'' },
+      { ar:'الْمُصَوِّر', name:'Аль-Мусаввир', meaning:'Ваятель образов — Формирующий облик каждого существа', hadith:'' },
+      { ar:'الْغَفَّار', name:'Аль-Гаффар', meaning:'Всепрощающий — Постоянно прощающий грехи', hadith:'' },
+      { ar:'الْقَهَّار', name:'Аль-Каххар', meaning:'Всевластный — Покоряющий всё и всех', hadith:'' },
+      { ar:'الْوَهَّاب', name:'Аль-Ваххаб', meaning:'Дарующий — Дающий щедро без ожидания отдачи', hadith:'' },
+      { ar:'الرَّزَّاق', name:'Ар-Раззак', meaning:'Питающий — Дарующий пропитание всем существам', hadith:'' },
+      { ar:'الْفَتَّاح', name:'Аль-Фаттах', meaning:'Открывающий — Открывающий двери благ и решений', hadith:'' },
+      { ar:'الْعَلِيم', name:'Аль-`Алим', meaning:'Всезнающий — Знающий всё явное и скрытое', hadith:'' },
+      { ar:'الْقَابِض', name:'Аль-Кабид', meaning:'Сжимающий — Удерживающий по Своей мудрости', hadith:'' },
+      { ar:'الْبَاسِط', name:'Аль-Басит', meaning:'Расширяющий — Дарующий изобилие по Своей щедрости', hadith:'' },
+      { ar:'الْخَافِض', name:'Аль-Хафид', meaning:'Унижающий — Низводящий высокомерных', hadith:'' },
+      { ar:'الرَّافِع', name:'Ар-Рафи`', meaning:'Возвышающий — Поднимающий достойных', hadith:'' },
+      { ar:'الْمُعِز', name:'Аль-Му`изз', meaning:'Дающий честь — Дающий почёт кому пожелает', hadith:'' },
+      { ar:'الْمُذِل', name:'Аль-Музилл', meaning:'Унижающий — Лишающий почёта кого пожелает', hadith:'' },
+      { ar:'السَّمِيع', name:'Ас-Сами`', meaning:'Всеслышащий — Слышащий каждый звук и мысль', hadith:'' },
+      { ar:'الْبَصِير', name:'Аль-Басир', meaning:'Всевидящий — Видящий всё явное и скрытое', hadith:'' },
+      { ar:'الْحَكَم', name:'Аль-Хакам', meaning:'Судья — Единственный истинный судья', hadith:'' },
+      { ar:'الْعَدْل', name:'Аль-`Адль', meaning:'Справедливый — Абсолютно справедливый во всём', hadith:'' },
+      { ar:'اللَّطِيف', name:'Аль-Латиф', meaning:'Тонко знающий — Добрый к рабам Своим, видящий скрытое', hadith:'' },
+      { ar:'الْخَبِير', name:'Аль-Хабир', meaning:'Осведомлённый — Знающий все тайны и подробности', hadith:'' },
+      { ar:'الْحَلِيم', name:'Аль-Халим', meaning:'Кроткий — Терпеливый, не спешащий с наказанием', hadith:'' },
+      { ar:'الْعَظِيم', name:'Аль-`Азим', meaning:'Великий — Превосходящий всё своим величием', hadith:'' },
+      { ar:'الْغَفُور', name:'Аль-Гафур', meaning:'Прощающий — Скрывающий грехи и прощающий их', hadith:'' },
+      { ar:'الشَّكُور', name:'Аш-Шакур', meaning:'Благодарный — Воздающий за малые дела великой наградой', hadith:'' },
+      { ar:'الْعَلِي', name:'Аль-`Алий', meaning:'Высший — Превыше всего Своей сущностью', hadith:'' },
+      { ar:'الْكَبِير', name:'Аль-Кабир', meaning:'Великий — Превосходящий всех в величии', hadith:'' },
+      { ar:'الْحَفِيظ', name:'Аль-Хафиз', meaning:'Хранитель — Сохраняющий всё творение', hadith:'' },
+      { ar:'الْمُقِيت', name:'Аль-Мукит', meaning:'Питающий — Дающий силу и пропитание', hadith:'' },
+      { ar:'الْحَسِيب', name:'Аль-Хасиб', meaning:'Считающий — Достаточный для всех нужд', hadith:'' },
+      { ar:'الْجَلِيل', name:'Аль-Джалиль', meaning:'Величественный — Обладающий совершенным могуществом', hadith:'' },
+      { ar:'الْكَرِيم', name:'Аль-Карим', meaning:'Щедрый — Благородный в дарах Своих', hadith:'' },
+      { ar:'الرَّقِيب', name:'Ар-Ракиб', meaning:'Наблюдающий — Следящий за каждым', hadith:'' },
+      { ar:'الْمُجِيب', name:'Аль-Муджиб', meaning:'Отвечающий — Отвечающий на каждое дуа', hadith:'' },
+      { ar:'الْوَاسِع', name:'Аль-Васи`', meaning:'Объемлющий — Безграничный в знании и щедрости', hadith:'' },
+      { ar:'الْحَكِيم', name:'Аль-Хаким', meaning:'Мудрый — Всё делающий с совершенной мудростью', hadith:'' },
+      { ar:'الْوَدُود', name:'Аль-Вадуд', meaning:'Любящий — Любящий верующих безмерной любовью', hadith:'' },
+      { ar:'الْمَجِيد', name:'Аль-Маджид', meaning:'Преславный — Обладающий совершенной славой', hadith:'' },
+      { ar:'الْبَاعِث', name:'Аль-Баис', meaning:'Воскрешающий — Воскрешающий мёртвых в Судный день', hadith:'' },
+      { ar:'الشَّهِيد', name:'Аш-Шахид', meaning:'Свидетель — Присутствующий везде и свидетельствующий', hadith:'' },
+      { ar:'الْحَق', name:'Аль-Хакк', meaning:'Истина — Единственная абсолютная истина', hadith:'' },
+      { ar:'الْوَكِيل', name:'Аль-Вакиль', meaning:'Попечитель — Тот, на Кого можно положиться во всём', hadith:'' },
+      { ar:'الْقَوِي', name:'Аль-Кавий', meaning:'Всесильный — Обладающий совершенной силой', hadith:'' },
+      { ar:'الْمَتِين', name:'Аль-Матин', meaning:'Крепкий — Непоколебимый в силе Своей', hadith:'' },
+      { ar:'الْوَلِي', name:'Аль-Валий', meaning:'Покровитель — Защитник и помощник верующих', hadith:'' },
+      { ar:'الْحَمِيد', name:'Аль-Хамид', meaning:'Достохвальный — Достойный всяческой хвалы', hadith:'' },
+      { ar:'الْمُحْصِي', name:'Аль-Мухси', meaning:'Исчисляющий — Считающий всё до мельчайших деталей', hadith:'' },
+      { ar:'الْمُبْدِئ', name:'Аль-Мубди`', meaning:'Начинающий — Создавший творение впервые', hadith:'' },
+      { ar:'الْمُعِيد', name:'Аль-Му`ид', meaning:'Возвращающий — Воссоздающий после смерти', hadith:'' },
+      { ar:'الْمُحْيِي', name:'Аль-Мухий', meaning:'Оживляющий — Дающий жизнь', hadith:'' },
+      { ar:'الْمُمِيت', name:'Аль-Мумит', meaning:'Умерщвляющий — Забирающий жизнь по Своей воле', hadith:'' },
+      { ar:'الْحَي', name:'Аль-Хайй', meaning:'Живой — Вечно живой, не умирающий никогда', hadith:'' },
+      { ar:'الْقَيُّوم', name:'Аль-Каййум', meaning:'Самодостаточный — Поддерживающий всё существующее', hadith:'' },
+      { ar:'الْوَاجِد', name:'Аль-Ваджид', meaning:'Находящий — Находящий всё, что пожелает', hadith:'' },
+      { ar:'الْمَاجِد', name:'Аль-Маджид', meaning:'Славный — Щедрый и благородный', hadith:'' },
+      { ar:'الْوَاحِد', name:'Аль-Вахид', meaning:'Единый — Единственный, не имеющий равных', hadith:'' },
+      { ar:'الْأَحَد', name:'Аль-Ахад', meaning:'Единственный — Абсолютно один, без сотоварищей', hadith:'' },
+      { ar:'الصَّمَد', name:'Ас-Самад', meaning:'Вечный — Тот, в Ком нуждаются все, Сам ни в чём не нуждаясь', hadith:'' },
+      { ar:'الْقَادِر', name:'Аль-Кадир', meaning:'Всемощный — Способный на всё', hadith:'' },
+      { ar:'الْمُقْتَدِر', name:'Аль-Муктадир', meaning:'Владеющий силой — Абсолютный властитель', hadith:'' },
+      { ar:'الْمُقَدِّم', name:'Аль-Мукаддим', meaning:'Выдвигающий вперёд — Продвигающий кого пожелает', hadith:'' },
+      { ar:'الْمُؤَخِّر', name:'Аль-Му`аххир', meaning:'Задерживающий — Откладывающий по Своей мудрости', hadith:'' },
+      { ar:'الْأَوَّل', name:'Аль-Авваль', meaning:'Первый — Существовавший прежде всего', hadith:'' },
+      { ar:'الْآخِر', name:'Аль-Ахир', meaning:'Последний — Пребывающий после всего', hadith:'' },
+      { ar:'الظَّاهِر', name:'Аз-Захир', meaning:'Явный — Очевидный через Свои знамения', hadith:'' },
+      { ar:'الْبَاطِن', name:'Аль-Батин', meaning:'Скрытый — Недостижимый для человеческого постижения', hadith:'' },
+      { ar:'الْوَالِي', name:'Аль-Вали', meaning:'Управляющий — Правящий всем творением', hadith:'' },
+      { ar:'الْمُتَعَالِ', name:'Аль-Мута`али', meaning:'Превознесённый — Выше любого описания', hadith:'' },
+      { ar:'الْبَر', name:'Аль-Барр', meaning:'Благой — Источник всякого блага', hadith:'' },
+      { ar:'التَّوَّاب', name:'Ат-Таввab', meaning:'Принимающий покаяние — Всегда готовый простить', hadith:'' },
+      { ar:'الْمُنْتَقِم', name:'Аль-Мунтаким', meaning:'Мстящий — Воздающий справедливо за зло', hadith:'' },
+      { ar:'الْعَفُو', name:'Аль-`Афувв', meaning:'Прощающий — Стирающий грехи полностью', hadith:'' },
+      { ar:'الرَّؤُوف', name:'Ар-Рауф', meaning:'Сострадательный — Нежно заботящийся о творениях', hadith:'' },
+      { ar:'مَالِك الْمُلْك', name:'Малик уль-Мульк', meaning:'Владелец царства — Истинный хозяин всего', hadith:'' },
+      { ar:'ذُو الْجَلَال', name:'Зуль-Джалали валь-Икрам', meaning:'Обладатель величия и щедрости', hadith:'' },
+      { ar:'الْمُقْسِط', name:'Аль-Муксит', meaning:'Справедливый — Устанавливающий равновесие', hadith:'' },
+      { ar:'الْجَامِع', name:'Аль-Джами`', meaning:'Собирающий — Собирающий всё в Судный день', hadith:'' },
+      { ar:'الْغَنِي', name:'Аль-Ганий', meaning:'Самодостаточный — Ни в чём не нуждающийся', hadith:'' },
+      { ar:'الْمُغْنِي', name:'Аль-Мугний', meaning:'Обогащающий — Дающий богатство кому пожелает', hadith:'' },
+      { ar:'الْمَانِع', name:'Аль-Мани`', meaning:'Удерживающий — Защищающий по Своей мудрости', hadith:'' },
+      { ar:'الضَّار', name:'Ад-Дарр', meaning:'Причиняющий вред — По мудрости Своей испытывающий', hadith:'' },
+      { ar:'النَّافِع', name:'Ан-Нафи`', meaning:'Приносящий пользу — Источник всякой пользы', hadith:'' },
+      { ar:'النُّور', name:'Ан-Нур', meaning:'Свет — Освещающий небеса и землю', hadith:'📖 Коран 24:35' },
+      { ar:'الْهَادِي', name:'Аль-Хади', meaning:'Ведущий — Направляющий на верный путь', hadith:'' },
+      { ar:'الْبَدِيع', name:'Аль-Бади`', meaning:'Несравненный творец — Создавший без образца', hadith:'' },
+      { ar:'الْبَاقِي', name:'Аль-Баки', meaning:'Вечный — Существующий без конца', hadith:'' },
+      { ar:'الْوَارِث', name:'Аль-Варис', meaning:'Наследующий — Остающийся после исчезновения всего', hadith:'' },
+      { ar:'الرَّشِيد', name:'Ар-Рашид', meaning:'Верно направляющий — Всё устраивающий наилучшим образом', hadith:'' },
+      { ar:'الصَّبُور', name:'Ас-Сабур', meaning:'Терпеливый — Не спешащий с наказанием грешников', hadith:'' },
+    ];
+
+    const renderAsma = () => {
+      const idx = Math.floor(Date.now() / 86400000) % ASMA.length;
+      const item = ASMA[idx];
+      const el = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=val; };
+      el('asma-number', `Имя ${idx+1} из 99`);
+      el('asma-arabic', item.ar);
+      el('asma-name', item.name);
+      el('asma-meaning', item.meaning);
+      el('asma-hadith', item.hadith || '📚 Тирмизи, 3507 — «У Аллаха 99 имён, тот кто их выучит — войдёт в Рай»');
+
+      const list = document.getElementById('asma-all-list'); if (!list) return;
+      list.innerHTML = '';
+      ASMA.forEach((a, i) => {
+        const div = document.createElement('div');
+        const isToday = i === idx;
+        div.style.cssText = `display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.85rem;background:${isToday?'rgba(16,185,129,0.12)':'rgba(148,163,184,0.06)'};border-radius:0.6rem;border:1px solid ${isToday?'rgba(16,185,129,0.4)':'transparent'}`;
+        div.innerHTML = `<span style="font-size:0.7rem;color:var(--muted);width:24px;flex-shrink:0">${i+1}</span><span style="font-size:1rem;direction:rtl;color:var(--accent);flex-shrink:0">${a.ar}</span><span style="font-size:0.85rem;font-weight:${isToday?700:400}">${a.name}</span>${isToday?'<span style="margin-left:auto;font-size:0.7rem;color:var(--accent);font-weight:700">сегодня</span>':''}`;
+        list.appendChild(div);
+      });
+    };
+
     // === АЯТ ДНЯ ===
     const AYAHS = [
       { text:'Воистину, молитва предписана верующим в определённое время.', source:'📖 Коран 4:103' },
@@ -1219,6 +1531,8 @@
       renderAyah();
       renderStreak();
       renderAzkar();
+      checkFriday();
+      checkOnboard();
 
       // Восстанавливаем зикры если были открыты до сворачивания
       try {
@@ -1237,9 +1551,61 @@
       }
     };
 
+    // === ПОДЕЛИТЬСЯ + QR ===
+    const SHARE_URL = window.location.origin || 'https://awareness-ten.vercel.app';
+
+    window.openShare = () => {
+      document.getElementById('share-url-text').textContent = SHARE_URL.replace('https://','');
+      document.getElementById('share-modal').classList.add('show');
+      drawQR(SHARE_URL);
+    };
+    window.closeShare = () => document.getElementById('share-modal').classList.remove('show');
+
+    window.copyShareUrl = () => {
+      navigator.clipboard.writeText(SHARE_URL).then(() => showToast('✓ Ссылка скопирована!')).catch(() => showToast('Скопируй вручную: ' + SHARE_URL));
+    };
+
+    window.nativeShare = () => {
+      if (navigator.share) {
+        navigator.share({ title:'Намаз — трекер намазов', text:'Приложение для отслеживания намазов, зикров и азкаров. Бесплатно для всех мусульман 🤲', url: SHARE_URL });
+      } else { copyShareUrl(); }
+    };
+
+    // QR — рисуем через canvas без внешних библиотек (простая матрица)
+    const drawQR = (url) => {
+      const canvas = document.getElementById('qr-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const size = 180;
+      canvas.width = size; canvas.height = size;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,size,size);
+
+      // Используем qrcode через CDN
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      script.onload = () => {
+        canvas.width = 0; canvas.height = 0; // скрываем canvas
+        const div = document.getElementById('qr-canvas').parentNode;
+        div.innerHTML = '';
+        try {
+          new QRCode(div, { text: url, width: 180, height: 180, colorDark:'#0f172a', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        } catch(e) {
+          div.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" width="180" height="180" style="border-radius:0.5rem" />`;
+        }
+      };
+      script.onerror = () => {
+        // Fallback — внешний API
+        const div = document.getElementById('qr-canvas')?.parentNode;
+        if (div) div.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" width="180" height="180" style="border-radius:0.5rem" />`;
+      };
+      if (!window.QRCode) document.head.appendChild(script);
+      else script.onload();
+    };
+
     // === НАВИГАЦИЯ ===
     const SECTIONS = ['sec-home','sec-prayers','sec-zikr','sec-more'];
-    const SUBS = ['sub-compass','sub-azkar','sub-zakat'];
+    const SUBS = ['sub-compass','sub-azkar','sub-zakat','sub-duas-occasion','sub-asma'];
 
     const hideAll = () => {
       SECTIONS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
@@ -1260,6 +1626,8 @@
       const el = document.getElementById(id);
       if (el) { el.style.display='block'; window.scrollTo(0,0); }
       if (id === 'sub-azkar') renderAzkar();
+      if (id === 'sub-duas-occasion') renderDuasOccasion();
+      if (id === 'sub-asma') renderAsma();
     };
 
     window.closeMoreSub = () => {

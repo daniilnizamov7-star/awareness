@@ -139,6 +139,9 @@
   </style>
 </head>
 <body>
+
+  <!-- ===== СЕКЦИЯ: ГЛАВНАЯ ===== -->
+  <div id="sec-home">
   <div class="header">
     <div>
       <h1>🌙 Осознанность</h1>
@@ -183,15 +186,12 @@
       </div>
     </div>
     <button id="mark-done" class="btn">✅ Я совершил этот намаз</button>
-
-    <!-- Напоминание с ниятом за 10 минут -->
     <div id="niyyah-banner" style="display:none; margin-top:0.75rem; background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.05)); border:1px solid rgba(16,185,129,0.4); border-radius:0.75rem; padding:0.9rem 1rem; text-align:center;">
       <div style="font-size:0.8rem;font-weight:700;color:var(--accent);margin-bottom:0.3rem" id="niyyah-title">🕌 Скоро намаз</div>
       <div style="font-size:0.75rem;color:var(--muted);line-height:1.6;margin-bottom:0.5rem">Обнови намерение — ты делаешь это ради Аллаха</div>
       <div style="font-size:0.85rem;color:var(--text);font-style:italic;line-height:1.6">"Наввайту ан усаллия фарда <span id="niyyah-prayer-name">—</span>"</div>
       <div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">Намерение — в сердце, не обязательно вслух</div>
     </div>
-    
     <div id="zikr-card" class="zikr-card">
       <div style="font-size:0.8rem; color:var(--muted); margin-bottom:0.5rem">Зикры после намаза</div>
       <div class="zikr-text" id="zikr-phrase">Нажми кнопку</div>
@@ -199,8 +199,6 @@
       <button id="zikr-btn" class="btn btn-zikr btn-zikr-tap" onclick="handleZikr()">Тап</button>
       <button id="zikr-done-btn" class="btn btn-zikr btn-zikr-done" onclick="finishZikr()">✅ Я выполнил зикры</button>
     </div>
-  </div>
-
   </div>
 
   <!-- Аят дня + счётчик дней -->
@@ -216,41 +214,108 @@
       <div id="streak-count" style="font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1">0</div>
     </div>
   </div>
+  <div class="footer-warning">
+    <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
+    <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
+    <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
+  </div>
+  </div>
 
+  <!-- ===== СЕКЦИЯ: НАМАЗЫ ===== -->
+  <div id="sec-prayers" style="display:none">
+  <div class="header">
+    <div><h1>📋 Намазы</h1><p>Челябинск • <span id="date2">—</span></p></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="card">
+    <div id="prayers-list" class="prayer-list"></div>
+  </div>
+  <div class="footer-warning">
+    <p>⚠️ Время намазов указано справочно. Сверяйтесь с расписанием мечети.</p>
+  </div>
+  </div>
+
+  <!-- ===== СЕКЦИЯ: ЗИКРЫ ===== -->
+  <div id="sec-zikr" style="display:none">
+  <div class="header">
+    <div><h1>📿 Зикры</h1><p>После намаза</p></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="card" style="text-align:center">
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">Зикры появляются после отметки намаза на главной</p>
+    <div style="font-size:0.85rem;line-height:1.8;color:var(--text)">
+      <p>📿 СубханАллах × 33</p>
+      <p>📿 АльхамдулиЛлях × 33</p>
+      <p>📿 АллахуАкбар × 33</p>
+      <p>📿 Тахлиль × 1</p>
+      <p>📖 Сура Ихлас × 3</p>
+      <p>📖 Сура Фаляк × 1</p>
+      <p>📖 Сура Нас × 1</p>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== СЕКЦИЯ: ЕЩЁ — главный экран с плитками ===== -->
+  <div id="sec-more" style="display:none">
+  <div class="header">
+    <div><h1>🔖 Ещё</h1></div>
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+    <div onclick="openMoreSub('sub-compass')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">🕋</div>
+      <div style="font-weight:700;font-size:0.95rem">Кибла</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Направление на Мекку</div>
+    </div>
+    <div onclick="openMoreSub('sub-azkar')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">📿</div>
+      <div style="font-weight:700;font-size:0.95rem">Азкары</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Утро и вечер</div>
+    </div>
+    <div onclick="openMoreSub('sub-zakat')" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">💰</div>
+      <div style="font-weight:700;font-size:0.95rem">Закат</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Калькулятор</div>
+    </div>
+    <div onclick="openDuaModal()" style="background:var(--card);border-radius:1rem;padding:1.5rem 1rem;text-align:center;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1)">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">🤲</div>
+      <div style="font-weight:700;font-size:0.95rem">Мои дуа</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">Личные азкары</div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: КИБЛА ===== -->
+  <div id="sub-compass" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
   <div class="card compass-card">
     <h3 style="margin-bottom: 0.5rem">🕋 Направление Киблы</h3>
     <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem">Для Челябинска (~229°)</p>
-    
     <div class="compass-wrapper">
       <div class="compass-ring" id="compass-ring">
         <div class="compass-directions">
-          <span class="compass-n">С</span>
-          <span class="compass-s">Ю</span>
-          <span class="compass-e">В</span>
-          <span class="compass-w">З</span>
+          <span class="compass-n">С</span><span class="compass-s">Ю</span>
+          <span class="compass-e">В</span><span class="compass-w">З</span>
         </div>
       </div>
-      <div class="compass-arrow" id="compass-arrow">
-        <div class="qibla-arrow"></div>
-      </div>
+      <div class="compass-arrow" id="compass-arrow"><div class="qibla-arrow"></div></div>
       <div class="compass-center"></div>
     </div>
-    
     <p class="compass-status" id="compass-status">Нажмите кнопку ниже</p>
     <button id="enable-compass-btn" class="btn-compass" onclick="enableCompass()">📡 Включить компас</button>
     <p class="compass-note">Держите телефон горизонтально</p>
     <p class="compass-warning">⚠️ Компас может иметь погрешность</p>
   </div>
-
-  <div class="card">
-    <h3 style="margin-bottom: 0.75rem">📋 Сегодня</h3>
-    <div id="prayers-list" class="prayer-list"></div>
   </div>
 
-  <button class="btn btn-outline" onclick="openDuaModal()" style="width: 100%; margin-bottom: 1rem;">📖 Мои дуа и азкары</button>
-
-  <!-- Утренние/вечерние азкары -->
-  <div class="card" id="azkar-card" style="margin-bottom:1rem">
+  <!-- ===== ПОДЭКРАН: АЗКАРЫ ===== -->
+  <div id="sub-azkar" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div class="card" id="azkar-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
       <h3>📿 Азкары</h3>
       <div style="display:flex;gap:0.5rem">
@@ -263,9 +328,14 @@
       ✅ Все азкары прочитаны! АльхамдулиЛлях 🤲
     </div>
   </div>
+  </div>
 
-  <!-- Калькулятор заката -->
-  <div class="card" style="margin-bottom:1rem">
+  <!-- ===== ПОДЭКРАН: ЗАКАТ ===== -->
+  <div id="sub-zakat" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+  </div>
+  <div class="card">
     <h3 style="margin-bottom:0.75rem">💰 Калькулятор Заката</h3>
     <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.5">Нисаб = 85г золота ≈ <strong id="nisab-val" style="color:var(--accent)">—</strong> ₽. Если ваши сбережения хранились год и превышают нисаб — закат обязателен (2.5%)</p>
     <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
@@ -282,10 +352,6 @@
     </div>
     <p style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.5">⚠️ Расчёт приблизительный. По точным вопросам заката — к знающим.</p>
   </div>
-  <div class="footer-warning">
-    <p>⚠️ <strong>Время намазов указано справочно.</strong></p>
-    <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
-    <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
 
   <!-- Dhuha Modal -->
@@ -369,7 +435,7 @@
       <span class="nav-icon">📿</span><span>Зикры</span>
     </button>
     <button class="nav-btn" id="nav-more" onclick="navTo('more')">
-      <span class="nav-icon">🕋</span><span>Компас</span>
+      <span class="nav-icon">🔖</span><span>Ещё</span>
     </button>
   </nav>
 
@@ -1171,25 +1237,35 @@
       }
     };
 
-    // === НАВИГАЦИЯ (скролл к блокам) ===
+    // === НАВИГАЦИЯ ===
+    const SECTIONS = ['sec-home','sec-prayers','sec-zikr','sec-more'];
+    const SUBS = ['sub-compass','sub-azkar','sub-zakat'];
+
+    const hideAll = () => {
+      SECTIONS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+      SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    };
+
     window.navTo = (tab) => {
+      hideAll();
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('nav-' + tab).classList.add('active');
+      const el = document.getElementById('sec-' + tab);
+      if (el) { el.style.display='block'; window.scrollTo(0,0); }
+      if (tab === 'prayers') renderList(appTimings, appState?.completed || {});
+    };
 
-      const scrollTargets = {
-        home: null,                  // вверх
-        prayers: 'prayers-list',     // список намазов
-        zikr: 'zikr-card',          // зикры
-        more: 'enable-compass-btn', // компас / дуа
-      };
+    window.openMoreSub = (id) => {
+      hideAll();
+      const el = document.getElementById(id);
+      if (el) { el.style.display='block'; window.scrollTo(0,0); }
+      if (id === 'sub-azkar') renderAzkar();
+    };
 
-      const targetId = scrollTargets[tab];
-      if (!targetId) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        const el = document.getElementById(targetId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+    window.closeMoreSub = () => {
+      SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+      const more = document.getElementById('sec-more');
+      if (more) { more.style.display='block'; window.scrollTo(0,0); }
     };
 
     document.addEventListener('DOMContentLoaded', init);

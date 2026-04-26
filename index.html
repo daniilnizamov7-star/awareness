@@ -291,8 +291,11 @@
   </div>
 
   <!-- Кнопка поделиться -->
-  <button onclick="openShare()" style="width:100%;padding:0.85rem;background:transparent;border:1px solid rgba(148,163,184,0.25);color:var(--muted);border-radius:0.75rem;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+  <button onclick="openShare()" style="width:100%;padding:0.85rem;background:transparent;border:1px solid rgba(148,163,184,0.25);color:var(--muted);border-radius:0.75rem;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:0.5rem;display:flex;align-items:center;justify-content:center;gap:0.5rem">
     📤 Поделиться приложением
+  </button>
+  <button onclick="openInstall()" style="width:100%;padding:0.85rem;background:transparent;border:1px solid rgba(148,163,184,0.25);color:var(--muted);border-radius:0.75rem;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+    📲 Установить на экран
   </button>
 
   <div class="footer-warning">
@@ -301,6 +304,46 @@
     <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
   </div><!-- /sec-home -->
+
+  <!-- Модалка установки -->
+  <div id="install-modal" class="alhamd-overlay">
+    <div class="alhamd-card" style="text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-size:1.1rem;font-weight:800">📲 Установить на экран</div>
+        <button onclick="closeInstall()" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1">&times;</button>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.5">Установи как приложение — иконка на главном экране, открывается без браузера</p>
+
+      <!-- Android -->
+      <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:0.85rem;padding:1rem;margin-bottom:0.75rem">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem">
+          <span style="font-size:1.2rem">🤖</span>
+          <span style="font-weight:700;font-size:0.9rem;color:var(--accent)">Android (Chrome)</span>
+        </div>
+        <ol style="font-size:0.83rem;color:var(--text);line-height:1.8;padding-left:1.2rem">
+          <li>Нажми <strong>⋮</strong> (три точки) справа вверху</li>
+          <li>Выбери <strong>"Добавить на главный экран"</strong></li>
+          <li>Нажми <strong>"Установить"</strong></li>
+        </ol>
+      </div>
+
+      <!-- iPhone -->
+      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:0.85rem;padding:1rem;margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem">
+          <span style="font-size:1.2rem">🍎</span>
+          <span style="font-weight:700;font-size:0.9rem;color:#3b82f6">iPhone (Safari)</span>
+        </div>
+        <ol style="font-size:0.83rem;color:var(--text);line-height:1.8;padding-left:1.2rem">
+          <li>Нажми кнопку <strong>"Поделиться"</strong> (⬆️) внизу</li>
+          <li>Прокрути вниз → <strong>"На экран Домой"</strong></li>
+          <li>Нажми <strong>"Добавить"</strong></li>
+        </ol>
+        <p style="font-size:0.72rem;color:#3b82f6;margin-top:0.4rem">⚠️ Открывай в Safari, не в Chrome</p>
+      </div>
+
+      <button class="alhamd-btn" onclick="closeInstall()">Понял, спасибо! 🤲</button>
+    </div>
+  </div>
 
   <!-- Модалка поделиться -->
   <div id="share-modal" class="share-overlay">
@@ -1663,6 +1706,9 @@
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));
       }
     };
+
+    window.openInstall  = () => document.getElementById('install-modal').classList.add('show');
+    window.closeInstall = () => document.getElementById('install-modal').classList.remove('show');
 
     // === ПОДЕЛИТЬСЯ + QR ===
     const SHARE_URL = window.location.origin || 'https://awareness-ten.vercel.app';

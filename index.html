@@ -1609,7 +1609,7 @@
         if (cached) {
           const { timings, cachedDate, hijriDay, hijriMonth } = JSON.parse(cached);
           // Кэш валиден только если это сегодняшняя дата
-          if (timings && cachedDate === realTodayISO) {
+          if (timings && (cached.cachedDate === realTodayISO || cached.date === realTodayISO)) {
             return { timings, hijriDay, hijriMonth };
           }
         }
@@ -1632,8 +1632,9 @@
               schedule: json.schedule,
               hijriDay: entry.d,
               hijriMonth: json.monthName || '—',
-              cachedDate: realTodayISO,   // дата вместо timestamp
-              timestamp: Date.now()       // оставляем для совместимости
+              cachedDate: realTodayISO,
+              date: realTodayISO,
+              timestamp: Date.now()
             }));
             return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
           }

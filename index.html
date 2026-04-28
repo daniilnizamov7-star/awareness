@@ -1383,14 +1383,14 @@
     const getAzkarState = (type) => {
       try {
         const s = JSON.parse(localStorage.getItem(AZKAR_KEY)) || {};
-        const today = new Date().toISOString().split('T')[0];
+        const today = getPrayerDayISO();
         if (s.date !== today) return {};
         return s[type] || {};
       } catch { return {}; }
     };
     const saveAzkarState = (type, state) => {
       try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getPrayerDayISO();
         const s = JSON.parse(localStorage.getItem(AZKAR_KEY)) || { date:today };
         if (s.date !== today) { localStorage.setItem(AZKAR_KEY, JSON.stringify({ date:today, [type]:state })); return; }
         s[type] = state; localStorage.setItem(AZKAR_KEY, JSON.stringify(s));
@@ -2038,8 +2038,7 @@
 
         const btn = document.getElementById('mark-done');
         const done = appState.completed[current.name];
-        const isAfterMidnightBeforeFajr = appTimings.fajr && new Date() < parseTime(appTimings.fajr);
-        const btnDisabled = done || (isAfterMidnightBeforeFajr && current.name === 'isha');
+        const btnDisabled = done;
         btn.disabled = btnDisabled;
         btn.textContent = done ? `${NAMES[current.name] || current.name} ✓` : `✅ ${NAMES[current.name] || current.name}`;
 
@@ -2091,15 +2090,15 @@
     const getIstigfarState = () => {
       try {
         const s = JSON.parse(localStorage.getItem(IG_KEY)) || {};
-        const today = new Date().toISOString().split('T')[0];
+        const today = getPrayerDayISO();
         if (s.date !== today) return { count: 0, date: today };
         return s;
-      } catch { return { count: 0, date: new Date().toISOString().split('T')[0] }; }
+      } catch { return { count: 0, date: getPrayerDayISO() }; }
     };
     window.tapIstigfar = (type) => {
       const s = getIstigfarState();
       if (s.count >= 100) { showToast('✨ 100 истигфаров выполнено!'); return; }
-      s.count++; s.date = new Date().toISOString().split('T')[0];
+      s.count++; s.date = getPrayerDayISO();
       localStorage.setItem(IG_KEY, JSON.stringify(s));
       if (navigator.vibrate) navigator.vibrate(35);
       const el = document.getElementById(`ig-count-${type}`);
@@ -2110,7 +2109,7 @@
       else if (s.count % 10 === 0) showToast(`📿 ${s.count}/100`);
     };
     window.resetIstigfar = (type) => {
-      const s = { count: 0, date: new Date().toISOString().split('T')[0] };
+      const s = { count: 0, date: getPrayerDayISO() };
       localStorage.setItem(IG_KEY, JSON.stringify(s));
       const el = document.getElementById(`ig-count-${type}`);
       const bar = document.getElementById(`ig-bar-${type}`);
@@ -2124,13 +2123,13 @@
     const getSalState = () => {
       try {
         const s = JSON.parse(localStorage.getItem(SAL_KEY)) || {};
-        const today = new Date().toISOString().split('T')[0];
+        const today = getPrayerDayISO();
         if (s.date !== today) return { count: 0, goal: 100, date: today };
         return s;
-      } catch { return { count: 0, goal: 100, date: new Date().toISOString().split('T')[0] }; }
+      } catch { return { count: 0, goal: 100, date: getPrayerDayISO() }; }
     };
     const saveSalState = (s) => {
-      s.date = new Date().toISOString().split('T')[0];
+      s.date = getPrayerDayISO();
       localStorage.setItem(SAL_KEY, JSON.stringify(s));
     };
     const renderSalawat = () => {

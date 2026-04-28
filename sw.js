@@ -1,5 +1,5 @@
-const CACHE_NAME = 'osoznanie-v5';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE_NAME = 'osoznanie-v6';
+const ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
@@ -7,7 +7,6 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  // Удаляем все старые кэши
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
@@ -16,12 +15,11 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Для index.html — всегда сеть, кэш только если нет интернета
+  // index.html — всегда сеть без кэша браузера, fallback на кэш SW
   if (e.request.url.endsWith('/') || e.request.url.endsWith('/index.html')) {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: 'no-store' })
         .then((res) => {
-          // Обновляем кэш свежей версией
           const clone = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
           return res;
@@ -31,6 +29,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Для остального — кэш сначала (иконки, манифест)
+  // Остальное — кэш сначала
   e.respondWith(caches.match(e.request).then((cached) => cached || fetch(e.request)));
 });

@@ -705,7 +705,77 @@
   <button onclick="tasbihReset()" id="tasbih-reset-btn" style="width:100%;padding:0.75rem;background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:0.875rem;font-size:0.85rem;cursor:pointer;margin-top:0.5rem">↺ Сброс</button>
   </div>
 
-  <!-- ===== СЕКЦИЯ: ЕЩЁ — главный экран с плитками ===== -->
+  <div id="sub-istikhara" style="display:none">
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem">
+      <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+      <h2 style="font-size:1.1rem;font-weight:800">🤲 Намаз Истихара</h2>
+    </div>
+
+    <!-- Предупреждение о запретном времени -->
+    <div id="istikhara-warning" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:0.875rem;padding:0.875rem 1rem;margin-bottom:1rem">
+      <div style="font-weight:800;color:#ef4444;margin-bottom:0.25rem">⛔ Сейчас запретное время</div>
+      <div id="istikhara-warning-text" style="font-size:0.85rem;color:var(--text2)"></div>
+    </div>
+
+    <!-- Лучшее время -->
+    <div class="card" style="margin-bottom:0.875rem;border-left:3px solid var(--accent)">
+      <div style="font-weight:800;color:var(--accent);margin-bottom:0.5rem">🌟 Когда лучше всего совершать</div>
+      <div style="font-size:0.875rem;color:var(--text2);line-height:1.7">
+        Последняя треть ночи (время Тахаджуда) — самое близкое время к Аллаху.<br>
+        Также можно совершить перед сном или в любое дозволенное время.
+      </div>
+    </div>
+
+    <!-- Запретные времена -->
+    <div class="card" style="margin-bottom:0.875rem">
+      <div style="font-weight:800;margin-bottom:0.75rem">⛔ Запретные времена для намаза</div>
+      <div style="font-size:0.85rem;color:var(--text2);line-height:1.9">
+        <div style="padding:0.4rem 0;border-bottom:1px solid var(--border2)">🌅 <b>При восходе солнца</b> — от азана Фаджра до полного восхода (~20 мин после)</div>
+        <div style="padding:0.4rem 0;border-bottom:1px solid var(--border2)">☀️ <b>В полдень</b> — когда солнце в зените (около 5–10 мин перед Зухром)</div>
+        <div style="padding:0.4rem 0">🌇 <b>При закате</b> — от начала захода до полного исчезновения солнца</div>
+      </div>
+    </div>
+
+    <!-- Инструкция -->
+    <div class="card" style="margin-bottom:0.875rem">
+      <div style="font-weight:800;margin-bottom:0.75rem">📋 Как совершить</div>
+      <div style="font-size:0.875rem;color:var(--text2);line-height:1.8">
+        <div style="display:flex;gap:0.75rem;margin-bottom:0.75rem"><span style="color:var(--accent);font-weight:900;flex-shrink:0">1.</span><span>Соверши омовение (вуду)</span></div>
+        <div style="display:flex;gap:0.75rem;margin-bottom:0.75rem"><span style="color:var(--accent);font-weight:900;flex-shrink:0">2.</span><span>Соверши <b>2 ракаата</b> добровольного намаза с намерением Истихары</span></div>
+        <div style="display:flex;gap:0.75rem;margin-bottom:0.75rem"><span style="color:var(--accent);font-weight:900;flex-shrink:0">3.</span><span>После намаза прочитай дуа ниже, упомянув своё дело</span></div>
+        <div style="display:flex;gap:0.75rem"><span style="color:var(--accent);font-weight:900;flex-shrink:0">4.</span><span>Жди — ответ приходит через <b>облегчение или затруднение дела</b>, не обязательно во сне</span></div>
+      </div>
+    </div>
+
+    <!-- Дуа -->
+    <div class="card" style="margin-bottom:0.875rem">
+      <div style="font-weight:800;margin-bottom:0.75rem">🤲 Дуа Истихары</div>
+      <div style="font-size:1.1rem;direction:rtl;text-align:right;color:var(--accent);line-height:2;margin-bottom:1rem;font-family:'Amiri',serif">
+        اللَّهُمَّ إِنِّي أَسْتَخِيرُكَ بِعِلْمِكَ، وَأَسْتَقْدِرُكَ بِقُدْرَتِكَ، وَأَسْأَلُكَ مِنْ فَضْلِكَ الْعَظِيمِ، فَإِنَّكَ تَقْدِرُ وَلَا أَقْدِرُ، وَتَعْلَمُ وَلَا أَعْلَمُ، وَأَنْتَ عَلَّامُ الْغُيُوبِ
+      </div>
+      <div style="font-size:0.85rem;color:var(--text);line-height:1.8;margin-bottom:0.75rem">
+        АллахуммА инни астахирука би`ильмика, ва астакдирука бикудратика, ва ас`алюка мин фадликаль-`азим, фа-иннака такдиру ва ля акдир, ва та`ляму ва ля а`ляму, ва анта `алляmuль-гуюб.
+      </div>
+      <div style="font-size:0.85rem;color:var(--text);line-height:1.8;margin-bottom:0.75rem">
+        АллахуммА ин кунта та`ляму анна хазаль-амра (здесь назови своё дело) хайрун ли фи дини ва ма`аши ва `акибати амри — фа`кдурху ли ва яссирху ли, сумма барик ли фих.
+      </div>
+      <div style="font-size:0.85rem;color:var(--text);line-height:1.8;margin-bottom:0.75rem">
+        Ва ин кунта та`ляму анна хазаль-амра шаррун ли фи дини ва ма`аши ва `акибати амри — фасрифху `анни ва сурфни `анху, ва акдир лияль-хайра хайсу кан, сумма рдини бих.
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);font-style:italic;background:rgba(16,185,129,0.07);padding:0.5rem 0.75rem;border-radius:0.5rem;border-left:3px solid var(--accent);margin-bottom:0.4rem">
+        О Аллах! Поистине, я прошу Тебя направить меня верно, используя Твоё знание, прошу Тебя помочь мне, используя Твоё могущество, и прошу Тебя о Твоей великой милости. Ты можешь, а я не могу. Ты знаешь, а я не знаю. Ты — Знающий сокрытое. О Аллах, если Ты знаешь, что это дело (назови дело) — благо для меня в моей религии, жизни и в итоге моих дел — предопредели его мне и облегчи его, затем дай мне благодать в нём. Если же Ты знаешь, что оно — зло для меня — отврати его от меня и меня от него, и предопредели мне благо, где бы оно ни было, затем сделай меня довольным этим.
+      </div>
+      <div style="font-size:0.75rem;color:var(--muted)">📚 Бухари, 1162 — от Джабира ибн Абдуллы ؓ</div>
+    </div>
+
+    <!-- Важное замечание -->
+    <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:0.875rem;padding:0.875rem 1rem;margin-bottom:1.5rem">
+      <div style="font-weight:800;color:var(--dhuha);margin-bottom:0.35rem">💡 Важно знать</div>
+      <div style="font-size:0.82rem;color:var(--text2);line-height:1.7">
+        Истихару можно повторять несколько дней подряд. Сердце после неё успокаивается на одном решении — это и есть ответ Аллаха. Не жди обязательно сна или видения.
+      </div>
+    </div>
+  </div>
   <div id="sec-more" style="display:none">
   <div class="header">
     <div><h1>🔖 Ещё</h1></div>
@@ -742,7 +812,11 @@
       <div class="more-tile-title">99 имён</div>
       <div class="more-tile-sub">Имена Аллаха</div>
     </div>
-    <div class="more-tile" onclick="openMoreSub('sub-salawat')">
+    <div class="more-tile" onclick="openMoreSub('sub-istikhara')">
+      <div class="more-tile-icon">🤲</div>
+      <div class="more-tile-title">Истихара</div>
+      <div class="more-tile-sub">Намаз за советом к Аллаху</div>
+    </div>
       <div class="more-tile-icon">💚</div>
       <div class="more-tile-title">Салават</div>
       <div class="more-tile-sub">На Пророка ﷺ</div>
@@ -1020,6 +1094,7 @@
       { id:'hard',    icon:'😔', label:'Трудности' },
       { id:'nature',  icon:'🌿', label:'Природа' },
       { id:'health',  icon:'🏥', label:'Здоровье' },
+      { id:'family',  icon:'👨‍👩‍👧', label:'Семья' },
     ];
     const DUAS_OCCASION = [
       { icon:'🍽️', title:'Перед едой', cat:'home', ar:'بِسْمِ اللَّهِ', text:'БисмиЛлях', translate:'С именем Аллаха', source:'📚 Бухари, 5376' },
@@ -1046,6 +1121,12 @@
       { icon:'😷', title:'При посещении больного', cat:'health', ar:'لَا بَأْسَ طَهُورٌ إِنْ شَاءَ اللَّهُ', text:'Ля ба`с, тахурун иншааллах', translate:'Не беда, это очищение, если пожелает Аллах', source:'📚 Бухари, 5656' },
       { icon:'🏥', title:'Дуа за больного', cat:'health', ar:'اللَّهُمَّ اشْفِ فُلَانًا', text:'АллахуммА ишфи (имя больного)', translate:'О Аллах! Исцели (имя больного)', source:'📚 Бухари, 5675; Муслим, 2191' },
       { icon:'🌬️', title:'При боли', cat:'health', ar:'بِسْمِ اللَّهِ', text:'БисмиЛлях (три раза)\nА`узу биЛлях ва кудратихи мин шарри ма аджиду ва юхазир (семь раз)', translate:'С именем Аллаха. Прибегаю к Аллаху и Его могуществу от зла того, что я ощущаю и опасаюсь', source:'📚 Муслим, 2202' },
+      { icon:'🤲', title:'Дуа за родителей', cat:'family', ar:'رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ وَارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا', text:'Рабби гфир ли ва ли-валидаййа вархамхума кама рабба-яни сагира', translate:'Господи! Прости меня и моих родителей, и помилуй их, как они воспитывали меня в детстве', source:'📖 Коран 17:24; Абу Дауд, 1516' },
+      { icon:'👴', title:'Дуа за живых родителей', cat:'family', ar:'اللَّهُمَّ اغْفِرْ لِوَالِدَيَّ وَارْحَمْهُمَا وَعَافِهِمَا وَاعْفُ عَنْهُمَا', text:'АллахуммА гфир ли-валидаййа вархамхума ва `афихима ва`фу `анхума', translate:'О Аллах! Прости моих родителей, помилуй их, даруй им здоровье и прости их прегрешения', source:'📚 Ибн Маджа, 3862' },
+      { icon:'🕊️', title:'Дуа за умерших родителей', cat:'family', ar:'اللَّهُمَّ اغْفِرْ لَهُ وَارْحَمْهُ وَعَافِهِ وَاعْفُ عَنْهُ', text:'АллахуммА гфир ляху вархамху ва `афихи ва`фу `анху\n\n(для женщины: ляха вархамха ва `афиха ва`фу `анха)', translate:'О Аллах! Прости его (её), помилуй, даруй благополучие и прости прегрешения', source:'📚 Муслим, 963' },
+      { icon:'🧒', title:'Дуа за детей', cat:'family', ar:'رَبِّ هَبْ لِي مِنَ الصَّالِحِينَ', text:'Рабби хаб ли минас-салихин', translate:'Господи! Даруй мне праведного потомка', source:'📖 Коран 37:100; дуа пророка Ибрахима ﷺ' },
+      { icon:'🌱', title:'Дуа о благом потомстве', cat:'family', ar:'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا', text:'Раббана хаб ляна мин азваджина ва зурриятина куррата а`йун вадж`альна лиль-муттакина имама', translate:'Господи! Даруй нам от наших супругов и потомков отраду для наших глаз и сделай нас образцом для богобоязненных', source:'📖 Коран 25:74' },
+      { icon:'🛡️', title:'Защита детей (утро/вечер)', cat:'family', ar:'أُعِيذُكُمَا بِكَلِمَاتِ اللَّهِ التَّامَّةِ مِنْ كُلِّ شَيْطَانٍ وَهَامَّةٍ وَمِنْ كُلِّ عَيْنٍ لَامَّةٍ', text:'У`изукума бикалиматиЛляхит-таммати мин кулли шайтанин ва хаммати ва мин кулли `айнин ляммах', translate:'Прибегаю к защите совершенных слов Аллаха для вас от каждого шайтана, ядовитого существа и от каждого дурного глаза', source:'📚 Бухари, 3371 — дуа которым Пророк ﷺ защищал Хасана и Хусейна' },
     ];
     let activeDuaCat = 'all';
     const renderDuasOccasion = () => {
@@ -2330,7 +2411,7 @@
 
     // === НАВИГАЦИЯ ===
     const SECTIONS = ['sec-home','sec-prayers','sec-zikr','sec-more'];
-    const SUBS = ['sub-compass','sub-azkar','sub-zakat','sub-duas-occasion','sub-asma','sub-salawat'];
+    const SUBS = ['sub-compass','sub-azkar','sub-zakat','sub-duas-occasion','sub-asma','sub-salawat','sub-istikhara'];
 
     const hideAll = () => {
       SECTIONS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
@@ -2355,12 +2436,52 @@
       if (id === 'sub-duas-occasion') renderDuasOccasion();
       if (id === 'sub-asma') renderAsma();
       if (id === 'sub-salawat') renderSalawat();
+      if (id === 'sub-istikhara') checkIstikharaTime();
     };
 
     window.closeMoreSub = () => {
       SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
       const more = document.getElementById('sec-more');
       if (more) { more.style.display='block'; window.scrollTo(0,0); }
+    };
+
+    // ===== ИСТИХАРА — проверка запретного времени =====
+    const checkIstikharaTime = () => {
+      const warning = document.getElementById('istikhara-warning');
+      const warningText = document.getElementById('istikhara-warning-text');
+      if (!warning || !warningText || !appTimings) return;
+
+      const now = new Date();
+      const h = now.getHours(), m = now.getMinutes();
+      const nowMins = h * 60 + m;
+
+      const toMins = (t) => { if (!t) return null; const [th,tm] = t.split(':').map(Number); return th*60+tm; };
+
+      const fajr = toMins(appTimings.fajr);
+      const sunrise = toMins(appTimings.sunrise);
+      const dhuhr = toMins(appTimings.dhuhr);
+      const maghrib = toMins(appTimings.maghrib);
+
+      let forbidden = false, text = '';
+
+      // 1. От Фаджра до ~20 мин после восхода
+      if (fajr && sunrise && nowMins >= fajr && nowMins <= sunrise + 20) {
+        forbidden = true;
+        text = `Время восхода — намаз запрещён от азана Фаджра до ~20 минут после восхода. Восход сегодня в ${appTimings.sunrise}.`;
+      }
+      // 2. Около полудня — 5 мин до Зухра
+      else if (dhuhr && nowMins >= dhuhr - 5 && nowMins <= dhuhr + 5) {
+        forbidden = true;
+        text = `Солнце в зените — намаз запрещён около ${appTimings.dhuhr}. Подожди несколько минут.`;
+      }
+      // 3. Закат — 15 мин до Магриба
+      else if (maghrib && nowMins >= maghrib - 15 && nowMins <= maghrib + 5) {
+        forbidden = true;
+        text = `Время заката — намаз запрещён до полного исчезновения солнца. Магриб сегодня в ${appTimings.maghrib}.`;
+      }
+
+      warning.style.display = forbidden ? 'block' : 'none';
+      if (forbidden) warningText.textContent = text;
     };
 
     // ===== ТАСБИХ =====

@@ -2433,6 +2433,8 @@
       if (el) { el.style.display='block'; window.scrollTo(0,0); }
       if (tab === 'prayers') renderList(appTimings, appState?.completed || {});
       if (tab === 'zikr') tasbihUpdate();
+      // Пушим в историю чтобы кнопка Назад на Android работала
+      history.pushState({ tab }, '', '');
     };
 
     window.openMoreSub = (id) => {
@@ -2444,6 +2446,7 @@
       if (id === 'sub-asma') renderAsma();
       if (id === 'sub-salawat') renderSalawat();
       if (id === 'sub-istikhara') checkIstikharaTime();
+      history.pushState({ sub: id }, '', '');
     };
 
     window.closeMoreSub = () => {
@@ -2451,6 +2454,27 @@
       const more = document.getElementById('sec-more');
       if (more) { more.style.display='block'; window.scrollTo(0,0); }
     };
+
+    // Перехват кнопки Назад на Android
+    window.addEventListener('popstate', (e) => {
+      // Если открыт подэкран — закрываем его
+      const openSub = SUBS.find(id => {
+        const el = document.getElementById(id);
+        return el && el.style.display !== 'none';
+      });
+      if (openSub) { closeMoreSub(); return; }
+      // Если открыта не главная — возвращаем главную
+      const activeSection = ['home','prayers','zikr','more'].find(t => {
+        const el = document.getElementById('sec-' + t);
+        return el && el.style.display !== 'none';
+      });
+      if (activeSection && activeSection !== 'home') {
+        navTo('home');
+        return;
+      }
+      // На главной — пушим снова чтобы не выйти из PWA
+      history.pushState({}, '', '');
+    });
 
     // ===== ИСТИХАРА — проверка запретного времени =====
     const checkIstikharaTime = () => {
@@ -2543,7 +2567,10 @@
       tasbihUpdate();
     };
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      history.replaceState({ tab: 'home' }, '', '');
+      init();
+    });
   </script>
 </body>
 </html>

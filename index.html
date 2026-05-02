@@ -2305,10 +2305,32 @@
 
 
     const startMidnightCheck = () => {
+      // Проверка каждую минуту пока приложение открыто
       setInterval(() => {
         const n = new Date();
-        if (n.getHours() === 0 && n.getMinutes() <= 1) { console.log('🌙 Midnight reload'); location.reload(); }
+        if (n.getHours() === 0 && n.getMinutes() <= 1) {
+          console.log('🌙 Midnight reload');
+          localStorage.removeItem(CACHE_KEY); // чистим кэш чтобы загрузить новое расписание
+          location.reload();
+        }
       }, 60000);
+
+      // При возврате в приложение — проверяем не сменился ли день
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          const cachedRaw = localStorage.getItem(CACHE_KEY);
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw);
+            const cacheDate = cached.cachedDate || cached.date;
+            const today = new Date().toISOString().split('T')[0];
+            if (cacheDate && cacheDate !== today) {
+              console.log('📅 New day detected, reloading...');
+              localStorage.removeItem(CACHE_KEY);
+              location.reload();
+            }
+          }
+        }
+      });
     };
 
     // === INIT ===

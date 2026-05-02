@@ -1,11 +1,5 @@
-const CACHE_NAME = 'osoznanie-v8';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/ayahs.json',
-  '/api/prayer-data.json'
-];
+const CACHE_NAME = 'osoznanie-v9';
+const ASSETS = ['/', '/index.html', '/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -18,12 +12,17 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => clients.claim())
+    ).then(() => {
+      // При активации нового SW — принудительно обновляем index.html у всех клиентов
+      return clients.matchAll({ type: 'window' }).then(clientList => {
+        clientList.forEach(client => client.navigate(client.url));
+      });
+    })
   );
 });
 
 self.addEventListener('fetch', (e) => {
-  // index.html — network-first
+  // index.html — всегда сеть, кэш только офлайн
   if (e.request.url.endsWith('/') || e.request.url.endsWith('/index.html')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
@@ -37,7 +36,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // prayer-data.json — network-first, офлайн из кэша
+  // prayer-data.json — network-first
   if (e.request.url.includes('prayer-data.json')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })

@@ -1708,27 +1708,31 @@
 
     // === DATA LOADER ===
     const loadData = async () => {
-      // Всегда используем реальную сегодняшнюю дату для расписания намазов
       const realTodayISO = new Date().toISOString().split('T')[0];
       const realTodayStr = getTodayStr();
 
+      // Парсим кэш один раз
+      let parsedCache = null;
       try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-          const { timings, cachedDate, hijriDay, hijriMonth } = JSON.parse(cached);
-          // Кэш валиден только если это сегодняшняя дата
-          if (timings && (cached.cachedDate === realTodayISO || cached.date === realTodayISO)) {
-            return { timings, hijriDay, hijriMonth };
-          }
-        }
-      } catch (e) { console.warn('Cache error:', e); }
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (raw) parsedCache = JSON.parse(raw);
+      } catch (e) { console.warn('Cache parse error:', e); }
 
+      // Кэш сегодняшний — сразу возвращаем
+      if (parsedCache) {
+        const cacheDate = parsedCache.cachedDate || parsedCache.date;
+        if (parsedCache.timings && cacheDate === realTodayISO) {
+          return { timings: parsedCache.timings, hijriDay: parsedCache.hijriDay, hijriMonth: parsedCache.hijriMonth };
+        }
+      }
+
+      // Идём в сеть
       try {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), 5000);
         const res = await fetch(API_URL + '?t=' + Date.now(), { signal: controller.signal, cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        
+
         const json = await res.json();
         const entry = json.schedule?.find(item => item.date === realTodayStr);
         if (entry) {
@@ -1747,8 +1751,28 @@
             return { timings, hijriDay: entry.d, hijriMonth: json.monthName || '—' };
           }
         }
-        throw new Error('Invalid');
+        throw new Error('No entry for today');
       } catch (e) {
+        // Офлайн или ошибка сети — ищем сегодня в schedule кэша
+        if (parsedCache?.schedule) {
+          const entry = parsedCache.schedule.find(item => item.date === realTodayStr);
+          if (entry) {
+            const timings = {};
+            PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
+            if (Object.keys(timings).length >= 4) {
+              // Обновляем кэш с сегодняшней датой
+              localStorage.setItem(CACHE_KEY, JSON.stringify({
+                ...parsedCache,
+                timings,
+                hijriDay: entry.d,
+                cachedDate: realTodayISO,
+                date: realTodayISO,
+              }));
+              return { timings, hijriDay: entry.d, hijriMonth: parsedCache.hijriMonth || '—' };
+            }
+          }
+        }
+        // Совсем нет данных
         document.getElementById('error-banner').classList.add('show');
         return { timings: FALLBACK, hijriDay: '—', hijriMonth: '—' };
       }

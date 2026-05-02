@@ -1,5 +1,11 @@
-const CACHE_NAME = 'osoznanie-v7';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/ayahs.json'];
+const CACHE_NAME = 'osoznanie-v8';
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/ayahs.json',
+  '/api/prayer-data.json'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -17,7 +23,7 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // index.html — network-first: пробуем сеть, обновляем кэш, при ошибке отдаём кэш
+  // index.html — network-first
   if (e.request.url.endsWith('/') || e.request.url.endsWith('/index.html')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
@@ -31,7 +37,21 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Остальное — cache-first: кэш, при промахе — сеть с сохранением в кэш
+  // prayer-data.json — network-first, офлайн из кэша
+  if (e.request.url.includes('prayer-data.json')) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' })
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match('/api/prayer-data.json'))
+    );
+    return;
+  }
+
+  // Остальное — cache-first
   e.respondWith(
     caches.match(e.request).then((cached) => {
       if (cached) return cached;

@@ -1718,6 +1718,12 @@
         if (raw) parsedCache = JSON.parse(raw);
       } catch (e) { console.warn('Cache parse error:', e); }
 
+      // Миграция: старый кэш без schedule — удаляем, загружаем заново
+      if (parsedCache && !parsedCache.schedule) {
+        localStorage.removeItem(CACHE_KEY);
+        parsedCache = null;
+      }
+
       // Кэш сегодняшний — сразу возвращаем
       if (parsedCache) {
         const cacheDate = parsedCache.cachedDate || parsedCache.date;

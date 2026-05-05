@@ -2155,9 +2155,29 @@
       return null;
     };
 
+    let lastPrayerDay = getPrayerDayISO();
     const startTimer = () => {
       if (!appTimings) return;
-      const update = () => {
+      const update = async () => {
+        // Проверяем смену намаз-дня — если изменился, перезагружаем данные
+        const currentDay = getPrayerDayISO();
+        if (currentDay !== lastPrayerDay) {
+          lastPrayerDay = currentDay;
+          console.log('📅 Намаз-день сменился, перезагружаю данные...');
+          localStorage.removeItem(CACHE_KEY);
+          const { timings, hijriDay, hijriMonth } = await loadData();
+          appTimings = timings;
+          const todayISO = getPrayerDayISO();
+          if (appState.date !== todayISO) {
+            appState.completed = {};
+            appState.date = todayISO;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            localStorage.removeItem('zikr_state_v1');
+          }
+          renderPrayersHome(timings, appState.completed);
+          renderStreak();
+          return;
+        }
         const { current, next } = findCurrentNext(appTimings);
         document.getElementById('current-name').textContent = NAMES[current.name] || current.name;
         document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;

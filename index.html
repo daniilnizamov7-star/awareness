@@ -1435,8 +1435,8 @@
     const calcStreak = () => {
       try {
         const saved = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count:0, lastDate:'' };
-        const today = getTodayISO();
-        const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+        const today = getPrayerDayISO(); // намаз-день: до Фаджра = вчера
+        const yesterday = (() => { const d = getPrayerDayDate(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
         const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} };
         const allDone = FARZ.every(p => state.completed[p]);
 

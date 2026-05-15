@@ -597,6 +597,22 @@
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
     <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
+
+  <button onclick="showDebug()" style="width:100%;padding:0.6rem;background:transparent;border:1px solid rgba(248,113,113,0.3);color:rgba(248,113,113,0.6);border-radius:0.75rem;font-size:0.75rem;font-weight:600;cursor:pointer;margin-top:0.5rem">
+    🔧 Отладка (временно)
+  </button>
+
+  <div id="debug-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:2000;padding:1rem;overflow-y:auto">
+    <div style="background:#0f172a;border:1px solid #34d399;border-radius:1rem;padding:1.25rem;max-width:480px;margin:0 auto;font-family:monospace;font-size:0.72rem;line-height:1.8;color:#e2e8f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <span style="font-weight:700;color:#34d399;font-size:0.85rem">🔧 Debug Info</span>
+        <button onclick="document.getElementById('debug-modal').style.display='none'" style="background:#ef4444;border:none;color:#fff;border-radius:0.5rem;padding:0.3rem 0.75rem;cursor:pointer;font-size:0.8rem">Закрыть</button>
+      </div>
+      <div id="debug-content" style="white-space:pre-wrap;word-break:break-all"></div>
+      <button onclick="clearAndReload()" style="margin-top:1rem;width:100%;padding:0.75rem;background:#ef4444;border:none;color:#fff;border-radius:0.75rem;cursor:pointer;font-weight:700;font-size:0.85rem">🗑️ Сбросить всё и перезагрузить</button>
+    </div>
+  </div>
+
   </div><!-- /sec-home -->
 
   <!-- Модалка установки -->
@@ -2673,6 +2689,58 @@
       document.getElementById('tasbih-tahlil').style.display = 'none';
       document.getElementById('tasbih-reset-btn').style.display = 'block';
       tasbihUpdate();
+    };
+
+    window.showDebug = () => {
+      const now = new Date();
+      const fajrStr = appTimings?.fajr || '—';
+      const [fh, fm] = fajrStr !== '—' ? fajrStr.split(':').map(Number) : [0,0];
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const fajrMins = fh * 60 + fm;
+      const isBeforeFajr = fajrStr !== '—' && nowMins < fajrMins;
+      const stateRaw = localStorage.getItem(STORAGE_KEY);
+      const state = stateRaw ? JSON.parse(stateRaw) : null;
+      const cacheRaw = localStorage.getItem(CACHE_KEY);
+      const cache = cacheRaw ? JSON.parse(cacheRaw) : null;
+      const pday = getPrayerDayISO();
+      const tday = getTodayISO();
+      const lines = [
+        '=== ВРЕМЯ ===',
+        'Сейчас: ' + now.toLocaleString('ru-RU'),
+        'До фаджра: ' + (isBeforeFajr ? 'ДА — намаз-день ВЧЕРА' : 'НЕТ — намаз-день СЕГОДНЯ'),
+        '',
+        '=== НАМАЗЫ ===',
+        'Фаджр: ' + (appTimings?.fajr || 'НЕТ'),
+        'Восход: ' + (appTimings?.sunrise || 'НЕТ'),
+        'Зухр: ' + (appTimings?.dhuhr || 'НЕТ'),
+        'Аср: ' + (appTimings?.asr || 'НЕТ'),
+        'Магриб: ' + (appTimings?.maghrib || 'НЕТ'),
+        'Иша: ' + (appTimings?.isha || 'НЕТ'),
+        '',
+        '=== СОСТОЯНИЕ ===',
+        'appState.date: ' + (state?.date || 'НЕТ'),
+        'getPrayerDayISO(): ' + pday,
+        'getTodayISO(): ' + tday,
+        'Совпадают: ' + (state?.date === pday ? 'ДА — сброса не будет' : 'НЕТ — будет СБРОС!'),
+        '',
+        '=== ВЫПОЛНЕНО ===',
+      ];
+      const comp = state?.completed || {};
+      if (Object.keys(comp).length === 0) lines.push('(пусто)');
+      else Object.entries(comp).forEach(([k,v]) => lines.push(k + ': ' + JSON.stringify(v)));
+      lines.push('');
+      lines.push('=== КЭШ ===');
+      lines.push('cachedDate: ' + (cache?.cachedDate || cache?.date || 'НЕТ'));
+      lines.push('lastPrayerDay: ' + (lastPrayerDay || 'НЕТ'));
+      document.getElementById('debug-content').textContent = lines.join('\n');
+      document.getElementById('debug-modal').style.display = 'block';
+    };
+
+    window.clearAndReload = () => {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem('zikr_state_v1');
+      location.reload();
     };
 
     document.addEventListener('DOMContentLoaded', () => {

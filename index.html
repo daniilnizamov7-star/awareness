@@ -2075,7 +2075,7 @@
 
     // === ACTIONS ===
     document.getElementById('mark-done').onclick = () => {
-      if (!appTimings) return;
+      if (!appTimings || !appState) return;
       const { current } = findCurrentNext(appTimings);
       if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
       
@@ -2340,18 +2340,18 @@
         }
       }, 60000);
 
-      // При возврате в приложение — проверяем не сменился ли день
+      // При возврате в приложение — обновляем UI без перезагрузки
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          const cachedRaw = localStorage.getItem(CACHE_KEY);
-          if (cachedRaw) {
-            const cached = JSON.parse(cachedRaw);
-            const cacheDate = cached.cachedDate || cached.date;
-            const today = getPrayerDayISO();
-            if (cacheDate && cacheDate !== today) {
-              localStorage.removeItem(CACHE_KEY);
-              location.reload();
-            }
+        if (document.visibilityState === 'visible' && appTimings) {
+          const currentDay = getPrayerDayISO();
+          if (currentDay !== lastPrayerDay) {
+            // День сменился — перезагружаем
+            localStorage.removeItem(CACHE_KEY);
+            location.reload();
+          } else {
+            // Тот же намаз-день — просто обновляем UI
+            renderList(appTimings, appState.completed);
+            renderPrayersHome(appTimings, appState.completed);
           }
         }
       });
@@ -2380,14 +2380,30 @@
       const data = await loadData();
       appTimings = data.timings;
 
-      // getPrayerDayISO теперь вызывается ПОСЛЕ загрузки appTimings — корректно определяет день
       const todayISO = getPrayerDayISO();
 
-      // Если новый день — сбрасываем все намазы
+      // Если appState.date отличается от namaz-дня — проверяем не миграция ли это:
+      // до фаджра namaz-день = вчера, а appState.date мог быть записан как calendar-сегодня старым кодом.
+      // Если completed содержит записи с _at датой = вчера — это наши данные, не сбрасываем.
       if (appState.date !== todayISO) {
-        appState.completed = {};
-        appState.date = todayISO;
-        localStorage.removeItem('zikr_state_v1');
+        let hasValidData = false;
+        if (appState.completed) {
+          for (const key of Object.keys(appState.completed)) {
+            if (key.endsWith('_at')) {
+              const d = new Date(appState.completed[key]);
+              const dISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+              if (dISO === todayISO) { hasValidData = true; break; }
+            }
+          }
+        }
+        if (hasValidData) {
+          // Данные валидные — только обновляем дату, не сбрасываем completed
+          appState.date = todayISO;
+        } else {
+          appState.completed = {};
+          appState.date = todayISO;
+          localStorage.removeItem('zikr_state_v1');
+        }
       }
 
       ['dhuha', 'tahajjud'].forEach(key => {
@@ -2542,6 +2558,9 @@
       SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
       const more = document.getElementById('sec-more');
       if (more) { more.style.display='block'; window.scrollTo(0,0); }
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const navMore = document.getElementById('nav-more');
+      if (navMore) navMore.classList.add('active');
     };
 
     // Перехват кнопки Назад на Android
@@ -2584,10 +2603,10 @@
 
       let forbidden = false, text = '';
 
-      // 1. От Фаджра до ~20 мин после восхода
-      if (fajr && sunrise && nowMins >= fajr && nowMins <= sunrise + 20) {
+      // 1. При восходе — от восхода до +30 мин
+      if (sunrise && nowMins >= sunrise && nowMins <= sunrise + 30) {
         forbidden = true;
-        text = `Время восхода — намаз запрещён от азана Фаджра до ~20 минут после восхода. Восход сегодня в ${appTimings.sunrise}.`;
+        text = `Время восхода — намаз запрещён до ~30 минут после восхода. Восход сегодня в ${appTimings.sunrise}.`;
       }
       // 2. Около полудня — 5 мин до Зухра
       else if (dhuhr && nowMins >= dhuhr - 5 && nowMins <= dhuhr + 5) {

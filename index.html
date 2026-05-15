@@ -597,22 +597,6 @@
     <p>Для обязательств сверяйтесь с расписанием местной мечети.</p>
     <p style="margin-top: 0.5rem">Не является фетвой. По шариатским вопросам — к знающим.</p>
   </div>
-
-  <button onclick="showDebug()" style="width:100%;padding:0.6rem;background:transparent;border:1px solid rgba(248,113,113,0.3);color:rgba(248,113,113,0.6);border-radius:0.75rem;font-size:0.75rem;font-weight:600;cursor:pointer;margin-top:0.5rem">
-    🔧 Отладка (временно)
-  </button>
-
-  <div id="debug-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:2000;padding:1rem;overflow-y:auto">
-    <div style="background:#0f172a;border:1px solid #34d399;border-radius:1rem;padding:1.25rem;max-width:480px;margin:0 auto;font-family:monospace;font-size:0.72rem;line-height:1.8;color:#e2e8f0">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <span style="font-weight:700;color:#34d399;font-size:0.85rem">🔧 Debug Info</span>
-        <button onclick="document.getElementById('debug-modal').style.display='none'" style="background:#ef4444;border:none;color:#fff;border-radius:0.5rem;padding:0.3rem 0.75rem;cursor:pointer;font-size:0.8rem">Закрыть</button>
-      </div>
-      <div id="debug-content" style="white-space:pre-wrap;word-break:break-all"></div>
-      <button onclick="clearAndReload()" style="margin-top:1rem;width:100%;padding:0.75rem;background:#ef4444;border:none;color:#fff;border-radius:0.75rem;cursor:pointer;font-weight:700;font-size:0.85rem">🗑️ Сбросить всё и перезагрузить</button>
-    </div>
-  </div>
-
   </div><!-- /sec-home -->
 
   <!-- Модалка установки -->
@@ -1083,13 +1067,11 @@
     const applyUserName = (name) => {
       const el = document.getElementById('greeting-name');
       if (el) el.textContent = name ? `${name}` : 'Осознанность';
+      // Приветствие в зависимости от времени
+      const h = new Date().getHours();
+      const greet = h < 6 ? 'Ночь' : h < 12 ? 'Доброе утро' : h < 17 ? 'Добрый день' : h < 21 ? 'Добрый вечер' : 'Доброй ночи';
       const dateEl = document.getElementById('date');
-      if (dateEl && name) {
-        // Не дублируем имя если уже добавлено
-        const base = dateEl.dataset.base || dateEl.textContent;
-        dateEl.dataset.base = base;
-        dateEl.textContent = `${name} • ${base}`;
-      }
+      if (dateEl && name) dateEl.textContent = `${name} • ${dateEl.textContent}`;
     };
     const checkOnboard = () => {
       const name = getUserName();
@@ -2091,7 +2073,7 @@
 
     // === ACTIONS ===
     document.getElementById('mark-done').onclick = () => {
-      if (!appTimings || !appState) return;
+      if (!appTimings) return;
       const { current } = findCurrentNext(appTimings);
       if (appState.completed[current.name]) return showToast('Уже отмечено ✓');
       
@@ -2173,15 +2155,15 @@
       return null;
     };
 
-    let lastPrayerDay = null;
+    let lastPrayerDay = getPrayerDayISO();
     const startTimer = () => {
-      if (!lastPrayerDay) lastPrayerDay = getPrayerDayISO();
       if (!appTimings) return;
       const update = async () => {
         // Проверяем смену намаз-дня — если изменился, перезагружаем данные
         const currentDay = getPrayerDayISO();
         if (currentDay !== lastPrayerDay) {
           lastPrayerDay = currentDay;
+          console.log('📅 Намаз-день сменился, перезагружаю данные...');
           localStorage.removeItem(CACHE_KEY);
           const { timings, hijriDay, hijriMonth } = await loadData();
           appTimings = timings;
@@ -2198,7 +2180,7 @@
         }
         const { current, next } = findCurrentNext(appTimings);
         document.getElementById('current-name').textContent = NAMES[current.name] || current.name;
-        document.getElementById('current-time-info').textContent = appTimings[current.name] ? `с ${appTimings[current.name]}` : '—';
+        document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;
 
         const forbidden = getForbiddenTime(appTimings);
         const countdown = document.getElementById('countdown');
@@ -2350,24 +2332,25 @@
       setInterval(() => {
         const n = new Date();
         if (n.getHours() === 0 && n.getMinutes() <= 1) {
-
+          console.log('🌙 Midnight reload');
           localStorage.removeItem(CACHE_KEY); // чистим кэш чтобы загрузить новое расписание
           location.reload();
         }
       }, 60000);
 
-      // При возврате в приложение — обновляем UI без перезагрузки
+      // При возврате в приложение — проверяем не сменился ли день
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && appTimings) {
-          const currentDay = getPrayerDayISO();
-          if (currentDay !== lastPrayerDay) {
-            // День сменился — перезагружаем
-            localStorage.removeItem(CACHE_KEY);
-            location.reload();
-          } else {
-            // Тот же намаз-день — просто обновляем UI
-            renderList(appTimings, appState.completed);
-            renderPrayersHome(appTimings, appState.completed);
+        if (document.visibilityState === 'visible') {
+          const cachedRaw = localStorage.getItem(CACHE_KEY);
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw);
+            const cacheDate = cached.cachedDate || cached.date;
+            const today = getTodayISO();
+            if (cacheDate && cacheDate !== today) {
+              console.log('📅 New day detected, reloading...');
+              localStorage.removeItem(CACHE_KEY);
+              location.reload();
+            }
           }
         }
       });
@@ -2379,10 +2362,7 @@
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelectorAll('.theme-btn').forEach(btn => btn.textContent = '🌞'); }
       
       const today = new Date();
-      const todayStr = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-      document.getElementById('date').textContent = todayStr;
-      const date2el = document.getElementById('date2');
-      if (date2el) date2el.textContent = todayStr;
+      document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
       
       try {
         const kurban = getKurbanBayramDate(today.getFullYear());
@@ -2391,35 +2371,15 @@
       
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       
-      dhuhaModalShown = false;
-
-      const data = await loadData();
-      appTimings = data.timings;
-
       const todayISO = getPrayerDayISO();
 
-      // Если appState.date отличается от namaz-дня — проверяем не миграция ли это:
-      // до фаджра namaz-день = вчера, а appState.date мог быть записан как calendar-сегодня старым кодом.
-      // Если completed содержит записи с _at датой = вчера — это наши данные, не сбрасываем.
+      // Если новый день — сбрасываем все намазы
+      console.log('🔍 appState.date:', appState.date, '| todayISO:', todayISO);
       if (appState.date !== todayISO) {
-        let hasValidData = false;
-        if (appState.completed) {
-          for (const key of Object.keys(appState.completed)) {
-            if (key.endsWith('_at')) {
-              const d = new Date(appState.completed[key]);
-              const dISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-              if (dISO === todayISO) { hasValidData = true; break; }
-            }
-          }
-        }
-        if (hasValidData) {
-          // Данные валидные — только обновляем дату, не сбрасываем completed
-          appState.date = todayISO;
-        } else {
-          appState.completed = {};
-          appState.date = todayISO;
-          localStorage.removeItem('zikr_state_v1');
-        }
+        console.log('🔄 Сброс намазов — новый день');
+        appState.completed = {};
+        appState.date = todayISO;
+        localStorage.removeItem('zikr_state_v1');
       }
 
       ['dhuha', 'tahajjud'].forEach(key => {
@@ -2433,21 +2393,21 @@
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
+      dhuhaModalShown = false;
+
+      const data = await loadData();
+      appTimings = data.timings;
+      
       if (data.hijriDay && data.hijriMonth) {
         document.getElementById('hijri-date').textContent = `${data.hijriDay} ${data.hijriMonth}`;
         document.getElementById('hijri-month').textContent = 'По хиджре (из базы)';
       } else {
         document.getElementById('hijri-date').textContent = '—';
-        document.getElementById('hijri-month').textContent = 'По хиджре';
       }
 
       renderList(appTimings, appState.completed);
       startTimer();
-      startMidnightCheck();
-      setInterval(() => {
-        renderList(appTimings, appState.completed);
-        renderPrayersHome(appTimings, appState.completed);
-      }, 30000);
+      startMidnightCheck();      setInterval(() => renderList(appTimings, appState.completed), 30000);
 
       await loadAyahs();
       renderAyah();
@@ -2574,9 +2534,6 @@
       SUBS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
       const more = document.getElementById('sec-more');
       if (more) { more.style.display='block'; window.scrollTo(0,0); }
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      const navMore = document.getElementById('nav-more');
-      if (navMore) navMore.classList.add('active');
     };
 
     // Перехват кнопки Назад на Android
@@ -2619,10 +2576,10 @@
 
       let forbidden = false, text = '';
 
-      // 1. При восходе — от восхода до +30 мин
-      if (sunrise && nowMins >= sunrise && nowMins <= sunrise + 30) {
+      // 1. От Фаджра до ~20 мин после восхода
+      if (fajr && sunrise && nowMins >= fajr && nowMins <= sunrise + 20) {
         forbidden = true;
-        text = `Время восхода — намаз запрещён до ~30 минут после восхода. Восход сегодня в ${appTimings.sunrise}.`;
+        text = `Время восхода — намаз запрещён от азана Фаджра до ~20 минут после восхода. Восход сегодня в ${appTimings.sunrise}.`;
       }
       // 2. Около полудня — 5 мин до Зухра
       else if (dhuhr && nowMins >= dhuhr - 5 && nowMins <= dhuhr + 5) {
@@ -2689,58 +2646,6 @@
       document.getElementById('tasbih-tahlil').style.display = 'none';
       document.getElementById('tasbih-reset-btn').style.display = 'block';
       tasbihUpdate();
-    };
-
-    window.showDebug = () => {
-      const now = new Date();
-      const fajrStr = appTimings?.fajr || '—';
-      const [fh, fm] = fajrStr !== '—' ? fajrStr.split(':').map(Number) : [0,0];
-      const nowMins = now.getHours() * 60 + now.getMinutes();
-      const fajrMins = fh * 60 + fm;
-      const isBeforeFajr = fajrStr !== '—' && nowMins < fajrMins;
-      const stateRaw = localStorage.getItem(STORAGE_KEY);
-      const state = stateRaw ? JSON.parse(stateRaw) : null;
-      const cacheRaw = localStorage.getItem(CACHE_KEY);
-      const cache = cacheRaw ? JSON.parse(cacheRaw) : null;
-      const pday = getPrayerDayISO();
-      const tday = getTodayISO();
-      const lines = [
-        '=== ВРЕМЯ ===',
-        'Сейчас: ' + now.toLocaleString('ru-RU'),
-        'До фаджра: ' + (isBeforeFajr ? 'ДА — намаз-день ВЧЕРА' : 'НЕТ — намаз-день СЕГОДНЯ'),
-        '',
-        '=== НАМАЗЫ ===',
-        'Фаджр: ' + (appTimings?.fajr || 'НЕТ'),
-        'Восход: ' + (appTimings?.sunrise || 'НЕТ'),
-        'Зухр: ' + (appTimings?.dhuhr || 'НЕТ'),
-        'Аср: ' + (appTimings?.asr || 'НЕТ'),
-        'Магриб: ' + (appTimings?.maghrib || 'НЕТ'),
-        'Иша: ' + (appTimings?.isha || 'НЕТ'),
-        '',
-        '=== СОСТОЯНИЕ ===',
-        'appState.date: ' + (state?.date || 'НЕТ'),
-        'getPrayerDayISO(): ' + pday,
-        'getTodayISO(): ' + tday,
-        'Совпадают: ' + (state?.date === pday ? 'ДА — сброса не будет' : 'НЕТ — будет СБРОС!'),
-        '',
-        '=== ВЫПОЛНЕНО ===',
-      ];
-      const comp = state?.completed || {};
-      if (Object.keys(comp).length === 0) lines.push('(пусто)');
-      else Object.entries(comp).forEach(([k,v]) => lines.push(k + ': ' + JSON.stringify(v)));
-      lines.push('');
-      lines.push('=== КЭШ ===');
-      lines.push('cachedDate: ' + (cache?.cachedDate || cache?.date || 'НЕТ'));
-      lines.push('lastPrayerDay: ' + (lastPrayerDay || 'НЕТ'));
-      document.getElementById('debug-content').textContent = lines.join('\n');
-      document.getElementById('debug-modal').style.display = 'block';
-    };
-
-    window.clearAndReload = () => {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(CACHE_KEY);
-      localStorage.removeItem('zikr_state_v1');
-      location.reload();
     };
 
     document.addEventListener('DOMContentLoaded', () => {

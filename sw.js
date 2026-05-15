@@ -1,4 +1,4 @@
-const CACHE_NAME = 'osoznanie-v9';
+const CACHE_NAME = 'osoznanie-v10';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
 
 self.addEventListener('install', (e) => {

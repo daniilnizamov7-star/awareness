@@ -1067,11 +1067,13 @@
     const applyUserName = (name) => {
       const el = document.getElementById('greeting-name');
       if (el) el.textContent = name ? `${name}` : 'Осознанность';
-      // Приветствие в зависимости от времени
-      const h = new Date().getHours();
-      const greet = h < 6 ? 'Ночь' : h < 12 ? 'Доброе утро' : h < 17 ? 'Добрый день' : h < 21 ? 'Добрый вечер' : 'Доброй ночи';
       const dateEl = document.getElementById('date');
-      if (dateEl && name) dateEl.textContent = `${name} • ${dateEl.textContent}`;
+      if (dateEl && name) {
+        // Не дублируем имя если уже добавлено
+        const base = dateEl.dataset.base || dateEl.textContent;
+        dateEl.dataset.base = base;
+        dateEl.textContent = `${name} • ${base}`;
+      }
     };
     const checkOnboard = () => {
       const name = getUserName();
@@ -2155,15 +2157,15 @@
       return null;
     };
 
-    let lastPrayerDay = getPrayerDayISO();
+    let lastPrayerDay = null;
     const startTimer = () => {
+      if (!lastPrayerDay) lastPrayerDay = getPrayerDayISO();
       if (!appTimings) return;
       const update = async () => {
         // Проверяем смену намаз-дня — если изменился, перезагружаем данные
         const currentDay = getPrayerDayISO();
         if (currentDay !== lastPrayerDay) {
           lastPrayerDay = currentDay;
-          console.log('📅 Намаз-день сменился, перезагружаю данные...');
           localStorage.removeItem(CACHE_KEY);
           const { timings, hijriDay, hijriMonth } = await loadData();
           appTimings = timings;
@@ -2180,7 +2182,7 @@
         }
         const { current, next } = findCurrentNext(appTimings);
         document.getElementById('current-name').textContent = NAMES[current.name] || current.name;
-        document.getElementById('current-time-info').textContent = `с ${appTimings[current.name]}`;
+        document.getElementById('current-time-info').textContent = appTimings[current.name] ? `с ${appTimings[current.name]}` : '—';
 
         const forbidden = getForbiddenTime(appTimings);
         const countdown = document.getElementById('countdown');
@@ -2332,7 +2334,7 @@
       setInterval(() => {
         const n = new Date();
         if (n.getHours() === 0 && n.getMinutes() <= 1) {
-          console.log('🌙 Midnight reload');
+
           localStorage.removeItem(CACHE_KEY); // чистим кэш чтобы загрузить новое расписание
           location.reload();
         }
@@ -2345,9 +2347,8 @@
           if (cachedRaw) {
             const cached = JSON.parse(cachedRaw);
             const cacheDate = cached.cachedDate || cached.date;
-            const today = getTodayISO();
+            const today = getPrayerDayISO();
             if (cacheDate && cacheDate !== today) {
-              console.log('📅 New day detected, reloading...');
               localStorage.removeItem(CACHE_KEY);
               location.reload();
             }
@@ -2362,7 +2363,10 @@
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelectorAll('.theme-btn').forEach(btn => btn.textContent = '🌞'); }
       
       const today = new Date();
-      document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      const todayStr = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      document.getElementById('date').textContent = todayStr;
+      const date2el = document.getElementById('date2');
+      if (date2el) date2el.textContent = todayStr;
       
       try {
         const kurban = getKurbanBayramDate(today.getFullYear());
@@ -2371,12 +2375,16 @@
       
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       
+      dhuhaModalShown = false;
+
+      const data = await loadData();
+      appTimings = data.timings;
+
+      // getPrayerDayISO теперь вызывается ПОСЛЕ загрузки appTimings — корректно определяет день
       const todayISO = getPrayerDayISO();
 
       // Если новый день — сбрасываем все намазы
-      console.log('🔍 appState.date:', appState.date, '| todayISO:', todayISO);
       if (appState.date !== todayISO) {
-        console.log('🔄 Сброс намазов — новый день');
         appState.completed = {};
         appState.date = todayISO;
         localStorage.removeItem('zikr_state_v1');
@@ -2393,21 +2401,21 @@
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
-      dhuhaModalShown = false;
-
-      const data = await loadData();
-      appTimings = data.timings;
-      
       if (data.hijriDay && data.hijriMonth) {
         document.getElementById('hijri-date').textContent = `${data.hijriDay} ${data.hijriMonth}`;
         document.getElementById('hijri-month').textContent = 'По хиджре (из базы)';
       } else {
         document.getElementById('hijri-date').textContent = '—';
+        document.getElementById('hijri-month').textContent = 'По хиджре';
       }
 
       renderList(appTimings, appState.completed);
       startTimer();
-      startMidnightCheck();      setInterval(() => renderList(appTimings, appState.completed), 30000);
+      startMidnightCheck();
+      setInterval(() => {
+        renderList(appTimings, appState.completed);
+        renderPrayersHome(appTimings, appState.completed);
+      }, 30000);
 
       await loadAyahs();
       renderAyah();

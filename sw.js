@@ -1,5 +1,5 @@
-const CACHE_NAME = 'osoznanie-v11';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
+const CACHE_NAME = 'osoznanie-v12';
+const ASSETS = ['/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -10,34 +10,38 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => clients.claim()).then(() => {
-      // После того как взяли контроль — перезагружаем все открытые вкладки
-      return clients.matchAll({ type: 'window' }).then(clientList => {
-        clientList.forEach(client => client.navigate(client.url));
-      });
-    })
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      ))
+      .then(() => clients.claim())
   );
 });
 
 self.addEventListener('fetch', (e) => {
-  // index.html — всегда сеть, кэш только офлайн
-  if (e.request.url.endsWith('/') || e.request.url.endsWith('/index.html')) {
+  const url = e.request.url;
+
+  // index.html — network-first: сначала сеть, при успехе обновляем кэш,
+  // при офлайне отдаём кэшированную версию
+  if (url.endsWith('/') || url.endsWith('/index.html')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
         .then((res) => {
+          // Успешно загрузили — кладём свежую версию в кэш
           const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', clone));
           return res;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => {
+          // Офлайн — отдаём последнюю сохранённую версию
+          return caches.match('/index.html');
+        })
     );
     return;
   }
 
   // prayer-data.json — network-first
-  if (e.request.url.includes('prayer-data.json')) {
+  if (url.includes('prayer-data.json')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
         .then((res) => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'osoznanie-v10';
+const CACHE_NAME = 'osoznanie-v11';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
 
 self.addEventListener('install', (e) => {
@@ -12,8 +12,8 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => {
-      // При активации нового SW — принудительно обновляем index.html у всех клиентов
+    ).then(() => clients.claim()).then(() => {
+      // После того как взяли контроль — перезагружаем все открытые вкладки
       return clients.matchAll({ type: 'window' }).then(clientList => {
         clientList.forEach(client => client.navigate(client.url));
       });

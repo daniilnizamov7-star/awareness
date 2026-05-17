@@ -215,6 +215,8 @@
       border-radius: 1.5rem;
       padding: 1.75rem;
       max-width: 400px; width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
       text-align: center;
       box-shadow: 0 24px 64px rgba(0,0,0,0.5);
       border: 1px solid var(--border);
@@ -1014,8 +1016,8 @@
       <div class="modal-title" style="color:#a78bfa" id="new-month-title">Новый месяц!</div>
       <div class="modal-text" id="new-month-body">Начался новый хиджрийский месяц. Прочитай дуа при виде нового полумесяца.</div>
       <div class="modal-hadith" style="border-left-color:#a78bfa;background:rgba(167,139,250,0.08)">
-        <p style="font-size:1rem;direction:rtl;text-align:right;color:#a78bfa;line-height:2;font-family:'Amiri',serif">اللَّهُمَّ أَهِلَّهُ عَلَيْنَا بِالْيُمْنِ وَالْإِيمَانِ وَالسَّلَامَةِ وَالْإِسْلَامِ، رَبِّي وَرَبُّكَ اللَّه</p>
-        <p style="margin-top:0.5rem">АллахуммА ахиллаху `аляйна биль-юмни валь-иман, вас-салямати валь-ислям, Рабби ва Раббукалла</p>
+        <p style="font-size:1rem;direction:rtl;text-align:right;color:#a78bfa;line-height:2;font-family:'Amiri',serif;font-style:normal">اللَّهُمَّ أَهِلَّهُ عَلَيْنَا بِالْيُمْنِ وَالْإِيمَانِ وَالسَّلَامَةِ وَالْإِسْلَامِ، رَبِّي وَرَبُّكَ اللَّه</p>
+        <p style="margin-top:0.5rem;font-style:normal">АллахуммА ахиллаху `аляйна биль-юмни валь-иман, вас-салямати валь-ислям, Рабби ва Раббукалла</p>
         <p style="margin-top:0.4rem;font-size:0.82rem;color:var(--text2);font-style:normal">О Аллах! Пусть этот месяц принесёт нам счастье, веру, мир и ислам. Мой Господь и Господь твой — Аллах.</p>
         <cite>📚 Тирмизи, 3451; Ахмад, 1397</cite>
       </div>
@@ -1903,8 +1905,6 @@
       try {
         const shown = JSON.parse(localStorage.getItem(NM_KEY)) || {};
         if (shown[shownKey]) return; // Уже показывали для этого месяца
-        shown[shownKey] = true;
-        localStorage.setItem(NM_KEY, JSON.stringify(shown));
       } catch { return; }
       // Небольшая задержка чтобы UI успел отрисоваться
       setTimeout(() => {
@@ -1913,7 +1913,13 @@
         const body = document.getElementById('new-month-body');
         if (!modal) return;
         if (title) title.textContent = `🌙 ${hijriMonth} — новый месяц!`;
-        if (body) body.textContent = `Начался ${hijriMonth} 1447 г.х. Прочитай дуа при виде нового полумесяца — это сунна Пророка ﷺ.`;
+        if (body) body.textContent = `Начался ${hijriMonth}. Прочитай дуа при виде нового полумесяца — это сунна Пророка ﷺ.`;
+        // Записываем флаг только когда модалка реально показана
+        try {
+          const shown = JSON.parse(localStorage.getItem(NM_KEY)) || {};
+          shown[shownKey] = true;
+          localStorage.setItem(NM_KEY, JSON.stringify(shown));
+        } catch {}
         modal.classList.add('show');
         if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
       }, 1500);
@@ -2426,7 +2432,9 @@
       if (savedTheme === 'light') { document.documentElement.classList.add('light-mode'); document.querySelectorAll('.theme-btn').forEach(btn => btn.textContent = '🌞'); }
       
       const today = new Date();
-      document.getElementById('date').textContent = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      const dateStr = today.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+      document.getElementById('date').textContent = dateStr;
+      const d2 = document.getElementById('date2'); if (d2) d2.textContent = dateStr;
       
       try {
         const kurban = getKurbanBayramDate(today.getFullYear());

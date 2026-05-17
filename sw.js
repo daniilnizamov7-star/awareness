@@ -1,4 +1,4 @@
-const CACHE_NAME = 'osoznanie-v12';
+const CACHE_NAME = 'osoznanie-v13';
 const ASSETS = ['/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
 
 self.addEventListener('install', (e) => {
@@ -21,35 +21,36 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
 
-  // index.html — network-first: сначала сеть, при успехе обновляем кэш,
-  // при офлайне отдаём кэшированную версию
+  // index.html — network-first
   if (url.endsWith('/') || url.endsWith('/index.html')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
         .then((res) => {
-          // Успешно загрузили — кладём свежую версию в кэш
           const clone = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', clone));
           return res;
         })
-        .catch(() => {
-          // Офлайн — отдаём последнюю сохранённую версию
-          return caches.match('/index.html');
-        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // prayer-data.json — network-first
+  // prayer-data.json — network-first, всегда кэшируем под фиксированным ключом
   if (url.includes('prayer-data.json')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
         .then((res) => {
           const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          // Кладём под фиксированный ключ — и по оригинальному URL и по локальному
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, res.clone());
+            cache.put('/api/prayer-data.json', clone);
+          });
           return res;
         })
-        .catch(() => caches.match('/api/prayer-data.json'))
+        .catch(() =>
+          caches.match(e.request).then(r => r || caches.match('/api/prayer-data.json'))
+        )
     );
     return;
   }

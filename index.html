@@ -1086,11 +1086,14 @@
     const applyUserName = (name) => {
       const el = document.getElementById('greeting-name');
       if (el) el.textContent = name ? `${name}` : 'Осознанность';
-      // Приветствие в зависимости от времени
       const h = new Date().getHours();
       const greet = h < 6 ? 'Ночь' : h < 12 ? 'Доброе утро' : h < 17 ? 'Добрый день' : h < 21 ? 'Добрый вечер' : 'Доброй ночи';
       const dateEl = document.getElementById('date');
-      if (dateEl && name) dateEl.textContent = `${name} • ${dateEl.textContent}`;
+      // Храним оригинальный текст даты чтобы не дописывать имя несколько раз
+      if (dateEl && name) {
+        if (!dateEl.dataset.base) dateEl.dataset.base = dateEl.textContent;
+        dateEl.textContent = `${greet}, ${name} • ${dateEl.dataset.base}`;
+      }
     };
     const checkOnboard = () => {
       const name = getUserName();
@@ -1451,11 +1454,17 @@
     // === СТРИК (дней подряд) ===
     const STREAK_KEY = 'prayer_streak_v1';
     const FARZ = ['fajr','dhuhr','asr','maghrib','isha'];
+    const getCalendarISO = () => {
+      const d = new Date();
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    };
     const calcStreak = () => {
       try {
         const saved = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count:0, lastDate:'' };
-        const today = getPrayerDayISO(); // намаз-день: до Фаджра = вчера
-        const yesterday = (() => { const d = getPrayerDayDate(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+        // Стрик считаем по календарному дню, а не намаз-дню
+        // Иначе до Фаджра "сегодня" = вчера и стрик ломается
+        const today = getCalendarISO();
+        const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
         const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} };
         const allDone = FARZ.every(p => state.completed[p]);
 

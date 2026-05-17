@@ -1750,39 +1750,17 @@
     };
 
     // === DATA LOADER ===
-
-    // Извлекает {schedule, monthName} из json любого формата:
-    // Старый: { monthName, schedule: [...] }
-    // Новый:  { months: [{ monthName, schedule: [...] }, ...] }
-    const extractScheduleForToday = (json, todayStr) => {
-      // Новый формат — months[]
-      if (json.months && Array.isArray(json.months)) {
-        for (const month of json.months) {
-          const entry = month.schedule?.find(item => item.date === todayStr);
-          if (entry) return { entry, schedule: month.schedule, monthName: month.monthName || '—' };
-        }
-        return null;
-      }
-      // Старый формат — плоский schedule
-      if (json.schedule && Array.isArray(json.schedule)) {
-        const entry = json.schedule.find(item => item.date === todayStr);
-        if (entry) return { entry, schedule: json.schedule, monthName: json.monthName || '—' };
-      }
-      return null;
-    };
-
     const loadData = async () => {
       const realTodayISO = getTodayISO();
       const realTodayStr = getTodayStr();
 
-      // Парсим кэш один раз
       let parsedCache = null;
       try {
         const raw = localStorage.getItem(CACHE_KEY);
         if (raw) parsedCache = JSON.parse(raw);
       } catch (e) { console.warn('Cache parse error:', e); }
 
-      // Миграция: старый кэш без schedule — удаляем, загружаем заново
+      // Сброс кэша если нет schedule
       if (parsedCache && !parsedCache.schedule) {
         localStorage.removeItem(CACHE_KEY);
         parsedCache = null;
@@ -1804,27 +1782,26 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
 
         const json = await res.json();
-        const found = extractScheduleForToday(json, realTodayStr);
-        if (found) {
-          const { entry, schedule, monthName } = found;
+        const entry = json.schedule?.find(item => item.date === realTodayStr);
+        if (entry) {
           const timings = {};
           PRAYERS.forEach(k => { if (entry[k]) timings[k] = entry[k]; });
           if (Object.keys(timings).length >= 4) {
             localStorage.setItem(CACHE_KEY, JSON.stringify({
               timings,
-              schedule,
+              schedule: json.schedule,
               hijriDay: entry.d,
-              hijriMonth: monthName,
+              hijriMonth: entry.hijriMonth || json.monthName || '—',
               cachedDate: realTodayISO,
               date: realTodayISO,
               timestamp: Date.now()
             }));
-            return { timings, hijriDay: entry.d, hijriMonth: monthName };
+            return { timings, hijriDay: entry.d, hijriMonth: entry.hijriMonth || json.monthName || '—' };
           }
         }
         throw new Error('No entry for today');
       } catch (e) {
-        // Офлайн или ошибка сети — ищем сегодня в schedule кэша
+        // Офлайн — ищем в schedule кэша
         if (parsedCache?.schedule) {
           const entry = parsedCache.schedule.find(item => item.date === realTodayStr);
           if (entry) {
@@ -1838,11 +1815,10 @@
                 cachedDate: realTodayISO,
                 date: realTodayISO,
               }));
-              return { timings, hijriDay: entry.d, hijriMonth: parsedCache.hijriMonth || '—' };
+              return { timings, hijriDay: entry.d, hijriMonth: entry.hijriMonth || parsedCache.hijriMonth || '—' };
             }
           }
         }
-        // Совсем нет данных
         document.getElementById('error-banner').classList.add('show');
         return { timings: FALLBACK, hijriDay: '—', hijriMonth: '—' };
       }

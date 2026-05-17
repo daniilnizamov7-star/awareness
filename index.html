@@ -1661,6 +1661,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
+    const APP_VERSION = 'v2'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -1669,7 +1670,18 @@
     const NAMES = { fajr: 'Фаджр', sunrise: 'Восход', dhuhr: 'Зухр', asr: 'Аср', maghrib: 'Магриб', isha: 'Иша' };
     const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const FALLBACK = { fajr: "03:48", sunrise: "05:26", dhuhr: "12:49", asr: "17:03", maghrib: "20:12", isha: "21:50" };
-    
+
+    // Сброс кэша при обновлении версии приложения
+    (() => {
+      try {
+        const savedVer = localStorage.getItem('app_version');
+        if (savedVer !== APP_VERSION) {
+          localStorage.removeItem(CACHE_KEY);
+          localStorage.setItem('app_version', APP_VERSION);
+        }
+      } catch {}
+    })();
+
     let appTimings = null, appState = null, timerInterval = null;
     let zikrPhase = 0, zikrCount = 0, zikrPrayerName = '';
     let dhuhaModalShown = false;

@@ -2453,11 +2453,15 @@
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       
       const todayISO = getPrayerDayISO();
+      // Для сброса намазов используем календарный день, а не намаз-день
+      // Иначе до Фаджра getPrayerDayISO() возвращает вчера → сброс completed
+      const calendarISO = getCalendarISO();
 
-      // Если новый день — сбрасываем все намазы
-      if (appState.date !== todayISO) {
+      // Если новый календарный день — сбрасываем все намазы
+      if ((appState.calendarDate || appState.date) !== calendarISO) {
         appState.completed = {};
         appState.date = todayISO;
+        appState.calendarDate = calendarISO;
         localStorage.removeItem('zikr_state_v1');
       }
 

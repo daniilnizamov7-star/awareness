@@ -1458,27 +1458,37 @@
       const d = new Date();
       return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     };
-    const calcStreak = () => {
+    const getDateISO = (daysAgo) => {
+      const d = new Date(); d.setDate(d.getDate() - daysAgo);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    };
+    const calcStreak = (completedOverride) => {
       try {
         const saved = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count:0, lastDate:'' };
-        // Стрик считаем по календарному дню, а не намаз-дню
-        // Иначе до Фаджра "сегодня" = вчера и стрик ломается
         const today = getCalendarISO();
-        const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
-        const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} };
-        const allDone = FARZ.every(p => state.completed[p]);
+        const yesterday = getDateISO(1);
+        const dayBefore = getDateISO(2); // допуск на старый формат намаз-дня
+        const completed = completedOverride !== undefined
+          ? completedOverride
+          : (JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} }).completed || {};
+        const allDone = FARZ.every(p => completed[p]);
 
         if (allDone && saved.lastDate !== today) {
-          const newCount = saved.lastDate === yesterday ? saved.count + 1 : 1;
-          localStorage.setItem(STREAK_KEY, JSON.stringify({ count:newCount, lastDate:today }));
+          const isContinuous = saved.lastDate === yesterday || saved.lastDate === dayBefore;
+          const newCount = isContinuous ? saved.count + 1 : 1;
+          localStorage.setItem(STREAK_KEY, JSON.stringify({ count: newCount, lastDate: today }));
           return newCount;
         }
-        if (saved.lastDate !== today && saved.lastDate !== yesterday) return 0;
+        if (saved.lastDate === today || saved.lastDate === yesterday || saved.lastDate === dayBefore) {
+          return saved.count || 0;
+        }
+        return 0;
         return saved.count || 0;
       } catch { return 0; }
     };
+
     const renderStreak = () => {
-      const n = calcStreak();
+      const n = calcStreak(appState ? appState.completed : undefined);
       const el = document.getElementById('streak-count');
       const txt = document.getElementById('streak-text');
       if (el) el.textContent = n;
@@ -2150,6 +2160,7 @@
       appState.completed[current.name] = true; 
       appState.completed[current.name + '_at'] = new Date().toISOString();
       appState.date = getPrayerDayISO();
+      appState.calendarDate = getCalendarISO();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       showToast(`✓ ${NAMES[current.name] || current.name}`); 

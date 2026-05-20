@@ -466,6 +466,36 @@
 
     /* ── АРАБСКИЙ ШРИФТ ── */
     .arabic { font-family: 'Amiri', serif; direction: rtl; }
+
+    /* ── НАМЕРЕНИЯ ── */
+    .niyyah-cat-btn {
+      flex-shrink: 0; padding: 0.3rem 0.8rem; border-radius: 1rem;
+      border: 1px solid var(--muted2); background: transparent;
+      color: var(--muted); font-size: 0.78rem; font-weight: 700;
+      cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s;
+    }
+    .niyyah-cat-btn.active { background: var(--accent); border-color: var(--accent); color: #0f172a; }
+    .niyyah-card {
+      background: var(--card); border-radius: 1.1rem; border: 1px solid var(--border2);
+      padding: 1rem 1.1rem; margin-bottom: 0.75rem; box-shadow: var(--shadow);
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .niyyah-card.accepted { border-color: var(--accent); background: linear-gradient(135deg, rgba(52,211,153,0.08), var(--card)); }
+    .niyyah-card.accepted::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--accent); border-radius: 3px 3px 0 0;
+    }
+    .niyyah-situation { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.35rem; }
+    .niyyah-text { font-size: 0.9rem; color: var(--text); line-height: 1.5; margin-bottom: 0.5rem; font-style: italic; }
+    .niyyah-note { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.7rem; }
+    .niyyah-accept-btn {
+      width: 100%; padding: 0.5rem; border-radius: 0.7rem;
+      border: 1px solid var(--accent); background: transparent;
+      color: var(--accent); font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.25s;
+    }
+    .niyyah-accept-btn.done { background: var(--accent); color: #0f172a; }
+    .niyyah-accept-btn:active { transform: scale(0.98); }
   </style>
 </head>
 <body>
@@ -830,7 +860,37 @@
       <div class="more-tile-title">Салават</div>
       <div class="more-tile-sub">На Пророка ﷺ</div>
     </div>
+    <div class="more-tile" onclick="openMoreSub('sub-niyyah')">
+      <div class="more-tile-icon">🌿</div>
+      <div class="more-tile-title">Намерения</div>
+      <div class="more-tile-sub">Ниййят на каждый день</div>
+    </div>
   </div>
+  </div>
+
+  <!-- ===== ПОДЭКРАН: НАМЕРЕНИЯ ===== -->
+  <div id="sub-niyyah" style="display:none">
+  <div class="header">
+    <button onclick="closeMoreSub()" style="background:none;border:none;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;padding:0">← Назад</button>
+    <div style="font-size:0.75rem;color:var(--muted)" id="niyyah-reset-info"></div>
+  </div>
+
+  <div class="card card-glass" style="margin-bottom:1rem;text-align:center;padding:1rem">
+    <div style="font-size:1.1rem;font-weight:800;color:var(--accent);margin-bottom:0.25rem">🌿 Намерения дня</div>
+    <div style="font-size:0.78rem;color:var(--muted)">Прими намерение — и обычное станет поклонением</div>
+    <div style="margin-top:0.6rem;font-size:0.72rem;color:var(--muted2)" id="niyyah-progress-text"></div>
+  </div>
+
+  <!-- Категории -->
+  <div style="display:flex;gap:0.4rem;overflow-x:auto;padding:0 0 0.75rem;scrollbar-width:none;-webkit-overflow-scrolling:touch" id="niyyah-cats">
+    <button class="niyyah-cat-btn active" onclick="filterNiyyah('all')">Все</button>
+    <button class="niyyah-cat-btn" onclick="filterNiyyah('prayer')">🕌 Намаз</button>
+    <button class="niyyah-cat-btn" onclick="filterNiyyah('daily')">☀️ День</button>
+    <button class="niyyah-cat-btn" onclick="filterNiyyah('work')">💼 Труд</button>
+    <button class="niyyah-cat-btn" onclick="filterNiyyah('family')">👨‍👩‍👧 Семья</button>
+  </div>
+
+  <div id="niyyah-list"></div>
   </div>
 
   <!-- ===== ПОДЭКРАН: КИБЛА ===== -->
@@ -2586,7 +2646,7 @@
 
     // === НАВИГАЦИЯ ===
     const SECTIONS = ['sec-home','sec-prayers','sec-zikr','sec-more'];
-    const SUBS = ['sub-compass','sub-azkar','sub-zakat','sub-duas-occasion','sub-asma','sub-salawat','sub-istikhara'];
+    const SUBS = ['sub-compass','sub-azkar','sub-zakat','sub-duas-occasion','sub-asma','sub-salawat','sub-istikhara','sub-niyyah'];
 
     const hideAll = () => {
       SECTIONS.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
@@ -2614,6 +2674,7 @@
       if (id === 'sub-asma') renderAsma();
       if (id === 'sub-salawat') renderSalawat();
       if (id === 'sub-istikhara') checkIstikharaTime();
+      if (id === 'sub-niyyah') renderNiyyah();
       history.pushState({ sub: id }, '', '');
     };
 
@@ -2622,6 +2683,140 @@
       const more = document.getElementById('sec-more');
       if (more) { more.style.display='block'; window.scrollTo(0,0); }
     };
+
+
+    // ===== НАМЕРЕНИЯ (НИЙЙЯТ) =====
+    const NIYYAHS = [
+      { id:'n1', cat:'prayer', icon:'🕌', situation:'Перед намазом (Фаджр)',
+        text:'Я встаю на молитву, оставив сон, ради Аллаха. Эти ракааты — моя первая встреча с Ним сегодня.',
+        note:'Фаджр — самый ценный из намазов' },
+      { id:'n2', cat:'prayer', icon:'🌤️', situation:'Перед намазом (Зухр)',
+        text:'Я прерываю день, чтобы вернуться к Нему. Эта молитва — центр моего дня.',
+        note:null },
+      { id:'n3', cat:'prayer', icon:'🌇', situation:'Перед намазом (Аср)',
+        text:'Аср — намаз, за пропуск которого дела сгорают. Я берегу его намеренно.',
+        note:'«Кто пропустит Аср — как будто потерял свою семью» (Бухари)' },
+      { id:'n4', cat:'prayer', icon:'🌆', situation:'Перед намазом (Магриб)',
+        text:'День завершается — я благодарю за каждый момент и прошу принятия.',
+        note:null },
+      { id:'n5', cat:'prayer', icon:'🌙', situation:'Перед намазом (Иша)',
+        text:'Последний намаз дня — моя точка соединения с Аллахом перед сном.',
+        note:'Иша+Фаджр в джамаате — как намаз всю ночь (Муслим)' },
+      { id:'n6', cat:'prayer', icon:'🤲', situation:'Перед джума-намазом',
+        text:'Я иду на пятничную молитву — это обязанность и честь. Грехи между двух джума прощаются.',
+        note:'Пятница — лучший день недели' },
+      { id:'n7', cat:'daily', icon:'🌅', situation:'Начало дня (пробуждение)',
+        text:'Алхамдулиллях — Аллах вернул мою душу. Этот день — подарок. Я проведу его осознанно.',
+        note:'Дуа после пробуждения: «Алхамдулиллях аль-лязи ахйана...»' },
+      { id:'n8', cat:'daily', icon:'🍽️', situation:'Перед едой',
+        text:'Я ем, чтобы иметь силы служить — семье, делу, уме. Эта еда — топливо для добрых дел.',
+        note:'Бисмиллях — и еда становится ибадатом' },
+      { id:'n9', cat:'daily', icon:'😴', situation:'Перед сном',
+        text:'Я ложусь отдохнуть, чтобы завтра снова быть полезным. Отдых с намерением — ибадат.',
+        note:'Аллахумма бисмика амуту ва ахйа' },
+      { id:'n10', cat:'daily', icon:'🚶', situation:'В дороге / транспорте',
+        text:'В пути я делаю зикр или думаю о благом. Каждую минуту можно сделать весомой.',
+        note:'Даже улыбка встречному — садака' },
+      { id:'n11', cat:'daily', icon:'💪', situation:'Трудный момент / усталость',
+        text:'Аллах не возлагает на душу сверх её возможностей. Я делаю следующий шаг — только один.',
+        note:'Аль-Бакара, 286' },
+      { id:'n12', cat:'daily', icon:'🤲', situation:'Перед садакой',
+        text:'Я отдаю то, что не моё. Аллах вернёт лучшим — в этой жизни или следующей.',
+        note:'Садака не уменьшает имущество (Муслим)' },
+      { id:'n13', cat:'work', icon:'☀️', situation:'Начало рабочего дня',
+        text:'Я иду работать, чтобы честно обеспечить семью и заработать на садаку. Это халяльный ризк.',
+        note:'Каждый час труда с намерением — ибадат' },
+      { id:'n14', cat:'work', icon:'⚡', situation:'Сложная задача / препятствие',
+        text:'Терпение в трудной работе — это джихад ан-нафс. Я не сдаюсь.',
+        note:'Сабр — половина имана' },
+      { id:'n15', cat:'work', icon:'🤝', situation:'Встреча / переговоры',
+        text:'Я предлагаю реальную пользу, а не продаю воздух. Итог — от Аллаха. Я делаю своё дело честно.',
+        note:'Тавakkул: готовлюсь сам — результат от Него' },
+      { id:'n16', cat:'family', icon:'👨‍👩‍👧', situation:'Время с семьёй',
+        text:'Я поддерживаю семью — словом, присутствием, терпением. Это тоже поклонение, не меньше намаза.',
+        note:null },
+      { id:'n17', cat:'family', icon:'📚', situation:'Обучение ребёнка',
+        text:'Я учу сына языку и адабу. Каждый урок — садака джарийя, которая останется после меня.',
+        note:'Обучать ребёнка — обязанность отца' },
+      { id:'n18', cat:'family', icon:'💚', situation:'Возврат долга',
+        text:'Я возвращаю аманат. Это не просто деньги — это уважение к человеку и исполнение права.',
+        note:'«Лучший — тот, кто лучше возвращает долги» (Бухари)' },
+    ];
+
+    let niyyahFilter = 'all';
+    let niyyahAccepted = {};
+
+    const getNiyyahKey = () => {
+      const d = new Date();
+      return `niyyah_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+    };
+
+    const loadNiyyahState = () => {
+      try {
+        const saved = localStorage.getItem(getNiyyahKey());
+        niyyahAccepted = saved ? JSON.parse(saved) : {};
+      } catch(e) { niyyahAccepted = {}; }
+    };
+
+    const saveNiyyahState = () => {
+      try { localStorage.setItem(getNiyyahKey(), JSON.stringify(niyyahAccepted)); } catch(e) {}
+    };
+
+    window.filterNiyyah = (cat) => {
+      niyyahFilter = cat;
+      document.querySelectorAll('.niyyah-cat-btn').forEach(b => b.classList.remove('active'));
+      const btns = document.querySelectorAll('.niyyah-cat-btn');
+      const catMap = ['all','prayer','daily','work','family'];
+      const idx = catMap.indexOf(cat);
+      if (btns[idx]) btns[idx].classList.add('active');
+      renderNiyyahList();
+    };
+
+    window.toggleNiyyah = (id) => {
+      if (niyyahAccepted[id]) {
+        delete niyyahAccepted[id];
+      } else {
+        niyyahAccepted[id] = true;
+        if (navigator.vibrate) navigator.vibrate([40, 20, 40]);
+      }
+      saveNiyyahState();
+      renderNiyyahList();
+      updateNiyyahProgress();
+    };
+
+    const renderNiyyahList = () => {
+      const list = document.getElementById('niyyah-list');
+      if (!list) return;
+      const filtered = niyyahFilter === 'all' ? NIYYAHS : NIYYAHS.filter(n => n.cat === niyyahFilter);
+      list.innerHTML = filtered.map(n => {
+        const done = !!niyyahAccepted[n.id];
+        return \`<div class="niyyah-card \${done ? 'accepted' : ''}">
+          <div class="niyyah-situation">\${n.icon} \${n.situation}\${done ? ' · ✓ Принято' : ''}</div>
+          <div class="niyyah-text">«\${n.text}»</div>
+          \${n.note ? \`<div class="niyyah-note">⟶ \${n.note}</div>\` : ''}
+          <button class="niyyah-accept-btn \${done ? 'done' : ''}" onclick="toggleNiyyah('\${n.id}')">
+            \${done ? '✓ Принято' : '🌿 Принять намерение'}
+          </button>
+        </div>\`;
+      }).join('');
+    };
+
+    const updateNiyyahProgress = () => {
+      const total = NIYYAHS.length;
+      const done = Object.keys(niyyahAccepted).length;
+      const el = document.getElementById('niyyah-progress-text');
+      if (el) el.textContent = done > 0 ? \`Принято сегодня: \${done} из \${total}\` : \`\${total} намерений — выбери свои на сегодня\`;
+      const info = document.getElementById('niyyah-reset-info');
+      if (info) info.textContent = done > 0 ? \`Сброс в полночь\` : '';
+    };
+
+    const renderNiyyah = () => {
+      loadNiyyahState();
+      renderNiyyahList();
+      updateNiyyahProgress();
+    };
+
+    // ===== КОНЕЦ НАМЕРЕНИЙ =====
 
     // Перехват кнопки Назад на Android
     window.addEventListener('popstate', (e) => {

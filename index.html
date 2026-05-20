@@ -306,6 +306,15 @@
 
     /* ── СИСТЕМНЫЕ ── */
     .error-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--danger); padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.875rem; display: none; text-align: center; font-size: 0.85rem; }
+    .sw-update-banner {
+      display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #0f172a; padding: 0.6rem 1.2rem;
+      border-radius: 2rem; font-size: 0.82rem; font-weight: 800;
+      box-shadow: 0 4px 20px rgba(52,211,153,0.4); cursor: pointer;
+      z-index: 9999; align-items: center; gap: 0.5rem; white-space: nowrap;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { opacity:0; transform: translateX(-50%) translateY(10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
     .error-banner.show { display: block; }
 
     .toast {
@@ -1116,6 +1125,7 @@
   <div id="toast" class="toast">✓</div>
 
   <!-- НИЖНЕЕ МЕНЮ -->
+  <div id="sw-update-banner" class="sw-update-banner">🔄 Доступно обновление — нажмите</div>
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="navTo('home')">
       <span class="nav-icon">🕌</span><span>Главная</span>
@@ -2585,18 +2595,37 @@
       
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(reg => {
+          // Проверяем обновление при каждом открытии
           reg.update();
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Новый SW установлен — перезагружаем без вопросов
-                window.location.reload();
+
+          const onNewWorker = (worker) => {
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Новый SW готов — показываем баннер вместо авто-reload
+                showUpdateBanner(worker);
               }
             });
-          });
+          };
+
+          if (reg.installing) onNewWorker(reg.installing);
+          reg.addEventListener('updatefound', () => onNewWorker(reg.installing));
         }).catch(console.error);
+
+        // Когда SW говорит "я активировался" — перезагружаем страницу один раз
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
       }
+
+      const showUpdateBanner = (worker) => {
+        const banner = document.getElementById('sw-update-banner');
+        if (!banner) return;
+        banner.style.display = 'flex';
+        banner.onclick = () => {
+          banner.style.display = 'none';
+          worker.postMessage({ type: 'SKIP_WAITING' });
+        };
+      };
     };
 
     window.openInstall  = () => document.getElementById('install-modal').classList.add('show');

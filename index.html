@@ -2829,14 +2829,14 @@
       const filtered = niyyahFilter === 'all' ? NIYYAHS : NIYYAHS.filter(n => n.cat === niyyahFilter);
       list.innerHTML = filtered.map(n => {
         const done = !!niyyahAccepted[n.id];
-        return \`<div class="niyyah-card \${done ? 'accepted' : ''}">
+        return `<div class="niyyah-card \${done ? 'accepted' : ''}">
           <div class="niyyah-situation">\${n.icon} \${n.situation}\${done ? ' · ✓ Принято' : ''}</div>
           <div class="niyyah-text">«\${n.text}»</div>
-          \${n.note ? \`<div class="niyyah-note">⟶ \${n.note}</div>\` : ''}
+          \${n.note ? `<div class="niyyah-note">⟶ \${n.note}</div>` : ''}
           <button class="niyyah-accept-btn \${done ? 'done' : ''}" onclick="toggleNiyyah('\${n.id}')">
             \${done ? '✓ Принято' : '🌿 Принять намерение'}
           </button>
-        </div>\`;
+        </div>`;
       }).join('');
     };
 
@@ -2844,9 +2844,9 @@
       const total = NIYYAHS.length;
       const done = Object.keys(niyyahAccepted).length;
       const el = document.getElementById('niyyah-progress-text');
-      if (el) el.textContent = done > 0 ? \`Принято сегодня: \${done} из \${total}\` : \`\${total} намерений — выбери свои на сегодня\`;
+      if (el) el.textContent = done > 0 ? `Принято сегодня: \${done} из \${total}` : `\${total} намерений — выбери свои на сегодня`;
       const info = document.getElementById('niyyah-reset-info');
-      if (info) info.textContent = done > 0 ? \`Сброс в полночь\` : '';
+      if (info) info.textContent = done > 0 ? `Сброс в полночь` : '';
     };
 
     const renderNiyyah = () => {

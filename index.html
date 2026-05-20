@@ -1746,7 +1746,17 @@
       try {
         const savedVer = localStorage.getItem('app_version');
         if (savedVer !== APP_VERSION) {
-          localStorage.removeItem(CACHE_KEY);
+          // Не удаляем кэш целиком — только сбрасываем дату,
+          // чтобы loadData() пошёл в сеть, но schedule остался как офлайн-фолбэк
+          try {
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              parsed.cachedDate = '';
+              parsed.date = '';
+              localStorage.setItem(CACHE_KEY, JSON.stringify(parsed));
+            }
+          } catch {}
           localStorage.setItem('app_version', APP_VERSION);
         }
       } catch {}

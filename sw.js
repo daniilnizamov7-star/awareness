@@ -1,11 +1,18 @@
-const CACHE_NAME = 'osoznanie-v14';
-const ASSETS = ['/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
+const CACHE_NAME = 'osoznanie-v15';
+const ASSETS = ['/index.html', '/manifest.json', '/ayahs.json', '/api/prayer-data.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    // Кэшируем index.html принудительно с сервера (no-store bypass браузерный кэш)
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // index.html всегда с сервера свежий
+      const indexRes = await fetch('/index.html', { cache: 'no-store' });
+      await cache.put('/index.html', indexRes);
+      // Остальные ассеты — обычно
+      await cache.addAll(['/manifest.json', '/ayahs.json']);
+    })
   );
-  // НЕ делаем skipWaiting здесь — ждём команды от страницы
+  // НЕ делаем skipWaiting — ждём команды от страницы
 });
 
 self.addEventListener('activate', (e) => {
@@ -18,7 +25,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Получаем команду от страницы — активируемся немедленно
+// Команда от страницы — активируемся немедленно
 self.addEventListener('message', (e) => {
   if (e.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -28,7 +35,7 @@ self.addEventListener('message', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
 
-  // index.html — network-first
+  // index.html — network-first, обновляем кэш при каждом успешном запросе
   if (url.endsWith('/') || url.endsWith('/index.html')) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })

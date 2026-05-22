@@ -2594,38 +2594,35 @@
       } catch {}
       
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          // Проверяем обновление при каждом открытии
-          reg.update();
+        let reloading = false;
 
-          const onNewWorker = (worker) => {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloading) return;
+          reloading = true;
+          window.location.reload();
+        });
+
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+
+          const activateWorker = (worker) => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              worker.postMessage({ type: 'SKIP_WAITING' });
+              return;
+            }
             worker.addEventListener('statechange', () => {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Новый SW готов — показываем баннер вместо авто-reload
-                showUpdateBanner(worker);
+                worker.postMessage({ type: 'SKIP_WAITING' });
               }
             });
           };
 
-          if (reg.installing) onNewWorker(reg.installing);
-          reg.addEventListener('updatefound', () => onNewWorker(reg.installing));
+          if (reg.waiting) { activateWorker(reg.waiting); return; }
+          if (reg.installing) activateWorker(reg.installing);
+          reg.addEventListener('updatefound', () => { if (reg.installing) activateWorker(reg.installing); });
+          reg.update();
+
         }).catch(console.error);
-
-        // Когда SW говорит "я активировался" — перезагружаем страницу один раз
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload();
-        });
       }
-
-      const showUpdateBanner = (worker) => {
-        const banner = document.getElementById('sw-update-banner');
-        if (!banner) return;
-        banner.style.display = 'flex';
-        banner.onclick = () => {
-          banner.style.display = 'none';
-          worker.postMessage({ type: 'SKIP_WAITING' });
-        };
-      };
     };
 
     window.openInstall  = () => document.getElementById('install-modal').classList.add('show');

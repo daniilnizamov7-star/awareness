@@ -358,6 +358,26 @@
       position: relative; overflow: hidden;
     }
     .kurban-banner::before { content: '🕌'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.08; }
+    .arafa-banner {
+      background: linear-gradient(135deg, #1a3a2a 0%, #0f2419 100%);
+      border: 1px solid #2d6a4f; border-radius: 1rem;
+      padding: 0.9rem 1rem; margin-bottom: 0.75rem;
+      position: relative; overflow: hidden; display: none;
+    }
+    .arafa-banner::before { content: '🌙'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.08; }
+    .tashrik-banner {
+      background: linear-gradient(135deg, #1a2a3a 0%, #0f1a24 100%);
+      border: 1px solid #2d4f6a; border-radius: 1rem;
+      padding: 0.9rem 1rem; margin-bottom: 0.75rem;
+      position: relative; overflow: hidden; display: none;
+    }
+    .tashrik-banner::before { content: '☪️'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.06; }
+    .tashrik-takbir {
+      font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem;
+      padding: 0.5rem 0.6rem; background: rgba(255,255,255,0.04);
+      border-radius: 0.5rem; border-left: 2px solid #2d4f6a;
+      line-height: 1.6; font-style: italic;
+    }
     .kurban-title { font-size: 0.85rem; font-weight: 800; color: var(--dhuha); margin-bottom: 0.2rem; }
     .kurban-date { font-size: 0.82rem; color: var(--text); font-weight: 700; }
     .kurban-greeting { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; font-style: italic; }
@@ -557,6 +577,26 @@
     </div>
     <div style="font-size: 2.5rem;">✨</div>
   </div>
+  <!-- Баннер: День Арафа (26 мая 2026) -->
+  <div class="arafa-banner" id="arafa-banner">
+    <div style="flex:1">
+      <div class="kurban-title">🌿 Завтра — День Арафа</div>
+      <div class="kurban-date">26 мая • 9 Зуль-Хиджа 1447</div>
+      <div class="kurban-greeting">Пост в этот день искупает грехи двух лет (Муслим)</div>
+    </div>
+  </div>
+
+  <!-- Баннер: Дни Ат-Ташрик (26–30 мая 2026) -->
+  <div class="tashrik-banner" id="tashrik-banner">
+    <div>
+      <div class="kurban-title" id="tashrik-title">☪️ Дни Ат-Ташрик</div>
+      <div class="kurban-date" id="tashrik-date">—</div>
+      <div class="kurban-greeting">После каждого фарз намаза произноси такбир-ташрик</div>
+      <div class="tashrik-takbir">«Аллаху акбар, Аллаху акбар! Ля иляха иллаллаху валлаху акбар. Аллаху акбар ва лилляхиль хамд»</div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:0.4rem">Мужчины — вслух, женщины — тихо • Всего 23 раза за все дни</div>
+    </div>
+  </div>
+
   <div class="card timer-card">
     <div class="status-label">Текущий период</div>
     <div class="current-prayer">
@@ -2528,6 +2568,37 @@
         const kurban = getKurbanBayramDate(today.getFullYear());
         document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
       } catch (e) { document.getElementById('kurban-date').textContent = '—'; }
+
+      // === ДЕНЬ АРАФА И АТ-ТАШРИК ===
+      try {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth(); // 0-based
+        const d = now.getDate();
+
+        // День Арафа = 26 мая 2026 (9 Зуль-Хиджа)
+        // Показываем баннер 25 мая (накануне)
+        const isArafaEve = (y === 2026 && m === 4 && d === 25); // 25 мая
+        if (isArafaEve) {
+          document.getElementById('arafa-banner').style.display = 'block';
+        }
+
+        // Дни Ат-Ташрик: 26–30 мая 2026
+        const tashrikStart = new Date(2026, 4, 26); // 26 мая
+        const tashrikEnd   = new Date(2026, 4, 30); // 30 мая
+        const todayMidnight = new Date(y, m, d);
+
+        if (todayMidnight >= tashrikStart && todayMidnight <= tashrikEnd) {
+          const dayNum = d - 25; // 1..5
+          const dayNames = ['', '1-й день (26 мая)', '2-й день (27 мая, Курбан Байрам)', '3-й день (28 мая)', '4-й день (29 мая)', '5-й день (30 мая)'];
+          const banner = document.getElementById('tashrik-banner');
+          banner.style.display = 'block';
+          document.getElementById('tashrik-title').textContent = '☪️ Дни Ат-Ташрик — ' + (dayNames[dayNum] || '');
+          document.getElementById('tashrik-date').textContent = '26–30 мая 2026 • 9–13 Зуль-Хиджа 1447';
+          // Скрываем арафа-баннер если уже идут дни ташрика
+          document.getElementById('arafa-banner').style.display = 'none';
+        }
+      } catch(e) {}
       
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       

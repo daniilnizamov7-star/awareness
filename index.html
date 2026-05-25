@@ -1800,7 +1800,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v4'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v5'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2684,34 +2684,7 @@
       } catch {}
       
       if ('serviceWorker' in navigator) {
-        let reloading = false;
-
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (reloading) return;
-          reloading = true;
-          window.location.reload();
-        });
-
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-
-          const activateWorker = (worker) => {
-            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-              worker.postMessage({ type: 'SKIP_WAITING' });
-              return;
-            }
-            worker.addEventListener('statechange', () => {
-              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                worker.postMessage({ type: 'SKIP_WAITING' });
-              }
-            });
-          };
-
-          if (reg.waiting) { activateWorker(reg.waiting); return; }
-          if (reg.installing) activateWorker(reg.installing);
-          reg.addEventListener('updatefound', () => { if (reg.installing) activateWorker(reg.installing); });
-          reg.update();
-
-        }).catch(console.error);
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
       }
     };
 

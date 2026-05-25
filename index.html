@@ -359,15 +359,15 @@
     }
     .kurban-banner::before { content: '🕌'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.08; }
     .arafa-banner {
-      background: linear-gradient(135deg, #1a3a2a 0%, #0f2419 100%);
-      border: 1px solid #2d6a4f; border-radius: 1rem;
+      background: linear-gradient(135deg, rgba(45,106,79,0.18) 0%, rgba(15,36,25,0.12) 100%);
+      border: 1px solid rgba(45,106,79,0.4); border-radius: 1rem;
       padding: 0.9rem 1rem; margin-bottom: 0.75rem;
       position: relative; overflow: hidden; display: none;
     }
     .arafa-banner::before { content: '🌙'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.08; }
     .tashrik-banner {
-      background: linear-gradient(135deg, #1a2a3a 0%, #0f1a24 100%);
-      border: 1px solid #2d4f6a; border-radius: 1rem;
+      background: linear-gradient(135deg, rgba(45,79,106,0.18) 0%, rgba(15,26,36,0.12) 100%);
+      border: 1px solid rgba(45,79,106,0.4); border-radius: 1rem;
       padding: 0.9rem 1rem; margin-bottom: 0.75rem;
       position: relative; overflow: hidden; display: none;
     }
@@ -375,9 +375,28 @@
     .tashrik-takbir {
       font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem;
       padding: 0.5rem 0.6rem; background: rgba(255,255,255,0.04);
-      border-radius: 0.5rem; border-left: 2px solid #2d4f6a;
+      border-radius: 0.5rem; border-left: 2px solid rgba(45,79,106,0.5);
       line-height: 1.6; font-style: italic;
     }
+    /* Light mode overrides */
+    .light-mode .arafa-banner {
+      background: linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.04) 100%);
+      border-color: rgba(34,197,94,0.35);
+    }
+    .light-mode .tashrik-banner {
+      background: linear-gradient(135deg, rgba(37,99,235,0.09) 0%, rgba(37,99,235,0.03) 100%);
+      border-color: rgba(37,99,235,0.3);
+    }
+    .light-mode .tashrik-takbir {
+      background: rgba(0,0,0,0.04);
+      border-left-color: rgba(37,99,235,0.4);
+    }
+    .light-mode .arafa-banner .kurban-title,
+    .light-mode .tashrik-banner .kurban-title { color: #166534; }
+    .light-mode .arafa-banner .kurban-date,
+    .light-mode .tashrik-banner .kurban-date { color: #1e293b; }
+    .light-mode .arafa-banner .kurban-greeting,
+    .light-mode .tashrik-banner .kurban-greeting { color: #475569; }
     .kurban-title { font-size: 0.85rem; font-weight: 800; color: var(--dhuha); margin-bottom: 0.2rem; }
     .kurban-date { font-size: 0.82rem; color: var(--text); font-weight: 700; }
     .kurban-greeting { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; font-style: italic; }

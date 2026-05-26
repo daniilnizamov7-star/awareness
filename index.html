@@ -306,6 +306,54 @@
 
     /* ── СИСТЕМНЫЕ ── */
     .error-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--danger); padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.875rem; display: none; text-align: center; font-size: 0.85rem; }
+    /* ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ ── */
+    .kurban-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 10000;
+      align-items: center; justify-content: center; padding: 1.5rem;
+    }
+    .kurban-modal-overlay.show { display: flex; }
+    .kurban-modal {
+      background: var(--card); border-radius: 1.5rem;
+      padding: 2rem 1.5rem; max-width: 360px; width: 100%;
+      text-align: center; position: relative; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modalIn { from { opacity:0; transform: scale(0.85) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
+    .kurban-modal::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(251,191,36,0.06), rgba(52,211,153,0.04));
+      pointer-events: none;
+    }
+    .kurban-modal-emoji { font-size: 3.5rem; margin-bottom: 0.5rem; line-height: 1; }
+    .kurban-modal-title {
+      font-size: 1.4rem; font-weight: 900; color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .kurban-modal-sub {
+      font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem;
+    }
+    .kurban-modal-dua {
+      font-size: 0.95rem; color: var(--text); line-height: 1.6;
+      font-style: italic; margin-bottom: 0.5rem;
+      padding: 0.75rem; background: rgba(251,191,36,0.06);
+      border-radius: 0.75rem; border: 1px solid rgba(251,191,36,0.15);
+    }
+    .kurban-modal-arabic {
+      font-family: 'Amiri', serif; font-size: 1.1rem;
+      color: var(--accent); direction: rtl; margin-bottom: 1.25rem;
+      line-height: 1.8;
+    }
+    .kurban-modal-btn {
+      width: 100%; padding: 0.75rem; border-radius: 1rem;
+      background: var(--accent); border: none; color: #0f172a;
+      font-size: 1rem; font-weight: 800; cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: transform 0.15s;
+    }
+    .kurban-modal-btn:active { transform: scale(0.97); }
+
     .sw-update-banner {
       display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
       background: var(--accent); color: #0f172a; padding: 0.6rem 1.2rem;
@@ -1184,6 +1232,19 @@
   <div id="toast" class="toast">✓</div>
 
   <!-- НИЖНЕЕ МЕНЮ -->
+  <!-- ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ КУРБАН БАЙРАМ ── -->
+  <div class="kurban-modal-overlay" id="kurban-modal-overlay" onclick="closeKurbanModal(event)">
+    <div class="kurban-modal">
+      <div class="kurban-modal-emoji">🌙✨</div>
+      <div class="kurban-modal-title">Ид Мубарак!</div>
+      <div class="kurban-modal-sub">Курбан Байрам • 10 Зуль-Хиджа 1447</div>
+      <div class="kurban-modal-dua">«Такъаббаля Аллаху минна ва минкум»</div>
+      <div class="kurban-modal-arabic">تَقَبَّلَ اللهُ مِنَّا وَمِنْكُمْ</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:1.25rem">Да примет Аллах от нас и от вас</div>
+      <button class="kurban-modal-btn" onclick="closeKurbanModal()">Амин 🤲</button>
+    </div>
+  </div>
+
   <div id="sw-update-banner" class="sw-update-banner">🔄 Доступно обновление — нажмите</div>
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="navTo('home')">
@@ -1800,7 +1861,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v5'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v4'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2647,6 +2708,8 @@
       
       dhuhaModalShown = false;
 
+      checkKurbanModal();
+
       const data = await loadData();
       appTimings = data.timings;
       
@@ -2921,6 +2984,31 @@
     };
 
     // ===== КОНЕЦ НАМЕРЕНИЙ =====
+
+    // ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ КУРБАН БАЙРАМ ──
+    const checkKurbanModal = () => {
+      try {
+        const now = new Date();
+        const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+        // Показываем 27, 28, 29 мая 2026
+        const isKurbanDay = y === 2026 && m === 4 && [27, 28, 29].includes(d);
+        if (!isKurbanDay) return;
+        // Один раз в день — ключ по дате
+        const key = 'kurban_modal_' + y + '_' + m + '_' + d;
+        if (localStorage.getItem(key)) return;
+        // Показываем с небольшой задержкой чтобы приложение успело отрисоваться
+        setTimeout(() => {
+          document.getElementById('kurban-modal-overlay').classList.add('show');
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        }, 800);
+        localStorage.setItem(key, '1');
+      } catch(e) {}
+    };
+
+    window.closeKurbanModal = (e) => {
+      if (e && e.target !== document.getElementById('kurban-modal-overlay')) return;
+      document.getElementById('kurban-modal-overlay').classList.remove('show');
+    };
 
     // Перехват кнопки Назад на Android
     window.addEventListener('popstate', (e) => {

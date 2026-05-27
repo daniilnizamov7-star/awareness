@@ -1885,7 +1885,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v7'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v8'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2770,33 +2770,35 @@
         }
       } catch {}
       
+      // Регистрируем SW
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          // Новый SW установился — перезагружаем автоматически
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'activated') {
-                showSwToast();
-              }
-            });
-          });
-        }).catch(console.error);
-
-        // Новый SW взял контроль — тихо перезагружаемся
-        let swReloading = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (swReloading) return;
-          swReloading = true;
-          window.location.reload();
-        });
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
       }
 
-      // Тост с кнопкой обновить — запасной вариант
+      // Проверяем версию на сервере при каждом открытии
+      // Fetch идёт мимо SW кэша (no-store) — всегда с сервера
+      const checkVersion = async () => {
+        try {
+          const res = await fetch('/index.html', { cache: 'no-store' });
+          const html = await res.text();
+          const match = html.match(/APP_VERSION = '([^']+)'/);
+          if (match && match[1] !== APP_VERSION) {
+            showSwToast();
+          }
+        } catch(e) {}
+      };
+
       const showSwToast = () => {
         const t = document.getElementById('sw-toast');
-        if (t) { t.style.display = 'flex'; setTimeout(() => t.style.display = 'none', 8000); }
+        if (!t || t.style.display === 'flex') return;
+        t.style.display = 'flex';
+        // Не скрываем сам — пусть висит пока не обновит
       };
+
+      // Проверяем через 3 сек после загрузки (не мешаем старту)
+      setTimeout(checkVersion, 3000);
+      // И каждые 5 минут пока приложение открыто
+      setInterval(checkVersion, 5 * 60 * 1000);
     };
 
     window.openInstall  = () => document.getElementById('install-modal').classList.add('show');

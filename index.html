@@ -306,6 +306,24 @@
 
     /* ── СИСТЕМНЫЕ ── */
     .error-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--danger); padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.875rem; display: none; text-align: center; font-size: 0.85rem; }
+    /* ── SW ТОСТ ОБНОВЛЕНИЯ ── */
+    .sw-toast {
+      display: none; position: fixed; bottom: 100px; left: 50%;
+      transform: translateX(-50%); z-index: 9998;
+      background: #1e293b; border: 1px solid var(--accent);
+      border-radius: 2rem; padding: 0.55rem 0.75rem 0.55rem 1rem;
+      align-items: center; gap: 0.6rem; white-space: nowrap;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+      font-size: 0.82rem; color: #e2e8f0;
+    }
+    .sw-toast button {
+      background: var(--accent); border: none; border-radius: 1rem;
+      padding: 0.3rem 0.75rem; color: #0f172a;
+      font-weight: 800; font-size: 0.78rem; cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+    }
+
     /* ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ ── */
     .kurban-modal-overlay {
       display: none; position: fixed; inset: 0;
@@ -1232,6 +1250,12 @@
   <div id="toast" class="toast">✓</div>
 
   <!-- НИЖНЕЕ МЕНЮ -->
+  <!-- SW тост обновления -->
+  <div class="sw-toast" id="sw-toast">
+    🔄 Доступна новая версия
+    <button onclick="window.location.reload()">Обновить</button>
+  </div>
+
   <!-- ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ КУРБАН БАЙРАМ ── -->
   <div class="kurban-modal-overlay" id="kurban-modal-overlay" onclick="closeKurbanModal(event)">
     <div class="kurban-modal">
@@ -1861,7 +1885,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v4'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v7'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2747,8 +2771,32 @@
       } catch {}
       
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(console.error);
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          // Новый SW установился — перезагружаем автоматически
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'activated') {
+                showSwToast();
+              }
+            });
+          });
+        }).catch(console.error);
+
+        // Новый SW взял контроль — тихо перезагружаемся
+        let swReloading = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (swReloading) return;
+          swReloading = true;
+          window.location.reload();
+        });
       }
+
+      // Тост с кнопкой обновить — запасной вариант
+      const showSwToast = () => {
+        const t = document.getElementById('sw-toast');
+        if (t) { t.style.display = 'flex'; setTimeout(() => t.style.display = 'none', 8000); }
+      };
     };
 
     window.openInstall  = () => document.getElementById('install-modal').classList.add('show');

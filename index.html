@@ -324,54 +324,6 @@
       font-family: 'Nunito', sans-serif;
     }
 
-    /* ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ ── */
-    .kurban-modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.6); z-index: 10000;
-      align-items: center; justify-content: center; padding: 1.5rem;
-    }
-    .kurban-modal-overlay.show { display: flex; }
-    .kurban-modal {
-      background: var(--card); border-radius: 1.5rem;
-      padding: 2rem 1.5rem; max-width: 360px; width: 100%;
-      text-align: center; position: relative; overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-      animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    @keyframes modalIn { from { opacity:0; transform: scale(0.85) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
-    .kurban-modal::before {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(251,191,36,0.06), rgba(52,211,153,0.04));
-      pointer-events: none;
-    }
-    .kurban-modal-emoji { font-size: 3.5rem; margin-bottom: 0.5rem; line-height: 1; }
-    .kurban-modal-title {
-      font-size: 1.4rem; font-weight: 900; color: var(--accent);
-      margin-bottom: 0.25rem;
-    }
-    .kurban-modal-sub {
-      font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem;
-    }
-    .kurban-modal-dua {
-      font-size: 0.95rem; color: var(--text); line-height: 1.6;
-      font-style: italic; margin-bottom: 0.5rem;
-      padding: 0.75rem; background: rgba(251,191,36,0.06);
-      border-radius: 0.75rem; border: 1px solid rgba(251,191,36,0.15);
-    }
-    .kurban-modal-arabic {
-      font-family: 'Amiri', serif; font-size: 1.1rem;
-      color: var(--accent); direction: rtl; margin-bottom: 1.25rem;
-      line-height: 1.8;
-    }
-    .kurban-modal-btn {
-      width: 100%; padding: 0.75rem; border-radius: 1rem;
-      background: var(--accent); border: none; color: #0f172a;
-      font-size: 1rem; font-weight: 800; cursor: pointer;
-      font-family: 'Nunito', sans-serif;
-      transition: transform 0.15s;
-    }
-    .kurban-modal-btn:active { transform: scale(0.97); }
-
     .sw-update-banner {
       display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
       background: var(--accent); color: #0f172a; padding: 0.6rem 1.2rem;
@@ -413,59 +365,31 @@
     .hijri-date { font-size: 1rem; font-weight: 800; color: var(--accent); }
     .hijri-month { font-size: 0.75rem; color: var(--muted); }
 
-    /* ── КУРБАН ── */
-    .kurban-banner {
-      background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(251,191,36,0.03));
-      border: 1px solid rgba(251,191,36,0.25);
-      border-radius: 1.25rem;
-      padding: 1rem 1.25rem;
-      margin-bottom: 0.875rem;
-      display: flex; align-items: center; gap: 1rem;
-      position: relative; overflow: hidden;
-    }
-    .kurban-banner::before { content: '🕌'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.08; }
-    .arafa-banner {
       background: linear-gradient(135deg, rgba(45,106,79,0.18) 0%, rgba(15,36,25,0.12) 100%);
       border: 1px solid rgba(45,106,79,0.4); border-radius: 1rem;
       padding: 0.9rem 1rem; margin-bottom: 0.75rem;
       position: relative; overflow: hidden; display: none;
     }
-    .arafa-banner::before { content: '🌙'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.08; }
-    .tashrik-banner {
       background: linear-gradient(135deg, rgba(45,79,106,0.18) 0%, rgba(15,26,36,0.12) 100%);
       border: 1px solid rgba(45,79,106,0.4); border-radius: 1rem;
       padding: 0.9rem 1rem; margin-bottom: 0.75rem;
       position: relative; overflow: hidden; display: none;
     }
-    .tashrik-banner::before { content: '☪️'; position: absolute; right: -0.5rem; bottom: -0.5rem; font-size: 3.5rem; opacity: 0.06; }
-    .tashrik-takbir {
       font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem;
       padding: 0.5rem 0.6rem; background: rgba(255,255,255,0.04);
       border-radius: 0.5rem; border-left: 2px solid rgba(45,79,106,0.5);
       line-height: 1.6; font-style: italic;
     }
     /* Light mode overrides */
-    .light-mode .arafa-banner {
       background: linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.04) 100%);
       border-color: rgba(34,197,94,0.35);
     }
-    .light-mode .tashrik-banner {
       background: linear-gradient(135deg, rgba(37,99,235,0.09) 0%, rgba(37,99,235,0.03) 100%);
       border-color: rgba(37,99,235,0.3);
     }
-    .light-mode .tashrik-takbir {
       background: rgba(0,0,0,0.04);
       border-left-color: rgba(37,99,235,0.4);
     }
-    .light-mode .arafa-banner .kurban-title,
-    .light-mode .tashrik-banner .kurban-title { color: #166534; }
-    .light-mode .arafa-banner .kurban-date,
-    .light-mode .tashrik-banner .kurban-date { color: #1e293b; }
-    .light-mode .arafa-banner .kurban-greeting,
-    .light-mode .tashrik-banner .kurban-greeting { color: #475569; }
-    .kurban-title { font-size: 0.85rem; font-weight: 800; color: var(--dhuha); margin-bottom: 0.2rem; }
-    .kurban-date { font-size: 0.82rem; color: var(--text); font-weight: 700; }
-    .kurban-greeting { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; font-style: italic; }
 
     /* ── ПОДВАЛ ── */
     .footer-warning { text-align: center; font-size: 0.7rem; color: var(--muted2); padding: 0.875rem; margin-top: auto; line-height: 1.6; }
@@ -652,34 +576,6 @@
   <div class="hijri-banner">
     <div class="hijri-date" id="hijri-date">—</div>
     <div class="hijri-month" id="hijri-month">По хиджре</div>
-  </div>
-
-  <div class="kurban-banner" id="kurban-banner">
-    <div style="flex: 1;">
-      <div class="kurban-title">🌙 Курбан Байрам</div>
-      <div class="kurban-date" id="kurban-date">—</div>
-      <div class="kurban-greeting">Такъаббаль Аллаху минна ва минкум</div>
-    </div>
-    <div style="font-size: 2.5rem;">✨</div>
-  </div>
-  <!-- Баннер: День Арафа (26 мая 2026) -->
-  <div class="arafa-banner" id="arafa-banner">
-    <div style="flex:1">
-      <div class="kurban-title">🌿 Завтра — День Арафа</div>
-      <div class="kurban-date">26 мая • 9 Зуль-Хиджа 1447</div>
-      <div class="kurban-greeting">Пост в этот день искупает грехи двух лет (Муслим)</div>
-    </div>
-  </div>
-
-  <!-- Баннер: Дни Ат-Ташрик (26–30 мая 2026) -->
-  <div class="tashrik-banner" id="tashrik-banner">
-    <div>
-      <div class="kurban-title" id="tashrik-title">☪️ Дни Ат-Ташрик</div>
-      <div class="kurban-date" id="tashrik-date">—</div>
-      <div class="kurban-greeting">После каждого фарз намаза произноси такбир-ташрик</div>
-      <div class="tashrik-takbir">«Аллаху акбар, Аллаху акбар! Ля иляха иллаллаху валлаху акбар. Аллаху акбар ва лилляхиль хамд»</div>
-      <div style="font-size:0.7rem;color:var(--muted);margin-top:0.4rem">Мужчины — вслух, женщины — тихо • Всего 23 раза за все дни</div>
-    </div>
   </div>
 
   <div class="card timer-card">
@@ -1254,19 +1150,6 @@
   <div class="sw-toast" id="sw-toast">
     🔄 Доступна новая версия
     <button onclick="window.location.reload()">Обновить</button>
-  </div>
-
-  <!-- ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ КУРБАН БАЙРАМ ── -->
-  <div class="kurban-modal-overlay" id="kurban-modal-overlay" onclick="closeKurbanModal(event)">
-    <div class="kurban-modal">
-      <div class="kurban-modal-emoji">🌙✨</div>
-      <div class="kurban-modal-title">Ид Мубарак!</div>
-      <div class="kurban-modal-sub">Курбан Байрам • 10 Зуль-Хиджа 1447</div>
-      <div class="kurban-modal-dua">«Такъаббаля Аллаху минна ва минкум»</div>
-      <div class="kurban-modal-arabic">تَقَبَّلَ اللهُ مِنَّا وَمِنْكُمْ</div>
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:1.25rem">Да примет Аллах от нас и от вас</div>
-      <button class="kurban-modal-btn" onclick="closeKurbanModal()">Амин 🤲</button>
-    </div>
   </div>
 
   <div id="sw-update-banner" class="sw-update-banner">🔄 Доступно обновление — нажмите</div>
@@ -1885,7 +1768,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v8'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v9'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -1971,16 +1854,6 @@
     const getPrayerDayStr = () => {
       const d = getPrayerDayDate();
       return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    };
-
-    // === KURBAN BAYRAM ===
-    const getKurbanBayramDate = (year) => {
-      const dates = {
-        2026: { gregorian: '27 мая', dayOfWeek: 'Среда', hijri: '10 Зуль-Хиджа 1447' },
-        2027: { gregorian: '16 мая', dayOfWeek: 'Воскресенье', hijri: '10 Зуль-Хиджа 1448' },
-        2028: { gregorian: '5 мая', dayOfWeek: 'Пятница', hijri: '10 Зуль-Хиджа 1449' }
-      };
-      return dates[year] || dates[2026];
     };
 
     // === DATA LOADER ===
@@ -2668,41 +2541,6 @@
       document.getElementById('date').textContent = dateStr;
       const d2 = document.getElementById('date2'); if (d2) d2.textContent = dateStr;
       
-      try {
-        const kurban = getKurbanBayramDate(today.getFullYear());
-        document.getElementById('kurban-date').textContent = `${kurban.gregorian} (${kurban.dayOfWeek}) • ${kurban.hijri}`;
-      } catch (e) { document.getElementById('kurban-date').textContent = '—'; }
-
-      // === ДЕНЬ АРАФА И АТ-ТАШРИК ===
-      try {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = now.getMonth(); // 0-based
-        const d = now.getDate();
-
-        // День Арафа = 26 мая 2026 (9 Зуль-Хиджа)
-        // Показываем баннер 25 мая (накануне)
-        const isArafaEve = (y === 2026 && m === 4 && d === 25); // 25 мая
-        if (isArafaEve) {
-          document.getElementById('arafa-banner').style.display = 'block';
-        }
-
-        // Дни Ат-Ташрик: 26–30 мая 2026
-        const tashrikStart = new Date(2026, 4, 26); // 26 мая
-        const tashrikEnd   = new Date(2026, 4, 30); // 30 мая
-        const todayMidnight = new Date(y, m, d);
-
-        if (todayMidnight >= tashrikStart && todayMidnight <= tashrikEnd) {
-          const dayNum = d - 25; // 1..5
-          const dayNames = ['', '1-й день (26 мая)', '2-й день (27 мая, Курбан Байрам)', '3-й день (28 мая)', '4-й день (29 мая)', '5-й день (30 мая)'];
-          const banner = document.getElementById('tashrik-banner');
-          banner.style.display = 'block';
-          document.getElementById('tashrik-title').textContent = '☪️ Дни Ат-Ташрик — ' + (dayNames[dayNum] || '');
-          document.getElementById('tashrik-date').textContent = '26–30 мая 2026 • 9–13 Зуль-Хиджа 1447';
-          // Скрываем арафа-баннер если уже идут дни ташрика
-          document.getElementById('arafa-banner').style.display = 'none';
-        }
-      } catch(e) {}
       
       try { const saved = localStorage.getItem(STORAGE_KEY); appState = saved ? JSON.parse(saved) : { completed: {}, date: '' }; } catch { appState = { completed: {}, date: '' }; }
       
@@ -2731,8 +2569,6 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       
       dhuhaModalShown = false;
-
-      checkKurbanModal();
 
       const data = await loadData();
       appTimings = data.timings;
@@ -3034,31 +2870,6 @@
     };
 
     // ===== КОНЕЦ НАМЕРЕНИЙ =====
-
-    // ── МОДАЛЬНОЕ ПОЗДРАВЛЕНИЕ КУРБАН БАЙРАМ ──
-    const checkKurbanModal = () => {
-      try {
-        const now = new Date();
-        const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
-        // Показываем 27, 28, 29 мая 2026
-        const isKurbanDay = y === 2026 && m === 4 && [27, 28, 29].includes(d);
-        if (!isKurbanDay) return;
-        // Один раз в день — ключ по дате
-        const key = 'kurban_modal_' + y + '_' + m + '_' + d;
-        if (localStorage.getItem(key)) return;
-        // Показываем с небольшой задержкой чтобы приложение успело отрисоваться
-        setTimeout(() => {
-          document.getElementById('kurban-modal-overlay').classList.add('show');
-          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
-        }, 800);
-        localStorage.setItem(key, '1');
-      } catch(e) {}
-    };
-
-    window.closeKurbanModal = (e) => {
-      if (e && e.target !== document.getElementById('kurban-modal-overlay')) return;
-      document.getElementById('kurban-modal-overlay').classList.remove('show');
-    };
 
     // Перехват кнопки Назад на Android
     window.addEventListener('popstate', (e) => {

@@ -816,7 +816,7 @@
         اللَّهُمَّ إِنِّي أَسْتَخِيرُكَ بِعِلْمِكَ، وَأَسْتَقْدِرُكَ بِقُدْرَتِكَ، وَأَسْأَلُكَ مِنْ فَضْلِكَ الْعَظِيمِ، فَإِنَّكَ تَقْدِرُ وَلَا أَقْدِرُ، وَتَعْلَمُ وَلَا أَعْلَمُ، وَأَنْتَ عَلَّامُ الْغُيُوبِ
       </div>
       <div style="font-size:0.85rem;color:var(--text);line-height:1.8;margin-bottom:1rem">
-        АллахуммА инни астахирука би`ильмика, ва астакдирука бикудратика, ва ас`алюка мин фадликаль-`азим, фа-иннака такдиру ва ля акдир, ва та`ляму ва ля а`ляму, ва анта `аллямуль-гуюб.
+        АллахуммА инни астахирука би`ильмика, ва астакдирука бикудратика, ва ас`алюка мин фадликаль-`азим, фа-иннака такдиру ва ля акдир, ва та`ляму ва ля а`ляму, ва анта `алляmuль-гуюб.
       </div>
       <div style="font-size:1.1rem;direction:rtl;text-align:right;color:var(--accent);line-height:2;margin-bottom:0.5rem;font-family:'Amiri',serif">
         اللَّهُمَّ إِنْ كُنْتَ تَعْلَمُ أَنَّ هَذَا الْأَمْرَ خَيْرٌ لِي فِي دِينِي وَمَعَاشِي وَعَاقِبَةِ أَمْرِي، فَاقْدُرْهُ لِي وَيَسِّرْهُ لِي، ثُمَّ بَارِكْ لِي فِيهِ
@@ -1768,7 +1768,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v9'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v10'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2611,29 +2611,19 @@
         navigator.serviceWorker.register('/sw.js').catch(console.error);
       }
 
-      // Проверяем версию на сервере при каждом открытии
-      // Fetch идёт мимо SW кэша (no-store) — всегда с сервера
+      // При каждом открытии — проверяем версию и автообновляемся
       const checkVersion = async () => {
         try {
           const res = await fetch('/index.html', { cache: 'no-store' });
           const html = await res.text();
           const match = html.match(/APP_VERSION = '([^']+)'/);
           if (match && match[1] !== APP_VERSION) {
-            showSwToast();
+            window.location.reload();
           }
         } catch(e) {}
       };
 
-      const showSwToast = () => {
-        const t = document.getElementById('sw-toast');
-        if (!t || t.style.display === 'flex') return;
-        t.style.display = 'flex';
-        // Не скрываем сам — пусть висит пока не обновит
-      };
-
-      // Проверяем через 3 сек после загрузки (не мешаем старту)
-      setTimeout(checkVersion, 3000);
-      // И каждые 5 минут пока приложение открыто
+      checkVersion();
       setInterval(checkVersion, 5 * 60 * 1000);
     };
 

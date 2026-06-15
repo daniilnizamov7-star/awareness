@@ -1795,7 +1795,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v16'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v17'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2649,7 +2649,7 @@
       // Проверяем версию один раз при открытии
       const checkVersion = async () => {
         try {
-          const res = await fetch('/index.html', { cache: 'no-store' });
+          const res = await fetch('/index.html?v=' + Date.now(), { cache: 'no-store' });
           const html = await res.text();
           const match = html.match(/APP_VERSION = '([^']+)'/);
           if (match && match[1] !== APP_VERSION) {

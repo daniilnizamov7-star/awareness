@@ -1795,7 +1795,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v12'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v16'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2646,20 +2646,20 @@
         navigator.serviceWorker.register('/sw.js').catch(console.error);
       }
 
-      // При каждом открытии — проверяем версию и автообновляемся
+      // Проверяем версию один раз при открытии
       const checkVersion = async () => {
         try {
           const res = await fetch('/index.html', { cache: 'no-store' });
           const html = await res.text();
           const match = html.match(/APP_VERSION = '([^']+)'/);
           if (match && match[1] !== APP_VERSION) {
-            window.location.reload();
+            const t = document.getElementById('sw-toast');
+            if (t) t.style.display = 'flex';
           }
         } catch(e) {}
       };
 
       checkVersion();
-      setInterval(checkVersion, 5 * 60 * 1000);
     };
 
     window.openInstall  = () => document.getElementById('install-modal').classList.add('show');

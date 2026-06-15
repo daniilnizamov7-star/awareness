@@ -1795,7 +1795,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v17'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v18'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -2643,7 +2643,7 @@
       
       // Регистрируем SW
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(console.error);
+        navigator.serviceWorker.register('/sw2.js').catch(console.error);
       }
 
       // Проверяем версию один раз при открытии

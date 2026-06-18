@@ -431,9 +431,10 @@
   };
 
   // ── FORM ──
-  // App check clicks
-  document.querySelectorAll('.app-check').forEach(el => {
-    el.addEventListener('click', () => el.classList.toggle('checked'));
+  // App check clicks — вешаем через делегирование на контейнер
+  document.getElementById('app-checks').addEventListener('click', (e) => {
+    const chip = e.target.closest('.app-check');
+    if (chip) chip.classList.toggle('checked');
   });
 
   const toggleAppCheck = (el) => { el.classList.toggle('checked'); };

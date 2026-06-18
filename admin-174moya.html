@@ -236,12 +236,12 @@
 
         <label class="form-label">Приложения</label>
         <div class="app-checks" id="app-checks">
-          <div class="app-check" data-app="namaz">🕌 Намаз</div>
-          <div class="app-check" data-app="awareness">🌿 Осознанность</div>
-          <div class="app-check" data-app="fitcore">💪 FitCore</div>
-          <div class="app-check" data-app="lesso">📚 Lesso</div>
-          <div class="app-check" data-app="sledopyt">🗺️ Следопыт</div>
-          <div class="app-check" data-app="raketa">🚀 Ракета</div>
+          <div class="app-check" data-app="namaz" onclick="this.classList.toggle('checked')">🕌 Намаз</div>
+          <div class="app-check" data-app="awareness" onclick="this.classList.toggle('checked')">🌿 Осознанность</div>
+          <div class="app-check" data-app="fitcore" onclick="this.classList.toggle('checked')">💪 FitCore</div>
+          <div class="app-check" data-app="lesso" onclick="this.classList.toggle('checked')">📚 Lesso</div>
+          <div class="app-check" data-app="sledopyt" onclick="this.classList.toggle('checked')">🗺️ Следопыт</div>
+          <div class="app-check" data-app="raketa" onclick="this.classList.toggle('checked')">🚀 Ракета</div>
         </div>
 
         <label class="form-label">Заголовок *</label>
@@ -431,11 +431,7 @@
   };
 
   // ── FORM ──
-  // App check clicks — вешаем через делегирование на контейнер
-  document.getElementById('app-checks').addEventListener('click', (e) => {
-    const chip = e.target.closest('.app-check');
-    if (chip) chip.classList.toggle('checked');
-  });
+  // App check clicks — через inline onclick на каждом чипе
 
   const toggleAppCheck = (el) => { el.classList.toggle('checked'); };
 

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <title>Admin • Nizamov.tech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --card: #1e293b; --card2: #263044;
+      --border: rgba(255,255,255,0.08); --accent: #6366f1;
+      --accent2: #818cf8; --green: #34d399; --red: #f87171;
+      --gold: #f59e0b; --text: #f1f5f9; --muted: #94a3b8;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* LOGIN */
+    .login-wrap {
+      min-height:100vh; display:flex; align-items:center;
+      justify-content:center; padding:1.5rem;
+    }
+    .login-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:1.5rem; padding:2rem; width:100%; max-width:360px;
+      text-align:center;
+    }
+    .login-logo { font-size:2.5rem; margin-bottom:0.5rem; }
+    .login-title { font-size:1.3rem; font-weight:900; margin-bottom:0.25rem; }
+    .login-sub { font-size:0.8rem; color:var(--muted); margin-bottom:1.5rem; }
+    .login-input {
+      width:100%; padding:0.75rem 1rem; border-radius:0.875rem;
+      border:1.5px solid var(--border); background:var(--card2);
+      color:var(--text); font-size:1rem; font-family:'Nunito',sans-serif;
+      margin-bottom:0.875rem; outline:none; transition:border-color 0.2s;
+    }
+    .login-input:focus { border-color:var(--accent); }
+    .login-btn {
+      width:100%; padding:0.75rem; border-radius:0.875rem;
+      background:var(--accent); border:none; color:#fff;
+      font-size:1rem; font-weight:800; cursor:pointer;
+      font-family:'Nunito',sans-serif; transition:opacity 0.2s;
+    }
+    .login-btn:active { opacity:0.85; }
+    .login-error { color:var(--red); font-size:0.82rem; margin-top:0.5rem; display:none; }
+
+    /* APP */
+    .app { display:none; }
+    .header {
+      background:rgba(15,23,42,0.95); backdrop-filter:blur(16px);
+      border-bottom:1px solid var(--border);
+      padding:0.875rem 1rem;
+      display:flex; align-items:center; gap:0.75rem;
+      position:sticky; top:0; z-index:100;
+    }
+    .header-logo { font-size:1.3rem; }
+    .header-title { font-size:1rem; font-weight:900; flex:1; }
+    .header-sub { font-size:0.7rem; color:var(--muted); }
+    .logout-btn {
+      padding:0.3rem 0.75rem; border-radius:0.75rem;
+      border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-size:0.75rem; font-weight:700;
+      cursor:pointer; font-family:'Nunito',sans-serif;
+    }
+
+    .main { padding:1rem; padding-bottom:5rem; max-width:600px; margin:0 auto; }
+
+    /* TABS */
+    .tabs {
+      display:flex; gap:0.5rem; margin-bottom:1rem;
+      overflow-x:auto; scrollbar-width:none;
+    }
+    .tab-btn {
+      flex-shrink:0; padding:0.45rem 1rem; border-radius:2rem;
+      border:1.5px solid var(--border); background:transparent;
+      color:var(--muted); font-size:0.8rem; font-weight:700;
+      cursor:pointer; font-family:'Nunito',sans-serif; transition:all 0.2s;
+    }
+    .tab-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+    /* SECTION */
+    .section { display:none; }
+    .section.active { display:block; }
+
+    /* CARDS */
+    .card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:1.25rem; padding:1.25rem; margin-bottom:0.875rem;
+    }
+    .card-title {
+      font-size:0.7rem; font-weight:900; text-transform:uppercase;
+      letter-spacing:0.08em; color:var(--accent2); margin-bottom:1rem;
+    }
+
+    /* FORM */
+    .form-label {
+      font-size:0.78rem; font-weight:700; color:var(--muted);
+      margin-bottom:0.35rem; display:block;
+    }
+    .form-input, .form-select, .form-textarea {
+      width:100%; padding:0.65rem 0.875rem; border-radius:0.75rem;
+      border:1.5px solid var(--border); background:var(--card2);
+      color:var(--text); font-size:0.88rem; font-family:'Nunito',sans-serif;
+      margin-bottom:0.875rem; outline:none; transition:border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color:var(--accent);
+    }
+    .form-textarea { resize:vertical; min-height:100px; line-height:1.5; }
+    .form-select option { background:var(--card2); }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+
+    /* APP CHECKBOXES */
+    .app-checks { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.875rem; }
+    .app-check {
+      display:flex; align-items:center; gap:0.4rem;
+      padding:0.4rem 0.75rem; border-radius:0.75rem;
+      border:1.5px solid var(--border); cursor:pointer;
+      font-size:0.8rem; font-weight:700; transition:all 0.2s;
+      user-select:none;
+    }
+    .app-check input { display:none; }
+    .app-check.checked { border-color:var(--accent); background:rgba(99,102,241,0.15); color:var(--accent2); }
+
+    /* BUTTONS */
+    .btn {
+      padding:0.65rem 1.25rem; border-radius:0.875rem; border:none;
+      font-size:0.88rem; font-weight:800; cursor:pointer;
+      font-family:'Nunito',sans-serif; transition:all 0.2s;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-danger { background:rgba(248,113,113,0.15); color:var(--red); border:1.5px solid rgba(248,113,113,0.3); }
+    .btn-success { background:rgba(52,211,153,0.15); color:var(--green); border:1.5px solid rgba(52,211,153,0.3); }
+    .btn:active { opacity:0.8; transform:scale(0.98); }
+    .btn-row { display:flex; gap:0.5rem; flex-wrap:wrap; }
+
+    /* ANNOUNCEMENT ITEMS */
+    .ann-item {
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:1rem; padding:1rem; margin-bottom:0.75rem;
+      transition:all 0.2s;
+    }
+    .ann-item.active-ann { border-color:var(--green); }
+    .ann-item-header { display:flex; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem; }
+    .ann-item-title { font-size:0.9rem; font-weight:800; flex:1; }
+    .ann-badge {
+      font-size:0.65rem; font-weight:700; padding:0.2rem 0.5rem;
+      border-radius:0.4rem; flex-shrink:0;
+    }
+    .badge-active { background:rgba(52,211,153,0.15); color:var(--green); }
+    .badge-inactive { background:rgba(148,163,184,0.1); color:var(--muted); }
+    .ann-apps { font-size:0.72rem; color:var(--muted); margin-bottom:0.35rem; }
+    .ann-dates { font-size:0.7rem; color:var(--muted2,#64748b); margin-bottom:0.75rem; }
+    .ann-text-preview {
+      font-size:0.8rem; color:var(--muted); line-height:1.5;
+      margin-bottom:0.75rem; white-space:nowrap; overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* TOGGLE */
+    .toggle-wrap { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.875rem; }
+    .toggle {
+      width:44px; height:24px; border-radius:12px;
+      background:var(--border); cursor:pointer; position:relative;
+      transition:background 0.2s; flex-shrink:0; border:none;
+    }
+    .toggle.on { background:var(--green); }
+    .toggle::after {
+      content:''; position:absolute; top:2px; left:2px;
+      width:20px; height:20px; border-radius:50%;
+      background:#fff; transition:transform 0.2s;
+    }
+    .toggle.on::after { transform:translateX(20px); }
+    .toggle-label { font-size:0.85rem; font-weight:700; }
+
+    /* STATUS */
+    .status {
+      padding:0.6rem 0.875rem; border-radius:0.75rem;
+      font-size:0.82rem; font-weight:700; margin-top:0.75rem;
+      display:none;
+    }
+    .status.ok { background:rgba(52,211,153,0.12); color:var(--green); border:1px solid rgba(52,211,153,0.25); display:block; }
+    .status.err { background:rgba(248,113,113,0.12); color:var(--red); border:1px solid rgba(248,113,113,0.25); display:block; }
+
+    /* EMPTY */
+    .empty { text-align:center; padding:2rem; color:var(--muted); font-size:0.88rem; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">🛡️</div>
+    <div class="login-title">Nizamov.tech Admin</div>
+    <div class="login-sub">Панель управления объявлениями</div>
+    <input class="login-input" type="password" id="pwd-input"
+      placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <div class="login-error" id="login-error">Неверный пароль</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="header">
+    <div class="header-logo">⚙️</div>
+    <div style="flex:1">
+      <div class="header-title">Nizamov Admin</div>
+      <div class="header-sub">Управление объявлениями</div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Выйти</button>
+  </div>
+
+  <div class="main">
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('list')">📋 Объявления</button>
+      <button class="tab-btn" onclick="switchTab('create')">➕ Создать</button>
+    </div>
+
+    <!-- LIST -->
+    <section class="section active" id="sec-list">
+      <div class="card">
+        <div class="card-title">Все объявления</div>
+        <div id="ann-list"><div class="empty">Загрузка...</div></div>
+      </div>
+    </section>
+
+    <!-- CREATE / EDIT -->
+    <section class="section" id="sec-create">
+      <div class="card">
+        <div class="card-title" id="form-title">Новое объявление</div>
+        <input type="hidden" id="edit-id">
+
+        <label class="form-label">Приложения</label>
+        <div class="app-checks" id="app-checks">
+          <label class="app-check" onclick="toggleAppCheck(this)">
+            <input type="checkbox" value="namaz"> 🕌 Намаз
+          </label>
+          <label class="app-check" onclick="toggleAppCheck(this)">
+            <input type="checkbox" value="awareness"> 🌿 Осознанность
+          </label>
+          <label class="app-check" onclick="toggleAppCheck(this)">
+            <input type="checkbox" value="fitcore"> 💪 FitCore
+          </label>
+          <label class="app-check" onclick="toggleAppCheck(this)">
+            <input type="checkbox" value="lesso"> 📚 Lesso
+          </label>
+          <label class="app-check" onclick="toggleAppCheck(this)">
+            <input type="checkbox" value="sledopyt"> 🗺️ Следопыт
+          </label>
+          <label class="app-check" onclick="toggleAppCheck(this)">
+            <input type="checkbox" value="raketa"> 🚀 Ракета
+          </label>
+        </div>
+
+        <label class="form-label">Заголовок *</label>
+        <input class="form-input" id="f-title" placeholder="🌙 С Новым годом по хиджре!">
+
+        <label class="form-label">Текст объявления *</label>
+        <textarea class="form-textarea" id="f-text" placeholder="Текст поздравления или объявления..."></textarea>
+
+        <label class="form-label">URL картинки (необязательно)</label>
+        <input class="form-input" id="f-image" placeholder="https://...">
+
+        <label class="form-label">Кнопка — текст (необязательно)</label>
+        <input class="form-input" id="f-btn-text" placeholder="Подробнее →">
+
+        <label class="form-label">Кнопка — ссылка</label>
+        <input class="form-input" id="f-btn-url" placeholder="https://...">
+
+        <div class="form-row">
+          <div>
+            <label class="form-label">Показывать с</label>
+            <input class="form-input" type="datetime-local" id="f-from">
+          </div>
+          <div>
+            <label class="form-label">Показывать до</label>
+            <input class="form-input" type="datetime-local" id="f-until">
+          </div>
+        </div>
+
+        <div class="toggle-wrap">
+          <button class="toggle" id="f-active-toggle" onclick="toggleActive()"></button>
+          <span class="toggle-label" id="f-active-label">Неактивно</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveAnn()">💾 Сохранить</button>
+          <button class="btn btn-danger" id="delete-btn" style="display:none" onclick="deleteAnn()">🗑️ Удалить</button>
+          <button class="btn" style="background:var(--card2);color:var(--muted)" onclick="resetForm()">✕ Сброс</button>
+        </div>
+        <div class="status" id="form-status"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://yiqipulgofoschkccaxr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcWlwdWxnb2ZvY2hrY2N4cnIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY5NzQ1NjE3NCwiZXhwIjoyMDEzMDMyMTc0fQ.Ej8pIBOVkKxp5Ks5C5r5N1T5y0J5r5N1T5y0J5r5N';
+  const ADMIN_PASS = 'nizamov2026';
+  const APPS = ['namaz','awareness','fitcore','lesso','sledopyt','raketa'];
+
+  // ── AUTH ──
+  const doLogin = () => {
+    const pwd = document.getElementById('pwd-input').value;
+    if (pwd === ADMIN_PASS) {
+      localStorage.setItem('admin_auth', '1');
+      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadList();
+    } else {
+      const err = document.getElementById('login-error');
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 2000);
+    }
+  };
+
+  const doLogout = () => {
+    localStorage.removeItem('admin_auth');
+    location.reload();
+  };
+
+  // Auto-login if already authenticated
+  if (localStorage.getItem('admin_auth')) {
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  // ── TABS ──
+  const switchTab = (tab) => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sec-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'list') loadList();
+    if (tab === 'create') { resetForm(); document.getElementById('form-title').textContent = 'Новое объявление'; }
+  };
+
+  // ── SUPABASE HELPERS ──
+  const sbFetch = async (path, opts = {}) => {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+      ...opts,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+        ...(opts.headers || {})
+      }
+    });
+    const text = await res.text();
+    try { return { ok: res.ok, data: JSON.parse(text), status: res.status }; }
+    catch { return { ok: res.ok, data: text, status: res.status }; }
+  };
+
+  // ── LIST ──
+  const loadList = async () => {
+    document.getElementById('ann-list').innerHTML = '<div class="empty">Загрузка...</div>';
+    const { ok, data } = await sbFetch('announcements?order=created_at.desc');
+    if (!ok || !Array.isArray(data)) {
+      document.getElementById('ann-list').innerHTML = '<div class="empty">Ошибка загрузки</div>';
+      return;
+    }
+    if (!data.length) {
+      document.getElementById('ann-list').innerHTML = '<div class="empty">Нет объявлений. Создай первое →</div>';
+      return;
+    }
+    document.getElementById('ann-list').innerHTML = data.map(a => {
+      const isActive = a.active && isCurrentlyActive(a);
+      const apps = Array.isArray(a.app_id) ? a.app_id.join(', ') : a.app_id;
+      const from = a.show_from ? new Date(a.show_from).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+      const until = a.show_until ? new Date(a.show_until).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+      return `<div class="ann-item ${isActive ? 'active-ann' : ''}" >
+        <div class="ann-item-header">
+          <div class="ann-item-title">${a.title}</div>
+          <span class="ann-badge ${isActive ? 'badge-active' : 'badge-inactive'}">${isActive ? '● Активно' : '○ Неактивно'}</span>
+        </div>
+        <div class="ann-apps">📱 ${apps || '—'}</div>
+        <div class="ann-dates">⏰ ${from} → ${until}</div>
+        <div class="ann-text-preview">${a.text || ''}</div>
+        <div class="btn-row">
+          <button class="btn btn-success" onclick="editAnn(${JSON.stringify(JSON.stringify(a))})">✏️ Редактировать</button>
+          <button class="btn ${a.active ? 'btn-danger' : 'btn-success'}" onclick="toggleAnnActive('${a.id}', ${!a.active})">
+            ${a.active ? '⏸ Деактивировать' : '▶️ Активировать'}
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  const isCurrentlyActive = (a) => {
+    if (!a.active) return false;
+    const now = new Date();
+    const from = a.show_from ? new Date(a.show_from) : null;
+    const until = a.show_until ? new Date(a.show_until) : null;
+    if (from && now < from) return false;
+    if (until && now > until) return false;
+    return true;
+  };
+
+  // ── TOGGLE ACTIVE ──
+  const toggleAnnActive = async (id, newActive) => {
+    const { ok } = await sbFetch('announcements?id=eq.' + id, {
+      method: 'PATCH',
+      body: JSON.stringify({ active: newActive })
+    });
+    if (ok) loadList();
+  };
+
+  // ── EDIT ──
+  const editAnn = (jsonStr) => {
+    const a = JSON.parse(jsonStr);
+    document.getElementById('edit-id').value = a.id;
+    document.getElementById('form-title').textContent = 'Редактировать';
+    document.getElementById('f-title').value = a.title || '';
+    document.getElementById('f-text').value = a.text || '';
+    document.getElementById('f-image').value = a.image_url || '';
+    document.getElementById('f-btn-text').value = a.button_text || '';
+    document.getElementById('f-btn-url').value = a.button_url || '';
+    document.getElementById('f-from').value = a.show_from ? a.show_from.slice(0,16) : '';
+    document.getElementById('f-until').value = a.show_until ? a.show_until.slice(0,16) : '';
+    document.getElementById('delete-btn').style.display = 'inline-flex';
+
+    // Set active toggle
+    const toggle = document.getElementById('f-active-toggle');
+    const label = document.getElementById('f-active-label');
+    if (a.active) { toggle.classList.add('on'); label.textContent = 'Активно'; }
+    else { toggle.classList.remove('on'); label.textContent = 'Неактивно'; }
+
+    // Set app checkboxes
+    document.querySelectorAll('.app-check').forEach(el => el.classList.remove('checked'));
+    const appIds = Array.isArray(a.app_id) ? a.app_id : (a.app_id ? [a.app_id] : []);
+    appIds.forEach(appId => {
+      document.querySelectorAll('.app-check input').forEach(inp => {
+        if (inp.value === appId) inp.closest('.app-check').classList.add('checked');
+      });
+    });
+
+    switchTab('create');
+  };
+
+  // ── FORM ──
+  const toggleAppCheck = (el) => {
+    el.classList.toggle('checked');
+  };
+
+  let activeState = false;
+  const toggleActive = () => {
+    activeState = !activeState;
+    const toggle = document.getElementById('f-active-toggle');
+    const label = document.getElementById('f-active-label');
+    toggle.classList.toggle('on', activeState);
+    label.textContent = activeState ? 'Активно' : 'Неактивно';
+  };
+
+  const getCheckedApps = () => {
+    return [...document.querySelectorAll('.app-check.checked input')].map(i => i.value);
+  };
+
+  const showStatus = (msg, type) => {
+    const el = document.getElementById('form-status');
+    el.textContent = msg;
+    el.className = 'status ' + type;
+    setTimeout(() => el.className = 'status', 3000);
+  };
+
+  const saveAnn = async () => {
+    const title = document.getElementById('f-title').value.trim();
+    const text = document.getElementById('f-text').value.trim();
+    const apps = getCheckedApps();
+
+    if (!title) { showStatus('⚠️ Введи заголовок', 'err'); return; }
+    if (!text) { showStatus('⚠️ Введи текст', 'err'); return; }
+    if (!apps.length) { showStatus('⚠️ Выбери хотя бы одно приложение', 'err'); return; }
+
+    const fromVal = document.getElementById('f-from').value;
+    const untilVal = document.getElementById('f-until').value;
+
+    // Save one record per app_id
+    const editId = document.getElementById('edit-id').value;
+    const isEdit = !!editId;
+
+    const payload = {
+      title,
+      text,
+      image_url: document.getElementById('f-image').value.trim() || null,
+      button_text: document.getElementById('f-btn-text').value.trim() || null,
+      button_url: document.getElementById('f-btn-url').value.trim() || null,
+      show_from: fromVal ? new Date(fromVal).toISOString() : null,
+      show_until: untilVal ? new Date(untilVal).toISOString() : null,
+      active: document.getElementById('f-active-toggle').classList.contains('on'),
+    };
+
+    let results = [];
+    if (isEdit) {
+      // Update existing
+      const { ok } = await sbFetch('announcements?id=eq.' + editId, {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      });
+      results.push(ok);
+    } else {
+      // Create one per app
+      for (const appId of apps) {
+        const { ok } = await sbFetch('announcements', {
+          method: 'POST',
+          body: JSON.stringify({ ...payload, app_id: appId })
+        });
+        results.push(ok);
+      }
+    }
+
+    if (results.every(Boolean)) {
+      showStatus('✅ Сохранено!', 'ok');
+      setTimeout(() => { switchTab('list'); resetForm(); }, 1000);
+    } else {
+      showStatus('❌ Ошибка сохранения — проверь RLS политику в Supabase', 'err');
+    }
+  };
+
+  const deleteAnn = async () => {
+    if (!confirm('Удалить это объявление?')) return;
+    const id = document.getElementById('edit-id').value;
+    const { ok } = await sbFetch('announcements?id=eq.' + id, { method: 'DELETE' });
+    if (ok) { showStatus('✅ Удалено', 'ok'); setTimeout(() => { switchTab('list'); resetForm(); }, 800); }
+    else showStatus('❌ Ошибка удаления', 'err');
+  };
+
+  const resetForm = () => {
+    document.getElementById('edit-id').value = '';
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-text').value = '';
+    document.getElementById('f-image').value = '';
+    document.getElementById('f-btn-text').value = '';
+    document.getElementById('f-btn-url').value = '';
+    document.getElementById('f-from').value = '';
+    document.getElementById('f-until').value = '';
+    document.querySelectorAll('.app-check').forEach(el => el.classList.remove('checked'));
+    activeState = false;
+    document.getElementById('f-active-toggle').classList.remove('on');
+    document.getElementById('f-active-label').textContent = 'Неактивно';
+    document.getElementById('delete-btn').style.display = 'none';
+    document.getElementById('form-status').className = 'status';
+    document.getElementById('form-title').textContent = 'Новое объявление';
+  };
+
+  // Load list on start if already authenticated
+  if (localStorage.getItem('admin_auth')) loadList();
+</script>
+</body>
+</html>

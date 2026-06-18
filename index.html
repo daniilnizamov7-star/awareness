@@ -306,6 +306,64 @@
 
     /* ── СИСТЕМНЫЕ ── */
     .error-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--danger); padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.875rem; display: none; text-align: center; font-size: 0.85rem; }
+
+    /* ── ANNOUNCEMENT BANNER ── */
+    .ann-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 10001;
+      align-items: center; justify-content: center;
+      padding: 1.25rem;
+    }
+    .ann-overlay.show { display: flex; }
+    .ann-modal {
+      background: var(--card);
+      border-radius: 1.5rem;
+      width: 100%; max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: annIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes annIn {
+      from { opacity:0; transform: scale(0.88) translateY(16px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .ann-close {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); border: none;
+      color: var(--muted); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; z-index: 1;
+    }
+    .ann-close:hover { background: rgba(255,255,255,0.15); }
+    .ann-img {
+      width: 100%; border-radius: 1.5rem 1.5rem 0 0;
+      display: block; max-height: 240px; object-fit: cover;
+    }
+    .ann-body { padding: 1.25rem 1.25rem 1.5rem; }
+    .ann-title {
+      font-size: 1.15rem; font-weight: 900;
+      color: var(--accent); margin-bottom: 0.6rem;
+      line-height: 1.3;
+    }
+    .ann-text {
+      font-size: 0.9rem; color: var(--text);
+      line-height: 1.65; white-space: pre-wrap;
+      margin-bottom: 1rem;
+    }
+    .ann-btn {
+      display: block; width: 100%; padding: 0.75rem;
+      border-radius: 1rem; border: none;
+      background: var(--accent); color: #0f172a;
+      font-size: 0.95rem; font-weight: 800;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      text-align: center; text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .ann-btn:active { opacity: 0.85; }
+
     /* ── SW ТОСТ ОБНОВЛЕНИЯ ── */
     .sw-toast {
       display: none; position: fixed; bottom: 100px; left: 50%;
@@ -1180,6 +1238,20 @@
   </div>
 
   <div id="sw-update-banner" class="sw-update-banner">🔄 Доступно обновление — нажмите</div>
+
+  <!-- ── ANNOUNCEMENT MODAL ── -->
+  <div class="ann-overlay" id="ann-overlay">
+    <div class="ann-modal" id="ann-modal">
+      <button class="ann-close" onclick="closeAnn()">✕</button>
+      <img class="ann-img" id="ann-img" src="" alt="" style="display:none">
+      <div class="ann-body">
+        <div class="ann-title" id="ann-title"></div>
+        <div class="ann-text" id="ann-text"></div>
+        <a class="ann-btn" id="ann-btn" href="#" target="_blank" style="display:none"></a>
+      </div>
+    </div>
+  </div>
+
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="navTo('home')">
       <span class="nav-icon">🕌</span><span>Главная</span>
@@ -2895,6 +2967,73 @@
     };
 
     // ===== КОНЕЦ НАМЕРЕНИЙ =====
+
+
+    // ── ANNOUNCEMENT BANNER ──
+    const ANN_APP_ID = 'awareness';
+    const ANN_SUPABASE_URL = 'https://yiqipulgofoschkccaxr.supabase.co';
+    const ANN_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcWlwdWxnb2ZvY2hrY2N4cnIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY5NzQ1NjE3NCwiZXhwIjoyMDEzMDMyMTc0fQ.Ej8pIBOVkKxp5Ks5C5r5N1T5y0J5r5N1T5y0J5r5N';
+
+    const loadAnnouncement = async () => {
+      try {
+        const now = new Date().toISOString();
+        const url = ANN_SUPABASE_URL + '/rest/v1/announcements'
+          + '?app_id=eq.' + ANN_APP_ID
+          + '&active=eq.true'
+          + '&show_from=lte.' + encodeURIComponent(now)
+          + '&show_until=gte.' + encodeURIComponent(now)
+          + '&order=created_at.desc&limit=1';
+
+        const res = await fetch(url, {
+          headers: {
+            'apikey': ANN_SUPABASE_KEY,
+            'Authorization': 'Bearer ' + ANN_SUPABASE_KEY
+          }
+        });
+        const data = await res.json();
+        if (!data || !data.length) return;
+
+        const ann = data[0];
+
+        // Показываем один раз — храним id в localStorage
+        const seenKey = 'ann_seen_' + ann.id;
+        if (localStorage.getItem(seenKey)) return;
+
+        const overlay = document.getElementById('ann-overlay');
+        document.getElementById('ann-title').textContent = ann.title || '';
+        document.getElementById('ann-text').textContent = ann.text || '';
+
+        if (ann.image_url) {
+          const img = document.getElementById('ann-img');
+          img.src = ann.image_url;
+          img.style.display = 'block';
+        }
+
+        if (ann.button_text && ann.button_url) {
+          const btn = document.getElementById('ann-btn');
+          btn.textContent = ann.button_text;
+          btn.href = ann.button_url;
+          btn.style.display = 'block';
+        }
+
+        overlay.classList.add('show');
+        localStorage.setItem(seenKey, '1');
+
+      } catch(e) {}
+    };
+
+    window.closeAnn = () => {
+      document.getElementById('ann-overlay').classList.remove('show');
+    };
+
+    // Закрыть по клику на оверлей
+    document.getElementById('ann-overlay').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('ann-overlay')) closeAnn();
+    });
+
+    // Загрузить через 1 сек после старта
+    setTimeout(loadAnnouncement, 1000);
+    // ── END ANNOUNCEMENT ──
 
     // Перехват кнопки Назад на Android
     window.addEventListener('popstate', (e) => {

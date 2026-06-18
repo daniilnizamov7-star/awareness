@@ -236,24 +236,12 @@
 
         <label class="form-label">Приложения</label>
         <div class="app-checks" id="app-checks">
-          <label class="app-check" onclick="toggleAppCheck(this)">
-            <input type="checkbox" value="namaz"> 🕌 Намаз
-          </label>
-          <label class="app-check" onclick="toggleAppCheck(this)">
-            <input type="checkbox" value="awareness"> 🌿 Осознанность
-          </label>
-          <label class="app-check" onclick="toggleAppCheck(this)">
-            <input type="checkbox" value="fitcore"> 💪 FitCore
-          </label>
-          <label class="app-check" onclick="toggleAppCheck(this)">
-            <input type="checkbox" value="lesso"> 📚 Lesso
-          </label>
-          <label class="app-check" onclick="toggleAppCheck(this)">
-            <input type="checkbox" value="sledopyt"> 🗺️ Следопыт
-          </label>
-          <label class="app-check" onclick="toggleAppCheck(this)">
-            <input type="checkbox" value="raketa"> 🚀 Ракета
-          </label>
+          <div class="app-check" data-app="namaz">🕌 Намаз</div>
+          <div class="app-check" data-app="awareness">🌿 Осознанность</div>
+          <div class="app-check" data-app="fitcore">💪 FitCore</div>
+          <div class="app-check" data-app="lesso">📚 Lesso</div>
+          <div class="app-check" data-app="sledopyt">🗺️ Следопыт</div>
+          <div class="app-check" data-app="raketa">🚀 Ракета</div>
         </div>
 
         <label class="form-label">Заголовок *</label>
@@ -435,18 +423,20 @@
     document.querySelectorAll('.app-check').forEach(el => el.classList.remove('checked'));
     const appIds = Array.isArray(a.app_id) ? a.app_id : (a.app_id ? [a.app_id] : []);
     appIds.forEach(appId => {
-      document.querySelectorAll('.app-check input').forEach(inp => {
-        if (inp.value === appId) inp.closest('.app-check').classList.add('checked');
-      });
+      const el = document.querySelector('.app-check[data-app="' + appId + '"]');
+      if (el) el.classList.add('checked');
     });
 
     switchTab('create');
   };
 
   // ── FORM ──
-  const toggleAppCheck = (el) => {
-    el.classList.toggle('checked');
-  };
+  // App check clicks
+  document.querySelectorAll('.app-check').forEach(el => {
+    el.addEventListener('click', () => el.classList.toggle('checked'));
+  });
+
+  const toggleAppCheck = (el) => { el.classList.toggle('checked'); };
 
   let activeState = false;
   const toggleActive = () => {
@@ -458,7 +448,7 @@
   };
 
   const getCheckedApps = () => {
-    return [...document.querySelectorAll('.app-check.checked input')].map(i => i.value);
+    return [...document.querySelectorAll('.app-check.checked')].map(el => el.dataset.app);
   };
 
   const showStatus = (msg, type) => {

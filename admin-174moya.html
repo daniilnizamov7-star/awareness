@@ -362,7 +362,7 @@
       const apps = Array.isArray(a.app_id) ? a.app_id.join(', ') : a.app_id;
       const from = a.show_from ? new Date(a.show_from).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
       const until = a.show_until ? new Date(a.show_until).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-      return `<div class="ann-item ${isActive ? 'active-ann' : ''}" >
+      return `<div class="ann-item ${isActive ? 'active-ann' : ''}" data-ann='${JSON.stringify(a).replace(/'/g, "&#39;")}'>
         <div class="ann-item-header">
           <div class="ann-item-title">${a.title}</div>
           <span class="ann-badge ${isActive ? 'badge-active' : 'badge-inactive'}">${isActive ? '● Активно' : '○ Неактивно'}</span>
@@ -371,7 +371,7 @@
         <div class="ann-dates">⏰ ${from} → ${until}</div>
         <div class="ann-text-preview">${a.text || ''}</div>
         <div class="btn-row">
-          <button class="btn btn-success" onclick="editAnn(${JSON.stringify(JSON.stringify(a))})">✏️ Редактировать</button>
+          <button class="btn btn-success" onclick="editAnn(this)">✏️ Редактировать</button>
           <button class="btn ${a.active ? 'btn-danger' : 'btn-success'}" onclick="toggleAnnActive('${a.id}', ${!a.active})">
             ${a.active ? '⏸ Деактивировать' : '▶️ Активировать'}
           </button>
@@ -400,8 +400,9 @@
   };
 
   // ── EDIT ──
-  const editAnn = (jsonStr) => {
-    const a = JSON.parse(jsonStr);
+  const editAnn = (btn) => {
+    const item = btn.closest('.ann-item');
+    const a = JSON.parse(item.dataset.ann);
     document.getElementById('edit-id').value = a.id;
     document.getElementById('form-title').textContent = 'Редактировать';
     document.getElementById('f-title').value = a.title || '';

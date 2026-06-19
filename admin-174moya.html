@@ -120,8 +120,9 @@
       font-size:0.8rem; font-weight:700; transition:all 0.2s;
       background: var(--card2); color: var(--text);
       font-family:'Nunito',sans-serif;
-      -webkit-tap-highlight-color: transparent;
     }
+    .app-check input { display:none; }
+    .app-check:has(input:checked) { border-color:var(--accent); background:rgba(99,102,241,0.2); color:var(--accent2); }
     .app-check.checked { border-color:var(--accent); background:rgba(99,102,241,0.2); color:var(--accent2); }
 
     /* BUTTONS */
@@ -237,12 +238,12 @@
 
         <label class="form-label">Приложения</label>
         <div class="app-checks" id="app-checks">
-          <button type="button" class="app-check" data-app="namaz" onclick="toggleChip(this)">🕌 Намаз</button>
-          <button type="button" class="app-check" data-app="awareness" onclick="toggleChip(this)">🌿 Осознанность</button>
-          <button type="button" class="app-check" data-app="fitcore" onclick="toggleChip(this)">💪 FitCore</button>
-          <button type="button" class="app-check" data-app="lesso" onclick="toggleChip(this)">📚 Lesso</button>
-          <button type="button" class="app-check" data-app="sledopyt" onclick="toggleChip(this)">🗺️ Следопыт</button>
-          <button type="button" class="app-check" data-app="raketa" onclick="toggleChip(this)">🚀 Ракета</button>
+          <label class="app-check"><input type="checkbox" value="namaz">🕌 Намаз</label>
+          <label class="app-check"><input type="checkbox" value="awareness">🌿 Осознанность</label>
+          <label class="app-check"><input type="checkbox" value="fitcore">💪 FitCore</label>
+          <label class="app-check"><input type="checkbox" value="lesso">📚 Lesso</label>
+          <label class="app-check"><input type="checkbox" value="sledopyt">🗺️ Следопыт</label>
+          <label class="app-check"><input type="checkbox" value="raketa">🚀 Ракета</label>
         </div>
 
         <label class="form-label">Заголовок *</label>
@@ -427,11 +428,11 @@
     else { toggle.classList.remove('on'); label.textContent = 'Неактивно'; }
 
     // Set app checkboxes
-    document.querySelectorAll('#app-checks .app-check').forEach(el => el.classList.remove('checked'));
+    document.querySelectorAll('#app-checks input').forEach(el => el.checked = false);
     const appIds = Array.isArray(a.app_id) ? a.app_id : (a.app_id ? [a.app_id] : []);
     appIds.forEach(appId => {
-      const el = document.querySelector('#app-checks .app-check[data-app="' + appId + '"]');
-      if (el) el.classList.add('checked');
+      const inp = document.querySelector('#app-checks input[value="' + appId + '"]');
+      if (inp) inp.checked = true;
     });
 
     switchTab('create', true);
@@ -453,7 +454,7 @@
   };
 
   const getCheckedApps = () => {
-    return [...document.querySelectorAll('#app-checks .app-check.checked')].map(el => el.dataset.app);
+    return [...document.querySelectorAll('#app-checks input:checked')].map(el => el.value);
   };
 
   const showStatus = (msg, type) => {

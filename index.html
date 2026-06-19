@@ -307,6 +307,37 @@
     /* ── СИСТЕМНЫЕ ── */
     .error-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--danger); padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.875rem; display: none; text-align: center; font-size: 0.85rem; }
 
+
+    /* ── POLL ── */
+    .poll-wrap { margin-top:0.75rem; border-top:1px solid var(--border,rgba(255,255,255,0.08)); padding-top:0.875rem; }
+    .poll-question { font-size:0.88rem; font-weight:800; color:var(--text); margin-bottom:0.75rem; line-height:1.4; }
+    .poll-options { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.75rem; }
+    .poll-option {
+      padding:0.6rem 0.875rem; border-radius:0.75rem;
+      border:1.5px solid var(--border,rgba(255,255,255,0.08));
+      background:transparent; color:var(--text);
+      font-size:0.85rem; font-weight:700; cursor:pointer;
+      font-family:'Nunito',sans-serif; text-align:left;
+      transition:all 0.2s; width:100%;
+    }
+    .poll-option:hover { border-color:var(--accent); }
+    .poll-option.selected { border-color:var(--accent); background:rgba(99,102,241,0.15); color:var(--accent2,#818cf8); }
+    .poll-input {
+      width:100%; padding:0.6rem 0.875rem; border-radius:0.75rem;
+      border:1.5px solid var(--border,rgba(255,255,255,0.08));
+      background:transparent; color:var(--text);
+      font-size:0.85rem; font-family:'Nunito',sans-serif;
+      outline:none; margin-bottom:0.75rem;
+    }
+    .poll-input:focus { border-color:var(--accent); }
+    .poll-submit {
+      width:100%; padding:0.6rem; border-radius:0.75rem;
+      background:var(--accent); border:none; color:#0f172a;
+      font-size:0.85rem; font-weight:800; cursor:pointer;
+      font-family:'Nunito',sans-serif;
+    }
+    .poll-done { text-align:center; padding:0.75rem; font-size:0.85rem; color:var(--accent); font-weight:700; }
+
     /* ── ANNOUNCEMENT BANNER ── */
     .ann-overlay {
       display: none; position: fixed; inset: 0;
@@ -1248,6 +1279,13 @@
         <div class="ann-title" id="ann-title"></div>
         <div class="ann-text" id="ann-text"></div>
         <a class="ann-btn" id="ann-btn" href="#" target="_blank" style="display:none"></a>
+        <div class="poll-wrap" id="poll-wrap" style="display:none">
+          <div class="poll-question" id="poll-question"></div>
+          <div class="poll-options" id="poll-options"></div>
+          <input class="poll-input" id="poll-input" placeholder="Ваш ответ..." style="display:none">
+          <button class="poll-submit" id="poll-submit" onclick="submitPoll()">Отправить ответ</button>
+          <div class="poll-done" id="poll-done" style="display:none">✅ Спасибо за ответ!</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1658,28 +1696,57 @@
       const d = new Date(); d.setDate(d.getDate() - daysAgo);
       return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     };
+    const HISTORY_KEY = 'prayer_history_v1';
+
+    // Сохраняем историю выполненных дней (до 30 дней)
+    const saveDayToHistory = (dateISO) => {
+      try {
+        const h = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+        if (!h.includes(dateISO)) {
+          h.push(dateISO);
+          // Оставляем только последние 30 дней
+          h.sort();
+          if (h.length > 30) h.splice(0, h.length - 30);
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+        }
+      } catch {}
+    };
+
     const calcStreak = (completedOverride) => {
       try {
-        const saved = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count:0, lastDate:'' };
         const today = getCalendarISO();
-        const yesterday = getDateISO(1);
-        const dayBefore = getDateISO(2); // допуск на старый формат намаз-дня
         const completed = completedOverride !== undefined
           ? completedOverride
           : (JSON.parse(localStorage.getItem(STORAGE_KEY)) || { completed:{} }).completed || {};
         const allDone = FARZ.every(p => completed[p]);
 
-        if (allDone && saved.lastDate !== today) {
-          const isContinuous = saved.lastDate === yesterday || saved.lastDate === dayBefore;
-          const newCount = isContinuous ? saved.count + 1 : 1;
-          localStorage.setItem(STREAK_KEY, JSON.stringify({ count: newCount, lastDate: today }));
-          return newCount;
+        // Если сегодня все выполнены — сохраняем в историю
+        if (allDone) saveDayToHistory(today);
+
+        // Считаем стрик по истории — сколько дней подряд назад
+        const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+        let streak = 0;
+        let checkDate = today;
+        // Начинаем с сегодня или вчера
+        if (!history.includes(checkDate)) {
+          // Сегодня не выполнено — начинаем со вчера
+          const d = new Date(); d.setDate(d.getDate() - 1);
+          checkDate = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         }
-        if (saved.lastDate === today || saved.lastDate === yesterday || saved.lastDate === dayBefore) {
-          return saved.count || 0;
+        // Считаем подряд назад
+        for (let i = 0; i <= 30; i++) {
+          const d = new Date(); d.setDate(d.getDate() - i);
+          const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+          if (history.includes(iso)) {
+            streak++;
+          } else if (i === 0) {
+            // Сегодня не выполнено — не считаем как разрыв
+            continue;
+          } else {
+            break;
+          }
         }
-        return 0;
-        return saved.count || 0;
+        return streak;
       } catch { return 0; }
     };
 
@@ -1867,7 +1934,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v23'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v25'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -3018,6 +3085,7 @@
 
         overlay.classList.add('show');
         localStorage.setItem(seenKey, '1');
+        loadPoll(ann.id);
 
       } catch(e) {}
     };
@@ -3030,6 +3098,107 @@
 
     // Загрузить через 1 сек после старта
     setTimeout(loadAnnouncement, 1000);
+
+    // ── ОПРОС ──
+    let currentPollId = null;
+    let currentPollType = null;
+    let selectedOption = null;
+    const POLL_APP_ID = 'awareness';
+
+    const loadPoll = async (annId) => {
+      try {
+        const now = new Date().toISOString();
+        const url = ANN_SUPABASE_URL + '/rest/v1/polls'
+          + '?app_id=eq.' + POLL_APP_ID
+          + '&active=eq.true'
+          + '&show_from=lte.' + encodeURIComponent(now)
+          + '&show_until=gte.' + encodeURIComponent(now)
+          + '&order=created_at.desc&limit=1';
+        const res = await fetch(url, {
+          headers: { 'apikey': ANN_SUPABASE_KEY, 'Authorization': 'Bearer ' + ANN_SUPABASE_KEY }
+        });
+        const data = await res.json();
+        if (!data || !data.length) return;
+        const poll = data[0];
+
+        // Один ответ на опрос
+        const pollKey = 'poll_answered_' + poll.id;
+        if (localStorage.getItem(pollKey)) {
+          document.getElementById('poll-wrap').style.display = 'block';
+          document.getElementById('poll-question').textContent = poll.question;
+          document.getElementById('poll-options').style.display = 'none';
+          document.getElementById('poll-input').style.display = 'none';
+          document.getElementById('poll-submit').style.display = 'none';
+          document.getElementById('poll-done').style.display = 'block';
+          return;
+        }
+
+        currentPollId = poll.id;
+        currentPollType = poll.type;
+        document.getElementById('poll-wrap').style.display = 'block';
+        document.getElementById('poll-question').textContent = poll.question;
+
+        if (poll.type === 'choice' && poll.options) {
+          const opts = typeof poll.options === 'string' ? JSON.parse(poll.options) : poll.options;
+          const container = document.getElementById('poll-options');
+          container.innerHTML = '';
+          opts.forEach((opt) => {
+            const btn = document.createElement('button');
+            btn.className = 'poll-option';
+            btn.type = 'button';
+            btn.textContent = opt;
+            btn.onclick = function() { selectOption(this, opt); };
+            container.appendChild(btn);
+          });;
+          document.getElementById('poll-options').style.display = 'flex';
+          document.getElementById('poll-input').style.display = 'none';
+        } else {
+          document.getElementById('poll-options').style.display = 'none';
+          document.getElementById('poll-input').style.display = 'block';
+        }
+      } catch(e) {}
+    };
+
+    window.selectOption = (el, val) => {
+      document.querySelectorAll('.poll-option').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedOption = val;
+    };
+
+    window.submitPoll = async () => {
+      if (!currentPollId) return;
+      const answer = currentPollType === 'choice'
+        ? selectedOption
+        : document.getElementById('poll-input').value.trim();
+      if (!answer) return;
+
+      try {
+        const userKey = localStorage.getItem('user_key') || (() => {
+          const k = 'u_' + Math.random().toString(36).slice(2,10);
+          localStorage.setItem('user_key', k);
+          return k;
+        })();
+
+        await fetch(ANN_SUPABASE_URL + '/rest/v1/poll_answers', {
+          method: 'POST',
+          headers: {
+            'apikey': ANN_SUPABASE_KEY,
+            'Authorization': 'Bearer ' + ANN_SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ poll_id: currentPollId, answer, user_key: userKey })
+        });
+
+        localStorage.setItem('poll_answered_' + currentPollId, '1');
+        document.getElementById('poll-submit').style.display = 'none';
+        document.getElementById('poll-options').style.display = 'none';
+        document.getElementById('poll-input').style.display = 'none';
+        document.getElementById('poll-done').style.display = 'block';
+      } catch(e) {}
+    };
+    // ── КОНЕЦ ОПРОСА ──
+
     // ── END ANNOUNCEMENT ──
 
     // Перехват кнопки Назад на Android

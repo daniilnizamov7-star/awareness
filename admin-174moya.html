@@ -319,13 +319,18 @@
   }
 
   // ── TABS ──
-  const switchTab = (tab) => {
+  const switchTab = (tab, skipReset = false) => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById('sec-' + tab).classList.add('active');
-    event.target.classList.add('active');
+    // Update active tab button
+    const tabBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+    if (tabBtn) tabBtn.classList.add('active');
     if (tab === 'list') loadList();
-    if (tab === 'create') { resetForm(); document.getElementById('form-title').textContent = 'Новое объявление'; }
+    if (tab === 'create' && !skipReset) {
+      resetForm();
+      document.getElementById('form-title').textContent = 'Новое объявление';
+    }
   };
 
   // ── SUPABASE HELPERS ──
@@ -428,7 +433,7 @@
       if (el) el.classList.add('checked');
     });
 
-    switchTab('create');
+    switchTab('create', true);
   };
 
   // ── FORM ──

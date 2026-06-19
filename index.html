@@ -1934,7 +1934,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v25'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v26'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -3097,7 +3097,10 @@
 
 
     // Загрузить через 1 сек после старта
-    setTimeout(loadAnnouncement, 1000);
+    setTimeout(() => {
+      loadAnnouncement();
+      loadPoll(null); // опрос показываем независимо от объявления
+    }, 1000);
 
     // ── ОПРОС ──
     let currentPollId = null;
@@ -3123,18 +3126,22 @@
 
         // Один ответ на опрос
         const pollKey = 'poll_answered_' + poll.id;
-        if (localStorage.getItem(pollKey)) {
-          document.getElementById('poll-wrap').style.display = 'block';
-          document.getElementById('poll-question').textContent = poll.question;
-          document.getElementById('poll-options').style.display = 'none';
-          document.getElementById('poll-input').style.display = 'none';
-          document.getElementById('poll-submit').style.display = 'none';
-          document.getElementById('poll-done').style.display = 'block';
-          return;
-        }
+        // Показываем overlay с опросом если объявление не открыто
+        const overlay = document.getElementById('ann-overlay');
+        const showOverlay = !overlay.classList.contains('show');
+
+        if (localStorage.getItem(pollKey)) return; // уже ответил
 
         currentPollId = poll.id;
         currentPollType = poll.type;
+        // Показываем overlay если не открыт через объявление
+        if (showOverlay) {
+          overlay.classList.add('show');
+          document.getElementById('ann-title').textContent = '';
+          document.getElementById('ann-text').textContent = '';
+          document.getElementById('ann-btn').style.display = 'none';
+          document.getElementById('ann-img').style.display = 'none';
+        }
         document.getElementById('poll-wrap').style.display = 'block';
         document.getElementById('poll-question').textContent = poll.question;
 

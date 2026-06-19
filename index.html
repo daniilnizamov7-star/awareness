@@ -1867,7 +1867,7 @@
 
     // === CONFIG ===
     const API_URL = 'https://raw.githubusercontent.com/daniilnizamov7-star/Namaz/main/api/prayer-data.json';
-    const APP_VERSION = 'v22'; // поднять при каждом обновлении данных/формата
+    const APP_VERSION = 'v23'; // поднять при каждом обновлении данных/формата
     const STORAGE_KEY = 'prayer_tracker_v1';
     const CACHE_KEY = 'prayer_cache_v1';
     const DUA_KEY = 'dua_collection_v1';
@@ -3026,10 +3026,7 @@
       document.getElementById('ann-overlay').classList.remove('show');
     };
 
-    // Закрыть по клику на оверлей
-    document.getElementById('ann-overlay').addEventListener('click', (e) => {
-      if (e.target === document.getElementById('ann-overlay')) closeAnn();
-    });
+
 
     // Загрузить через 1 сек после старта
     setTimeout(loadAnnouncement, 1000);

@@ -114,15 +114,15 @@
     /* APP CHECKBOXES */
     .app-checks { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.875rem; }
     .app-check {
-      display:flex; align-items:center; gap:0.4rem;
+      display:inline-flex; align-items:center; gap:0.4rem;
       padding:0.4rem 0.75rem; border-radius:0.75rem;
       border:1.5px solid var(--border); cursor:pointer;
       font-size:0.8rem; font-weight:700; transition:all 0.2s;
-      user-select:none; position:relative; z-index:10;
-      -webkit-tap-highlight-color: rgba(99,102,241,0.2);
+      background: var(--card2); color: var(--text);
+      font-family:'Nunito',sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
-    .app-check input { display:none; }
-    .app-check.checked { border-color:var(--accent); background:rgba(99,102,241,0.15); color:var(--accent2); }
+    .app-check.checked { border-color:var(--accent); background:rgba(99,102,241,0.2); color:var(--accent2); }
 
     /* BUTTONS */
     .btn {
@@ -237,12 +237,12 @@
 
         <label class="form-label">Приложения</label>
         <div class="app-checks" id="app-checks">
-          <div class="app-check" data-app="namaz" onclick="this.classList.toggle('checked')">🕌 Намаз</div>
-          <div class="app-check" data-app="awareness" onclick="this.classList.toggle('checked')">🌿 Осознанность</div>
-          <div class="app-check" data-app="fitcore" onclick="this.classList.toggle('checked')">💪 FitCore</div>
-          <div class="app-check" data-app="lesso" onclick="this.classList.toggle('checked')">📚 Lesso</div>
-          <div class="app-check" data-app="sledopyt" onclick="this.classList.toggle('checked')">🗺️ Следопыт</div>
-          <div class="app-check" data-app="raketa" onclick="this.classList.toggle('checked')">🚀 Ракета</div>
+          <button type="button" class="app-check" data-app="namaz" onclick="toggleChip(this)">🕌 Намаз</button>
+          <button type="button" class="app-check" data-app="awareness" onclick="toggleChip(this)">🌿 Осознанность</button>
+          <button type="button" class="app-check" data-app="fitcore" onclick="toggleChip(this)">💪 FitCore</button>
+          <button type="button" class="app-check" data-app="lesso" onclick="toggleChip(this)">📚 Lesso</button>
+          <button type="button" class="app-check" data-app="sledopyt" onclick="toggleChip(this)">🗺️ Следопыт</button>
+          <button type="button" class="app-check" data-app="raketa" onclick="toggleChip(this)">🚀 Ракета</button>
         </div>
 
         <label class="form-label">Заголовок *</label>
@@ -427,10 +427,10 @@
     else { toggle.classList.remove('on'); label.textContent = 'Неактивно'; }
 
     // Set app checkboxes
-    document.querySelectorAll('.app-check').forEach(el => el.classList.remove('checked'));
+    document.querySelectorAll('#app-checks .app-check').forEach(el => el.classList.remove('checked'));
     const appIds = Array.isArray(a.app_id) ? a.app_id : (a.app_id ? [a.app_id] : []);
     appIds.forEach(appId => {
-      const el = document.querySelector('.app-check[data-app="' + appId + '"]');
+      const el = document.querySelector('#app-checks .app-check[data-app="' + appId + '"]');
       if (el) el.classList.add('checked');
     });
 
@@ -438,7 +438,8 @@
   };
 
   // ── FORM ──
-  // App check clicks — через inline onclick на каждом чипе
+  // App check clicks
+  const toggleChip = (el) => { el.classList.toggle('checked'); };
 
   const toggleAppCheck = (el) => { el.classList.toggle('checked'); };
 
@@ -452,7 +453,7 @@
   };
 
   const getCheckedApps = () => {
-    return [...document.querySelectorAll('.app-check.checked')].map(el => el.dataset.app);
+    return [...document.querySelectorAll('#app-checks .app-check.checked')].map(el => el.dataset.app);
   };
 
   const showStatus = (msg, type) => {

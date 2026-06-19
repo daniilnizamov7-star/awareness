@@ -118,7 +118,8 @@
       padding:0.4rem 0.75rem; border-radius:0.75rem;
       border:1.5px solid var(--border); cursor:pointer;
       font-size:0.8rem; font-weight:700; transition:all 0.2s;
-      user-select:none;
+      user-select:none; position:relative; z-index:10;
+      -webkit-tap-highlight-color: rgba(99,102,241,0.2);
     }
     .app-check input { display:none; }
     .app-check.checked { border-color:var(--accent); background:rgba(99,102,241,0.15); color:var(--accent2); }
